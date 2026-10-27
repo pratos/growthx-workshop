@@ -1,0 +1,19 @@
+{
+  "name": "greenhouse",
+  "private": true,
+  "type": "module",
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "lint": "oxlint --type-aware . && oxfmt --check .",
+    "fmt": "oxfmt .",
+    "typecheck": "tsc -b",
+    "test": "bun test packages"
+  },
+  "devDependencies": {
+    "oxlint": "^1.78.0",
+    "oxfmt": "^0.63.0",
+    "typescript": "^5.9.0",
+    "wrangler": "^4.151.3",
+    "@cloudflare/workers-types": "^4.20261027.0"
+  }
+}

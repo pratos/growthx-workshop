@@ -1,0 +1,16 @@
+{
+  "$comment": "Third-party skills vendored at a pinned commit by scripts/skills-sync.sh. Bump the sha on purpose, never the morning of a talk.",
+  "vendor": [
+    { "repo": "emilkowalski/skills", "ref": "2d228630ba1446365f614a108cb8252f1feda202", "paths": {
+        "animate": "skills/animate", "review-animations": "skills/review-animations", "improve-animations": "skills/improve-animations",
+        "animation-vocabulary": "skills/animation-vocabulary", "pick-ui-library": "skills/pick-ui-library",
+        "emil-design-eng": "skills/emil-design-eng", "prototype": "skills/prototype" } },
+    { "repo": "cloudflare/skills", "ref": "86505e44f87d801aa1864a3c4109e9a8ae5c409f", "paths": {
+        "cloudflare": "skills/cloudflare", "workers-best-practices": "skills/workers-best-practices", "durable-objects": "skills/durable-objects",
+        "wrangler": "skills/wrangler", "agents-sdk": "skills/agents-sdk", "sandbox-stable": "skills/sandbox-stable" } },
+    { "repo": "pbakaus/impeccable", "ref": "d34c87e1a00989ae8dbdd7f6b30b70f23319e860", "paths": { "impeccable": ".agents/skills/impeccable" } },
+    { "repo": "alchemy-run/alchemy", "ref": "bb8eaa236a364bcaeb9bdcef6ce3062ecf6244d0", "paths": { "alchemy-domain": "packages/domain/skills/alchemy-domain" } },
+    { "repo": "benjitaylor/agentation", "ref": "0e3236eb1a0f5577852ab7bb5121f5dd46d42f1d", "paths": { "agentation": "skills/agentation", "agentation-self-driving": "skills/agentation-self-driving" } },
+    { "repo": "browserbase/stagehand", "ref": "63078cf85ddfe189da88204539ec30d41959378b", "paths": { "stagehand-browse": "packages/cli/skills/browse" } }
+  ]
+}

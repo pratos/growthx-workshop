@@ -1,0 +1,10 @@
+node_modules/
+.wrangler/
+.dev.vars*
+.alchemy/
+dist/
+.output/
+skills/vendor/
+skills/*/node_modules/
+tools/*/slop-jev
+*.local
