@@ -1,0 +1,2 @@
+when   OpenThread         on b3 by pratos "retries in the client or the wrapper?"
+then   ThreadOpened       id1 on b3 by pratos "retries in the client or the wrapper?"
