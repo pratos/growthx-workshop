@@ -1,0 +1,1 @@
+{ "name": "@greenhouse/db", "private": true, "type": "module", "description": "D1 migrations live in apps/api/migrations (wrangler convention); this package holds seeds and the replay job." }

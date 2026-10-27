@@ -2,7 +2,10 @@
   "name": "greenhouse",
   "private": true,
   "type": "module",
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "lint": "oxlint --type-aware . && oxfmt --check .",
     "fmt": "oxfmt .",
@@ -10,10 +13,10 @@
     "test": "bun test packages"
   },
   "devDependencies": {
-    "oxlint": "^1.78.0",
-    "oxfmt": "^0.63.0",
-    "typescript": "^5.9.0",
-    "wrangler": "^4.151.3",
-    "@cloudflare/workers-types": "^4.20261027.0"
+    "@cloudflare/workers-types": "^5.20261027.1",
+    "oxfmt": "^0.75.0",
+    "oxlint": "^1.90.0",
+    "typescript": "^7.0.2",
+    "wrangler": "^4.153.0"
   }
 }
