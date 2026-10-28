@@ -20,7 +20,7 @@ Spreadsheets won because the data and its flow are visible. An event log gives a
 1. **Commands validate; events are facts.** A command may be rejected. An event is never rejected, edited or deleted. Past tense, domain vocabulary word (load `ddd-vocabulary` for the word).
 2. **Decide, evolve, project.** `decide(state, command) → events[]` is the only place with rules. `evolve(state, event) → state` has none. `project(events) → readModel` is pure. Shape in `references/decider.md`.
 3. **One command, one append.** Every event a command emits is appended in one synchronous block. In a Durable Object that means no `await` between the writes. Partial appends do not exist.
-4. **Every command has an expect test.** Starting stream and command in, events out, snapshot read as prose. The scaffold writes the stub; the agent fills it; a human reviews the snapshot like a story. No unit tests of `evolve`, the snapshot already covers it.
+4. **Every command has an expect test, and every workflow a story.** Starting stream and command in, events out, snapshot read as prose; a workflow (sign-up, a session with several people and the agent) is a story through the real engine (`references/engine.md`). The scaffold writes the stub; the agent fills it; a human reviews the snapshot like a story. No unit tests of `evolve`, the snapshot already covers it.
 5. **Invariants are types first, checks second.** "A decision references exactly one thread" is a schema. Only what cannot be a type becomes a `decide` check, and the check gets an expect test that shows the rejection.
 6. **Flags live in `decide`.** A new command ships behind a flag, default off, checked in one place.
 7. **The past is read, not rewritten.** Changing a recorded event climbs the ladder in `references/changing-events.md` from the bottom: avoid, map, upcast on read, new event type, transform. Never edit a schema in place for an event that exists in any store.
@@ -51,6 +51,7 @@ No Markdown explainer files. `docs/decisions/` holds the artifacts and a one-lin
 
 ## Reference
 
+- `references/engine.md`: `packages/engine` (Effect): the event store, the `Sql` port and its SQLite, Durable Object, D1 and Postgres adapters, projections in the same transaction, and story tests for whole workflows. Read it before adding a stream or a projection.
 - `references/decider.md`: the TypeScript shape, the expect test format, the Durable Object append, the scaffold's output.
 - `references/changing-events.md`: the five-rung ladder with code for each.
 - `references/stream-to-artifact.md`: snapshot or replay output to viz-explainer spec.
