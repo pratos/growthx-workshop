@@ -771,7 +771,7 @@
         "steps": [
           {
             "id": "actor",
-            "caption": "Agent keeps meaning an actor, as it already does in the domain vocabulary and the map.",
+            "caption": "Agent keeps meaning an actor, as it does in the domain vocabulary and the map.",
             "edges": [
               "L_AG_SU_0"
             ],
@@ -1150,7 +1150,7 @@
             "done": false
           },
           {
-            "cmd": "git checkout wrong/cp-01 && just domain-vocabulary-check",
+            "cmd": "git checkout wrong/cp-02 && just domain-vocabulary-check",
             "text": "still fails on ThreadClosed and verdict",
             "done": false
           }

@@ -125,6 +125,6 @@ rollback app version="":
 deck:
     python3 -m http.server 8777 --bind 127.0.0.1
 
-# Run one checkpoint's deterministic beat: just demo cp-02
+# Run one checkpoint's deterministic beat: just demo cp-03
 demo cp:
     @scripts/demo.sh {{cp}}
