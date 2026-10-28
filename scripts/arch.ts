@@ -19,7 +19,7 @@ if (!mermaid) fail('docs/ARCHITECTURE.md has no ```mermaid block. The map is bui
 
 // Coverage: the map is plain language, so folders live in the "Where it lives" table. Every folder under apps/ or packages/
 // must be in it, and every part named there must be a node in the map.
-const units = ['apps', 'packages'].flatMap((d) => readdirSync(join(root, d), { withFileTypes: true })
+const units = ['apps', 'packages'].filter((d) => existsSync(join(root, d))).flatMap((d) => readdirSync(join(root, d), { withFileTypes: true })
   .filter((e) => e.isDirectory() && existsSync(join(root, d, e.name, 'package.json'))).map((e) => `${d}/${e.name}`));
 const where = /## Where it lives[\s\S]*?\n(\|[^\n]*\|\n\|[-| ]+\|\n(?:\|[^\n]*\|\n?)+)/.exec(md)?.[1];
 if (!where) fail('docs/ARCHITECTURE.md has no "## Where it lives" table mapping parts of the map to folders.');

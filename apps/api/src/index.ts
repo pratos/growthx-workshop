@@ -1,5 +1,7 @@
 import { Hono } from 'hono';
+// <cp-05>
 import { Schema } from 'effect';
+// </cp-05>
 import type { Env } from './services';
 // <cp-03>
 import type { Account } from '@greenhouse/schema';
@@ -33,7 +35,9 @@ type RequestVars =
   // </cp-03>
   Record<never, never>;
 const app = new Hono<{ Bindings: Env; Variables: RequestVars }>();
+// <cp-05>
 const planId = Schema.decodeUnknownSync(Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(64)));
+// </cp-05>
 
 // Health: public, dumb. `label` is what a person reads (git describe, passed in at deploy); `id` is what rollback needs.
 app.get('/healthz', (c) => c.json({ ok: true, version: { label: c.env.GIT_DESCRIBE ?? 'dev', id: c.env.VERSION?.id ?? 'dev', tag: c.env.VERSION?.tag ?? '' }, at: new Date().toISOString() }));
