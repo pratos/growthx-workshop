@@ -40,7 +40,7 @@
   .tabs button { font: inherit; font-size: 14px; padding: 6px 12px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 999px; cursor: pointer; }
   .tabs button[aria-selected="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
   main { display: grid; grid-template-columns: 1fr; gap: 18px; padding-top: 20px; padding-bottom: 28px; flex: 1; align-content: start; }
-  .stage { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 0; height: min(62vh, 760px); min-height: 340px; overflow: hidden; transition: height .24s var(--ease-out); }
+  .stage { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; height: min(62vh, 760px); min-height: 340px; overflow: hidden; transition: height .24s var(--ease-out); }
   .stage-controls { position: absolute; right: 10px; top: 10px; display: flex; gap: 6px; }
   .stage-controls button { font: inherit; font-size: 12.5px; padding: 5px 10px; border: 1px solid var(--line); background: var(--bg); color: var(--muted); border-radius: 999px; cursor: pointer; transition: color .15s ease, border-color .15s ease; }
   @media (hover: hover) and (pointer: fine) { .stage-controls button:hover { color: var(--fg); } }
