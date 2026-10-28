@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as HealthzRouteImport } from './routes/healthz'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ReadyzRouteImport } from './routes/readyz'
+import { Route as AdminFlagsRouteImport } from './routes/admin.flags'
 import { Route as PlansPlanIdRouteImport } from './routes/plans.$planId'
 import { Route as PlansPlanIdWsRouteImport } from './routes/plans.$planId.ws'
 
@@ -36,6 +37,11 @@ const ReadyzRoute = ReadyzRouteImport.update({
   path: '/readyz',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminFlagsRoute = AdminFlagsRouteImport.update({
+  id: '/admin/flags',
+  path: '/admin/flags',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlansPlanIdRoute = PlansPlanIdRouteImport.update({
   id: '/plans/$planId',
   path: '/plans/$planId',
@@ -52,6 +58,7 @@ export interface FileRoutesByFullPath {
   '/healthz': typeof HealthzRoute
   '/login': typeof LoginRoute
   '/readyz': typeof ReadyzRoute
+  '/admin/flags': typeof AdminFlagsRoute
   '/plans/$planId': typeof PlansPlanIdRouteWithChildren
   '/plans/$planId/ws': typeof PlansPlanIdWsRoute
 }
@@ -60,6 +67,7 @@ export interface FileRoutesByTo {
   '/healthz': typeof HealthzRoute
   '/login': typeof LoginRoute
   '/readyz': typeof ReadyzRoute
+  '/admin/flags': typeof AdminFlagsRoute
   '/plans/$planId': typeof PlansPlanIdRouteWithChildren
   '/plans/$planId/ws': typeof PlansPlanIdWsRoute
 }
@@ -69,6 +77,7 @@ export interface FileRoutesById {
   '/healthz': typeof HealthzRoute
   '/login': typeof LoginRoute
   '/readyz': typeof ReadyzRoute
+  '/admin/flags': typeof AdminFlagsRoute
   '/plans/$planId': typeof PlansPlanIdRouteWithChildren
   '/plans/$planId/ws': typeof PlansPlanIdWsRoute
 }
@@ -79,6 +88,7 @@ export interface FileRouteTypes {
     | '/healthz'
     | '/login'
     | '/readyz'
+    | '/admin/flags'
     | '/plans/$planId'
     | '/plans/$planId/ws'
   fileRoutesByTo: FileRoutesByTo
@@ -87,6 +97,7 @@ export interface FileRouteTypes {
     | '/healthz'
     | '/login'
     | '/readyz'
+    | '/admin/flags'
     | '/plans/$planId'
     | '/plans/$planId/ws'
   id:
@@ -95,6 +106,7 @@ export interface FileRouteTypes {
     | '/healthz'
     | '/login'
     | '/readyz'
+    | '/admin/flags'
     | '/plans/$planId'
     | '/plans/$planId/ws'
   fileRoutesById: FileRoutesById
@@ -104,6 +116,7 @@ export interface RootRouteChildren {
   HealthzRoute: typeof HealthzRoute
   LoginRoute: typeof LoginRoute
   ReadyzRoute: typeof ReadyzRoute
+  AdminFlagsRoute: typeof AdminFlagsRoute
   PlansPlanIdRoute: typeof PlansPlanIdRouteWithChildren
 }
 
@@ -135,6 +148,13 @@ declare module '@tanstack/react-router' {
       path: '/readyz'
       fullPath: '/readyz'
       preLoaderRoute: typeof ReadyzRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/flags': {
+      id: '/admin/flags'
+      path: '/admin/flags'
+      fullPath: '/admin/flags'
+      preLoaderRoute: typeof AdminFlagsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/plans/$planId': {
@@ -171,17 +191,9 @@ const rootRouteChildren: RootRouteChildren = {
   HealthzRoute: HealthzRoute,
   LoginRoute: LoginRoute,
   ReadyzRoute: ReadyzRoute,
+  AdminFlagsRoute: AdminFlagsRoute,
   PlansPlanIdRoute: PlansPlanIdRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { Effect, Schema } from 'effect';
 import { Commands, PlanRooms, readiness, runtimeFor, type Env } from './services';
 import { PlanRoom } from './plan-room';
+import { flagsAdmin } from './flags-admin';
 
 export { PlanRoom };
 
@@ -50,6 +51,9 @@ app.get('/plans/:planId', async (c) => {
   const id = planId(c.req.param('planId'));
   return c.json(await runtimeFor(c.env).runPromise(PlanRooms.use((r) => r.read(id))));
 });
+
+// Flags admin: list and set the D1 flags that `decide()` reads. GET /flags, PUT /flags/:name.
+app.route('/flags', flagsAdmin);
 
 app.notFound((c) => c.json({ error: 'not found' }, 404));
 app.onError((e, c) => {

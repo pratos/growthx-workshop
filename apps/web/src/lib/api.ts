@@ -14,3 +14,8 @@ export async function apiCommand(planId: string, type: string, by: string, data:
   const body = (await r.json()) as Record<string, unknown>;
   return { status: r.status, ...body };
 }
+export async function apiPut<T extends Record<string, unknown>>(path: string, body: unknown) {
+  const r = await api().fetch(`https://api${path}`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  const data = (await r.json()) as T;
+  return { status: r.status, ...data };
+}
