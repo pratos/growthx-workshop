@@ -1,0 +1,5 @@
+given  ThreadOpened       t7 on b3 by pratos "retries in the client or the wrapper?"
+       ReplyPosted        t7 by agent "wrapper: one place to change"
+when   ResolveThread      t7 by pratos decision "wrapper"
+then   ThreadResolved     t7 by pratos
+       DecisionRecorded   t7 on b3 by pratos decision "wrapper"

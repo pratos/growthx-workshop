@@ -1,0 +1,10 @@
+v1 stream as recorded
+  ThreadOpened       t7 on b3 by pratos "retries in the client or the wrapper?"
+  ReplyPosted        t7 by agent "wrapper: one place to change"
+  ThreadResolved     t7 by pratos
+  DecisionRecorded   t7 on b3 by pratos decision "wrapper"
+read through upcast
+  ThreadOpened       t7 on b3 by pratos "retries in the client or the wrapper?"
+  ReplyPosted        t7 by agent "wrapper: one place to change"
+  ThreadResolved     t7 by pratos
+  DecisionRecorded   t7 on b3 by pratos decision "wrapper" rationale "wrapper: one place to change"

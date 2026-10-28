@@ -1,0 +1,3 @@
+given  ThreadOpened       t7 on b3 by pratos "retries in the client or the wrapper?"
+when   ResolveThread      t7 by guest decision "wrapper"
+then   rejected           resolve-thread is not enabled for this participant
