@@ -25,6 +25,7 @@ cmux panes: `just up` · a shell on main · `tail -f /tmp/gh-*.log` · the brows
 | Plan as a wall of Markdown | `/create_plan GH-12` in Claude Code | open `docs/decisions/gh-12.html`, click an option | `just demo cp-04` |
 | UI half | Claude Code with impeccable + animate on `/plans/gh-12`; one Agentation note | open a thread, resolve it, see the decision | `just demo cp-05` |
 | Correct code that is wrong | `HEAD_REF=wrong/cp-01 just review cp-02` live, about ninety seconds | `cat demo/cp-06-review.md` | `just demo cp-06` |
+| A durable agent | terminal 2: `just agent-watch`; terminal 1: `just agent-reset && just agent-demo`, at "service_status: 3s / 8s" run `pkill -9 -f src/demo.ts`, then `just agent-demo` twice | the three observed runs in `packages/agent/README.md` | read the README's output aloud |
 | Two people, one room | two tabs on `/plans/gh-12`, open a thread in one, watch the other | `just demo cp-08` | the api socket directly: `bun scripts/ws-check.ts <api url>` |
 | Flags, as a panel | https://greenhouse-web.prthamesh-sarang.workers.dev/admin/flags: toggle, allowlist, percent; the same table `decide()` reads | `curl …/flags` on the api | `GH_REMOTE=1 just flag list` |
 | Released, then changed | `just deploy`, `GH_REMOTE=1 just flag user resolve-thread <you>`, use it live, `just rollback api <id>` | `curl …/healthz` shows label and id; `GH_REMOTE=1 just flag list` | `just demo cp-07` |
@@ -50,6 +51,10 @@ GH_REMOTE=1 just flag user resolve-thread pratos
 GH_REMOTE=1 just flag off resolve-thread
 just rollback api <version-id>
 ```
+
+## Keys
+
+- The agent demo needs a model key in the environment. On this machine only `openai/api-key` under `~/.config/sops-nix/secrets` is populated; export it as `OPENAI_API_KEY` in the shell that runs the demo. With `ANTHROPIC_API_KEY` set it uses `claude-sonnet-5-5`; run `just agent-reset` after switching providers.
 
 ## Timings
 

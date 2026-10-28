@@ -28,11 +28,12 @@ Three speakers, one vocabulary. The person says "resolve this thread", the code 
 ## Build sequence
 
 1. **Read `docs/GLOSSARY.md`.** If the noun is there, use its word and stop.
-2. **If it is not**, draft the entry in the format in `references/glossary-format.md`: definition in the user's words, context, the type that carries it, the events it appears in, synonyms it replaces.
-3. **Write the schema** for it in `packages/schema` in the same change. Entry and schema land together or not at all.
-4. **If the noun touches more than one context**, or replaces an existing word, render the vocabulary map (`references/vocabulary-map.md`) so the change is visible before it is argued about.
-5. **Run `scripts/check-glossary.sh docs/GLOSSARY.md packages`** and fix what it names.
-6. **Say the sentence.** Write one line a user would say that uses the new word. If it sounds wrong in their mouth, the word is wrong.
+2. **If it is not, search before you name.** Use web search and the DeepWiki MCP (`mcp__deepwiki`, ask it about `githubnext/chopin` and two shipped products in the same space) for what people already call this concept. Collect the candidate words and the sentence each product uses them in. Pick the word users say, not the word engineers say, and record the two runners-up under `Not:`.
+3. **Draft the entry** in the format in `references/glossary-format.md`: definition in the user's words, context, the type that carries it, the events it appears in, synonyms it replaces, and one line `Seen in:` naming where the search found the word.
+4. **Write the schema** for it in `packages/schema` in the same change. Entry and schema land together or not at all.
+5. **If the noun touches more than one context**, or replaces an existing word, render the vocabulary map (`references/vocabulary-map.md`) so the change is visible before it is argued about.
+6. **Run `scripts/check-glossary.sh docs/GLOSSARY.md packages`** and fix what it names.
+7. **Say the sentence.** Write one line a user would say that uses the new word. If it sounds wrong in their mouth, the word is wrong.
 
 ## Explain mode
 
