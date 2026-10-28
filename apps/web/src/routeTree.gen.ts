@@ -14,6 +14,10 @@ import { Route as HealthzRouteImport } from './routes/healthz'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ReadyzRouteImport } from './routes/readyz'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminAccountsRouteImport } from './routes/admin.accounts'
+import { Route as AdminEventsRouteImport } from './routes/admin.events'
+import { Route as AdminFlagsRouteImport } from './routes/admin.flags'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -40,6 +44,26 @@ const SignupRoute = SignupRouteImport.update({
   path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminAccountsRoute = AdminAccountsRouteImport.update({
+  id: '/admin/accounts',
+  path: '/admin/accounts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminEventsRoute = AdminEventsRouteImport.update({
+  id: '/admin/events',
+  path: '/admin/events',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminFlagsRoute = AdminFlagsRouteImport.update({
+  id: '/admin/flags',
+  path: '/admin/flags',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -47,6 +71,10 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/readyz': typeof ReadyzRoute
   '/signup': typeof SignupRoute
+  '/admin/accounts': typeof AdminAccountsRoute
+  '/admin/events': typeof AdminEventsRoute
+  '/admin/flags': typeof AdminFlagsRoute
+  '/admin/': typeof AdminIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +82,10 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/readyz': typeof ReadyzRoute
   '/signup': typeof SignupRoute
+  '/admin/accounts': typeof AdminAccountsRoute
+  '/admin/events': typeof AdminEventsRoute
+  '/admin/flags': typeof AdminFlagsRoute
+  '/admin': typeof AdminIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,13 +94,45 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/readyz': typeof ReadyzRoute
   '/signup': typeof SignupRoute
+  '/admin/accounts': typeof AdminAccountsRoute
+  '/admin/events': typeof AdminEventsRoute
+  '/admin/flags': typeof AdminFlagsRoute
+  '/admin/': typeof AdminIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/healthz' | '/login' | '/readyz' | '/signup'
+  fullPaths:
+    | '/'
+    | '/healthz'
+    | '/login'
+    | '/readyz'
+    | '/signup'
+    | '/admin/accounts'
+    | '/admin/events'
+    | '/admin/flags'
+    | '/admin/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/healthz' | '/login' | '/readyz' | '/signup'
-  id: '__root__' | '/' | '/healthz' | '/login' | '/readyz' | '/signup'
+  to:
+    | '/'
+    | '/healthz'
+    | '/login'
+    | '/readyz'
+    | '/signup'
+    | '/admin/accounts'
+    | '/admin/events'
+    | '/admin/flags'
+    | '/admin'
+  id:
+    | '__root__'
+    | '/'
+    | '/healthz'
+    | '/login'
+    | '/readyz'
+    | '/signup'
+    | '/admin/accounts'
+    | '/admin/events'
+    | '/admin/flags'
+    | '/admin/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -77,6 +141,10 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ReadyzRoute: typeof ReadyzRoute
   SignupRoute: typeof SignupRoute
+  AdminAccountsRoute: typeof AdminAccountsRoute
+  AdminEventsRoute: typeof AdminEventsRoute
+  AdminFlagsRoute: typeof AdminFlagsRoute
+  AdminIndexRoute: typeof AdminIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -116,6 +184,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/': {
+      id: '/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/accounts': {
+      id: '/admin/accounts'
+      path: '/admin/accounts'
+      fullPath: '/admin/accounts'
+      preLoaderRoute: typeof AdminAccountsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/events': {
+      id: '/admin/events'
+      path: '/admin/events'
+      fullPath: '/admin/events'
+      preLoaderRoute: typeof AdminEventsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/flags': {
+      id: '/admin/flags'
+      path: '/admin/flags'
+      fullPath: '/admin/flags'
+      preLoaderRoute: typeof AdminFlagsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -125,6 +221,10 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ReadyzRoute: ReadyzRoute,
   SignupRoute: SignupRoute,
+  AdminAccountsRoute: AdminAccountsRoute,
+  AdminEventsRoute: AdminEventsRoute,
+  AdminFlagsRoute: AdminFlagsRoute,
+  AdminIndexRoute: AdminIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

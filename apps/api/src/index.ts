@@ -2,6 +2,8 @@ import { Hono } from 'hono';
 import type { Env } from './services';
 import type { Account } from '@greenhouse/schema';
 import { auth } from './auth';
+import { flagsAdmin } from './flags-admin';
+import { admin } from './admin';
 
 // Stage markers (<cp-NN> … </cp-NN>) say which workshop stage adds the code between them; the stage branches are
 // built from main by keeping only what each stage has. On main they are plain comments.
@@ -32,6 +34,11 @@ app.get('/readyz', async (c) => {
 // Identity: POST /auth/sign-up, /auth/sign-in, /auth/sign-out, GET /auth/me.
 app.route('/auth', auth);
 
+// Flags admin: list and set the D1 flags that `decide()` reads. GET /flags, PUT /flags/:name. Admins only.
+app.route('/flags', flagsAdmin);
+
+// Admin dashboard: GET /admin/summary, /admin/accounts, /admin/events. Admins only.
+app.route('/admin', admin);
 
 app.notFound((c) => c.json({ error: 'not found' }, 404));
 app.onError((e, c) => {
