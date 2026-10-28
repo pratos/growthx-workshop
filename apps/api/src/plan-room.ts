@@ -5,9 +5,11 @@ import { Effect, Layer, ManagedRuntime } from 'effect';
 import { EventStore, type Recorded } from '@greenhouse/engine';
 import { durableObject } from '@greenhouse/engine/adapters/durable-object';
 import { session, sessionStream, sessionsView, readSession, listSessions, StartSession, JoinSession, Ask, StartRun, Steer, FinishRun, EndSession, PostMessage } from '@greenhouse/domain';
+import { FailRun } from '@greenhouse/domain';
 
 const sessionCommands = {
   StartSession, JoinSession, Ask, StartRun, Steer, FinishRun, EndSession, PostMessage,
+  FailRun,
 } as const;
 export type SessionResult = { events: Recorded[] } | Rejection;
 
