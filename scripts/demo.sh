@@ -11,7 +11,7 @@ fail() { echo "✗ $cp: $1"; exit 1; }
 api=""
 api_up() {
   export WRANGLER_SEND_METRICS=false
-  (cd apps/api && bunx wrangler d1 migrations apply greenhouse --local --persist-to .wrangler/demo >/dev/null 2>&1)
+  [ -d apps/api/migrations ] && (cd apps/api && bunx wrangler d1 migrations apply greenhouse --local --persist-to .wrangler/demo >/dev/null 2>&1)
   mkdir -p apps/api/.wrangler; : > apps/api/.wrangler/demo-seed.sql
   [ -f packages/db/seed.ts ] && bun packages/db/seed.ts > apps/api/.wrangler/demo-seed.sql
   [ -s apps/api/.wrangler/demo-seed.sql ] && (cd apps/api && bunx wrangler d1 execute greenhouse --local --persist-to .wrangler/demo --file .wrangler/demo-seed.sql >/dev/null 2>&1)
