@@ -49,8 +49,8 @@
       "diagram": "flowchart LR\n  Y[\"You and teammates\"]\n  R[\"Plan room · the agent runs here\"]\n  M[\"Model\"]\n  S[(\"Room storage · every step\")]\n  C[\"Container · only to run code\"]\n  Y -- \"ask\" --> R\n  R -- \"think\" --> M\n  R -- \"saves\" --> S\n  R -- \"run tests\" --> C\n  R -. \"shows each step\" .-> Y",
       "tried": {
         "kind": "spike",
-        "ref": "cp-08 and packages/agent",
-        "summary": "rooms showed every step live; the agent resumed after kill -9"
+        "ref": "cp-04 and cp-05",
+        "summary": "sessions and runs saved in the room's own SQLite; every step reaches open tabs live"
       },
       "axes": {
         "tab": "Keeps working",
@@ -65,11 +65,7 @@
       "label": "In a container",
       "summary": "One machine runs the agent and the code together.",
       "diagram": "flowchart LR\n  Y[\"You\"]\n  C[\"Container · the agent and the code\"]\n  M[\"Model\"]\n  D[(\"Its own disk\")]\n  G[\"Disk wiped when it stops\"]\n  Y -- \"ask\" --> C\n  C -- \"think\" --> M\n  C -- \"saves\" --> D\n  C -. \"stopped when idle\" .-> G",
-      "tried": {
-        "kind": "spike",
-        "ref": "packages/agent",
-        "summary": "a local process resumed from its own SQLite file"
-      },
+      "tried": null,
       "axes": {
         "tab": "Keeps working",
         "crash": "Only if its disk survives",
