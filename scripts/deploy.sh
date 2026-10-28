@@ -10,7 +10,8 @@ if [ "${pending:-0}" != "0" ]; then
   echo "  Migrations are additive; nothing is dropped or renamed in the same release as the code that stops using it."
   exit 1
 fi
-echo "→ api"; (cd apps/api && bunx wrangler deploy "${env_flag[@]}" 2>&1 | grep -E "Deployed|Version ID|https://|Error" || true)
-echo "→ web"; (cd apps/web && bun run build >/dev/null 2>&1 && bunx wrangler deploy "${env_flag[@]}" 2>&1 | grep -E "Deployed|Version ID|https://|Error" || true)
-api_url="$(cd apps/api && bunx wrangler deployments list "${env_flag[@]}" 2>/dev/null | grep -oE 'https://[^ ]+workers.dev' | head -1 || true)"
+label="$(git describe --tags --always --dirty 2>/dev/null || echo unknown)"
+echo "→ api ($label)"; (cd apps/api && bunx wrangler deploy "${env_flag[@]}" --var "GIT_DESCRIBE:$label" 2>&1 | grep -E "Deployed|Version ID|https://|Error" || true)
+echo "→ web ($label)"; (cd apps/web && bun run build >/dev/null 2>&1 && bunx wrangler deploy "${env_flag[@]}" --var "GIT_DESCRIBE:$label" 2>&1 | grep -E "Deployed|Version ID|https://|Error" || true)
+echo "→ smoke"; curl -sf --max-time 20 https://greenhouse-api.prthamesh-sarang.workers.dev/healthz | jq -c .version || echo "  (smoke skipped: api url differs from the default subdomain)"
 echo "Next: flag on for yourself (GH_REMOTE=1 just flag user NAME you), use it, then widen. Rollback: GH_REMOTE=1 just flag off NAME, then wrangler rollback in apps/api or apps/web."

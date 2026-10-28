@@ -5,11 +5,11 @@ import { PlanRoom } from './plan-room';
 
 export { PlanRoom };
 
-type Bindings = { DB: D1Database; PLAN_ROOM: DurableObjectNamespace<PlanRoom>; VERSION: { id: string; tag: string } };
+type Bindings = { DB: D1Database; PLAN_ROOM: DurableObjectNamespace<PlanRoom>; VERSION: { id: string; tag: string }; GIT_DESCRIBE: string };
 const app = new Hono<{ Bindings: Bindings }>();
 
-// Health: public, dumb, carries the version id so rollback is a curl away.
-app.get('/healthz', (c) => c.json({ ok: true, version: c.env.VERSION?.id ?? 'dev', at: new Date().toISOString() }));
+// Health: public, dumb. `label` is what a person reads (git describe, passed in at deploy); `id` is what rollback needs.
+app.get('/healthz', (c) => c.json({ ok: true, version: { label: c.env.GIT_DESCRIBE ?? 'dev', id: c.env.VERSION?.id ?? 'dev', tag: c.env.VERSION?.tag ?? '' }, at: new Date().toISOString() }));
 
 // Readiness: touches D1 and one Durable Object.
 app.get('/readyz', async (c) => {

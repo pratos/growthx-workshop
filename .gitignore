@@ -9,4 +9,7 @@ tools/*/slop-jev
 *.local
 .baml
 apps/checkin/package-lock.json
-tools/twelve-factor-baml/twelve-factor
+memes/
+demo/
+deck/
+checkin/

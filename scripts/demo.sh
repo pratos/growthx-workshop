@@ -23,7 +23,7 @@ case "$cp" in
   cp-06) scripts/review.sh main --dry-run >/dev/null && pass "review runs with a different model than the author" ;;
   cp-07)
     api="https://greenhouse-api.prthamesh-sarang.workers.dev"
-    v=$(curl -sf --max-time 20 "$api/healthz" | jq -r .version); [ -n "$v" ] && [ "$v" != "null" ] || { echo "✗ no version id from $api/healthz"; exit 1; }
+    v=$(curl -sf --max-time 20 "$api/healthz" | jq -r '"\(.version.label) (\(.version.id))"'); [ -n "$v" ] && [ "$v" != "null (null)" ] || { echo "✗ no version from $api/healthz"; exit 1; }
     n=$(cd apps/api && bunx wrangler deployments list 2>/dev/null | grep -c "Version(s)" || true)
     GH_REMOTE=1 scripts/flag.sh list >/dev/null && pass "live api version $v; $n deployment(s) listed; flags readable. Rollback: just rollback api <previous id>" ;;
   *) echo "unknown checkpoint $cp"; exit 2 ;;
