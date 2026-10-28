@@ -55,6 +55,27 @@ replay plan:
 new kind name:
     @scripts/new.sh {{kind}} {{name}}
 
+# Durable agent demo: one input, a slow tool; kill -9 it mid-tool, run again, it resumes (packages/agent/README.md)
+agent-demo:
+    cd packages/agent && bun run demo
+
+# Second terminal: print each entry the agent demo commits to agent.sqlite as it lands
+agent-watch:
+    cd packages/agent && bun run watch
+
+# Delete the agent demo's SQLite file so the next agent-demo starts from nothing
+agent-reset:
+    cd packages/agent && bun run reset
+
+# The agent as a Participant: signs in as the agent and answers every question in the plan's sessions. PLAN=gh-12 by default;
+# with no model key it answers with a faux model. Kill it mid-answer and run it again: the run resumes, answered once.
+agent-serve plan="gh-12":
+    cd packages/agent && PLAN={{plan}} bun run serve
+
+# Forget what agent-serve has stored (its pi-durable SQLite and the session map)
+agent-serve-reset:
+    cd packages/agent && bun run serve-reset
+
 # Rebuild the architecture map from docs/ARCHITECTURE.md (a hook does this on every edit)
 arch:
     bun scripts/arch.ts

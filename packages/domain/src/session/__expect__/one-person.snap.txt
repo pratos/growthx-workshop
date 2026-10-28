@@ -1,0 +1,23 @@
+when   Pratos starts a session on plan gh-12
+then   SessionStarted     s1 gh-12 by pratos title="retry policy"
+when   Pratos asks where retries should live
+then   RunQueued          s1 r1 by pratos asked="client or wrapper for retries?"
+when   the agent starts the run
+then   RunStarted         s1 r1 by agent
+when   Pratos ends the session mid-run
+then   rejected           r1 is still running
+when   the agent finishes the run
+then   RunFinished        s1 r1 by agent result="wrapper: one place to change"
+when   Pratos asks a follow-up
+then   RunQueued          s1 r2 by pratos asked="and the backoff?"
+when   the agent starts it
+then   RunStarted         s1 r2 by agent
+when   the agent finishes it
+then   RunFinished        s1 r2 by agent result="exponential, capped at 30s"
+when   Pratos ends the session
+then   SessionEnded       s1 by pratos
+when   Pratos asks after the end
+then   rejected           the session has ended
+read   sessions           s1  gh-12  pratos  ended
+read   runs               r1  pratos  finished  agent  0  wrapper: one place to change
+                          r2  pratos  finished  agent  0  exponential, capped at 30s

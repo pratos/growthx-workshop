@@ -1,0 +1,43 @@
+when   Pratos starts a session on plan gh-12
+then   SessionStarted     s1 gh-12 by pratos title="retry policy"
+when   Sam asks before joining
+then   rejected           sam has not joined this session
+when   Sam joins
+then   ParticipantJoined  s1 by sam
+when   Ana joins
+then   ParticipantJoined  s1 by ana
+when   Sam joins again
+then   rejected           sam is already in this session
+when   Pratos asks
+then   RunQueued          s1 r1 by pratos asked="client or wrapper for retries?"
+when   Sam asks while that is queued
+then   RunQueued          s1 r2 by sam asked="what about idempotency?"
+when   the agent tries Sam's run first
+then   rejected           r1 is next in the queue
+when   the agent starts the first run
+then   RunStarted         s1 r1 by agent
+when   the agent starts the second as well
+then   rejected           one run at a time: r1 is running
+when   Ana steers the running run
+then   RunSteered         s1 r1 by ana steer="keep the wrapper sync"
+when   Sam tries to finish the agent’s run
+then   rejected           only agent, who started r1, can finish it
+when   the agent finishes the first run
+then   RunFinished        s1 r1 by agent result="wrapper, kept sync"
+when   Sam starts their own question
+then   RunStarted         s1 r2 by sam
+when   Pratos steers it
+then   RunSteered         s1 r2 by pratos steer="use the request id"
+when   Sam finishes it
+then   RunFinished        s1 r2 by sam result="idempotency key = request id"
+when   Ana ends the session
+then   rejected           only pratos, who started the session, can end it
+when   Pratos ends the session
+then   SessionEnded       s1 by pratos
+read   sessions           s1  gh-12  pratos  ended
+read   participants       agent
+                          ana
+                          pratos
+                          sam
+read   runs               r1  pratos  finished  agent  1  wrapper, kept sync
+                          r2  sam  finished  sam  1  idempotency key = request id

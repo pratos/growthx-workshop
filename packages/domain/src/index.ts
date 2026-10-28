@@ -3,6 +3,8 @@ export * from './kernel';
 export * from './account/decider';
 export * from './account/view';
 export * from './account/accounts';
+export * from './session/decider';
+export * from './session/view';
 import type { PlanBody, PlanView, Thread, Decision } from '@greenhouse/schema';
 import { Schema } from 'effect';
 import { handle, isRejection, type Ctx, type Message, type Rejection } from './kernel';
