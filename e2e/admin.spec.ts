@@ -33,6 +33,9 @@ test('an admin sees the dashboard, the accounts, the event log with secrets mask
   await expect(page.locator('body')).not.toContainText('pbkdf2$');
 
   await ready(page, '/admin/flags');
+  await expect(page.getByRole('heading', { name: 'Flags' })).toBeVisible();
+  // <cp-05>
   await expect(page.locator('[data-flag="resolve-thread"]')).toBeVisible();
+  // </cp-05>
   await signOut(page);
 });
