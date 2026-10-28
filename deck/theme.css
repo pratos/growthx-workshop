@@ -155,10 +155,10 @@ html, body, .reveal-viewport, .reveal, .reveal .slides, .reveal .backgrounds, .r
 .ladder > div { display: grid; grid-template-columns: 56px 1fr; gap: 16px; padding: 14px 0; border-top: var(--tear); font-size: 25px; color: var(--ink); align-items: baseline; }
 .ladder > div:last-child { border-bottom: var(--tear); }
 .ladder .n { font: 500 18px/1 var(--mono); color: var(--ink-3); }
-.ladder > div:nth-child(2) { margin-left: 56px; }
-.ladder > div:nth-child(3) { margin-left: 112px; }
-.ladder > div:nth-child(4) { margin-left: 168px; }
-.ladder > div:nth-child(5) { margin-left: 224px; }
+.ladder.stair > div:nth-child(2) { margin-left: 56px; }
+.ladder.stair > div:nth-child(3) { margin-left: 112px; }
+.ladder.stair > div:nth-child(4) { margin-left: 168px; }
+.ladder.stair > div:nth-child(5) { margin-left: 224px; }
 
 /* ── workflow strip ── */
 .strip { display: grid; grid-template-columns: repeat(9, 1fr); gap: 10px; margin-top: 56px; position: relative; z-index: 2; }
@@ -212,4 +212,5 @@ html, body, .reveal-viewport, .reveal, .reveal .slides, .reveal .backgrounds, .r
 .reveal ul.plain li { padding: 12px 0; border-top: var(--tear); font-size: 30px; color: var(--ink); }
 .reveal ul.plain li:last-child { border-bottom: var(--tear); }
 .split .tag + p { margin-top: 14px; }
-.ladder > div:nth-child(5) { margin-left: 224px; }
+.ladder.stair > div:nth-child(5) { margin-left: 224px; }
+.reveal .slides section.btw-slide.meme-slide { background: var(--paper); }

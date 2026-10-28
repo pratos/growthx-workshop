@@ -4,7 +4,7 @@
   "date": "2026-10-28",
   "status": "draft",
   "author": "pratos with Claude Code",
-  "summary": "Greenhouse has words for planning but none for the agent's own work, the live room, or the workspace where code changes. This plan names them, once, in the glossary and in `packages/schema`, so people, code and the agent say the same thing as the product grows onto pi-durable, Durable Objects and Containers. Library words stay inside the adapters that use them.",
+  "summary": "Greenhouse has words for planning but none for the agent's own work, the live room, or the workspace where code changes. This plan names them in the glossary and in `packages/schema`, using pi-durable's own words for the agent's work and Amp's *Thread* for one conversation with the agent. The comment thread on a Block becomes a *Comment*; code and recorded events follow after the workshop.",
   "current": "The glossary has eight nouns across Planning and Identity (`docs/GLOSSARY.md`). It already contradicts itself in two places, and three of its schemas do not exist yet. The stack under it brings its own words, and many of them collide: *session* means six things across pi-durable, the Sandbox SDK and auth, *agent* is a configuration in pi-durable but an actor here, and Amp's *thread* is a unit of work while ours is a comment thread.",
   "discoveries": [
     "Plan is defined as \"a document\" while banning *document* (`docs/GLOSSARY.md:28,30`), and Exploration is \"an agent thread\", which is not our Thread (`docs/GLOSSARY.md:23`).",
@@ -16,14 +16,14 @@
     "The Sandbox SDK 1.0 removed *sessions* and *preview URLs* as 0.x had them, so neither should become a domain word from that source.",
     "The labels *decision report*, *option explorer*, *state machine explorer*, *trace views*, *parallel lookahead* and *pre-handoff exploration* do not appear in Maggie Appleton's talk or the Chopin sources. Her own terms are *boundary objects*, *interactive report*, *explore the terrain ahead of time* and *made meaningful contact with the important parts of reality*."
   ],
-  "endState": "`docs/GLOSSARY.md` names four contexts with every noun, command and event the next phases of Greenhouse need, each entry with where the word was seen and the synonyms it replaces. Each noun has an Effect Schema in `packages/schema`. A translation table says which library word maps to which product word and where library words may appear. `just glossary-check` fails on a library word outside an adapter, an unknown verb, or a missing schema. `just glossary` renders the vocabulary as a map you can step through.",
+  "endState": "`docs/GLOSSARY.md` names four contexts with every noun, command and event the next phases of Greenhouse need, each entry with where the word was seen and the synonyms it replaces. Each noun has an Effect Schema in `packages/schema`. An adopted-words table pins pi-durable 1.4.0 and says which library words are used as is, which map to our words, and which stay internal. `just glossary-check` fails on an unknown verb, a missing schema, an internal library word outside `packages/agent`, or a pi-durable version that has moved. `just glossary` renders the vocabulary as a map you can step through. After the workshop, code and stored events use Comment.",
   "notDoing": [
-    "Implementing Runs, Rooms or Workspaces. This plan names them; the deciders and screens are their own plans.",
+    "Implementing Runs, Rooms or Workspaces. This plan names them; their deciders and screens are their own plans.",
     "Renaming kernel words like Decider, Message and Rejection. They are the event-sourcing kernel's own words, internal to `packages/domain/src/kernel.ts`.",
     "Adopting Chopin's identifiers. We borrow a word when users already say it, and leave Chopin's wire protocol where it is.",
     "Rewriting the workshop page. Only the Appleton attribution is corrected, in the page and the viz-explainer skill."
   ],
-  "approach": "Fix what the glossary already gets wrong before adding to it, so new words land on a consistent base. Then draw the contexts and the boundary, because the four decisions below are all about where a word lives. Write the entries and schemas next, then make the check enforce them, and finish by rendering the vocabulary so it can be shown and reviewed by looking.",
+  "approach": "Fix what the glossary already gets wrong, so new words land on a consistent base. Then draw the contexts and the adopted words, write the entries and schemas, make the check enforce them, and render the vocabulary. The rename of code and recorded events comes last, after the workshop, so tonight's checkpoints stay as rehearsed.",
   "approachDiagram": "context-map",
   "diagrams": [
     {
@@ -36,11 +36,11 @@
           "builtAt": "2026-10-28",
           "source": "GH vocabulary plan"
         },
-        "diagram": "flowchart LR\n  subgraph planning[\"Planning\"]\n    PLN[\"Plan · Block · Thread · Reply · Decision\"]\n    EXP[\"Exploration · Finding · Artifact\"]\n  end\n  subgraph together[\"Working together\"]\n    RM[\"Room · Presence\"]\n    PA[\"Participant · person or Agent\"]\n  end\n  subgraph work[\"Agent work\"]\n    RUN[\"Run · Turn · Tool call\"]\n    RES[\"Checkpoint · Interruption · Steer · Follow-up\"]\n  end\n  subgraph place[\"Workspace\"]\n    WS[\"Workspace · Repo · Branch · Preview\"]\n  end\n  PD[\"pi-durable words · Conversation, Entry, Submission, Task\"]\n  CF[\"Cloudflare words · Durable Object, Container, Sandbox\"]\n  PA -- \"acts in\" --> RM\n  RM -- \"is opened on\" --> PLN\n  PA -- \"starts\" --> RUN\n  RUN -- \"reports\" --> EXP\n  RUN -- \"survives a crash through\" --> RES\n  RUN -- \"works in\" --> WS\n  PD -. \"translated at the edge\" .-> RUN\n  CF -. \"translated at the edge\" .-> WS",
+        "diagram": "flowchart LR\n  subgraph planning[\"Planning\"]\n    PLN[\"Plan · Block · Comment · Reply · Decision\"]\n    EXP[\"Exploration · Finding · Artifact\"]\n  end\n  subgraph together[\"Working together\"]\n    RM[\"Room · Presence\"]\n    PA[\"Participant · a person or the Agent\"]\n  end\n  subgraph work[\"Agent work · pi-durable 1.4.0 words\"]\n    RUN[\"Thread · Run · Turn · Tool call\"]\n    RES[\"Submission · Entry · Task · Checkpoint · Steer · Follow-up\"]\n  end\n  subgraph place[\"Workspace\"]\n    WS[\"Workspace · Repo · Branch · Preview\"]\n  end\n  INT[\"Internal only · Harness, Registry, Session, Document\"]\n  CF[\"Cloudflare words · Durable Object, Container, Sandbox\"]\n  PA -- \"acts in\" --> RM\n  RM -- \"is opened on\" --> PLN\n  PA -- \"starts\" --> RUN\n  RUN -- \"reports\" --> EXP\n  RUN -- \"is made of\" --> RES\n  RUN -- \"works in\" --> WS\n  INT -. \"never leaves the agent package\" .-> RUN\n  CF -. \"translated at the edge\" .-> WS",
         "steps": [
           {
             "id": "planning",
-            "caption": "Planning keeps the words people write and decide with, unchanged from today.",
+            "caption": "Planning keeps the words people write and decide with; the comment thread becomes a Comment.",
             "focus": [
               "planning",
               "PLN",
@@ -49,7 +49,7 @@
           },
           {
             "id": "together",
-            "caption": "Working together names who is here and that a person and the Agent act alike.",
+            "caption": "Working together names who is here, and a person and the Agent act alike.",
             "focus": [
               "together",
               "RM",
@@ -62,7 +62,7 @@
           },
           {
             "id": "work",
-            "caption": "Agent work names what the agent does, so people can see a run and its interruptions.",
+            "caption": "Agent work uses pi-durable's own words, and a Thread is where a Run happens.",
             "focus": [
               "work",
               "RUN",
@@ -87,13 +87,13 @@
           },
           {
             "id": "edge",
-            "caption": "Library words stop at the edge, and each one has a single product word on the other side.",
+            "caption": "A few library words stay internal, and Cloudflare's words are translated where the agent meets them.",
             "focus": [
-              "PD",
+              "INT",
               "CF"
             ],
             "edges": [
-              "L_PD_RUN_0",
+              "L_INT_RUN_0",
               "L_CF_WS_0"
             ]
           }
@@ -104,17 +104,17 @@
       "id": "run-states",
       "spec": {
         "kind": "state-explorer",
-        "question": "What can a Run be, from asked to answered?",
+        "question": "What can a Run in a Thread be, from submitted to answered?",
         "meta": {
           "builtBy": "create-plan",
           "builtAt": "2026-10-28",
           "source": "pi-durable run and task states, in product words"
         },
-        "diagram": "stateDiagram-v2\n  [*] --> Queued: StartRun\n  Queued --> Running: RunStarted\n  Running --> Waiting: ToolCallStarted\n  Waiting --> Running: ToolCallFinished\n  Waiting --> Interrupted: process stopped\n  Interrupted --> Running: RunResumed\n  Running --> Answered: RunAnswered\n  Running --> Failed: RunFailed\n  Running --> Stopped: StopRun\n  Answered --> [*]\n  Failed --> [*]\n  Stopped --> [*]",
+        "diagram": "stateDiagram-v2\n  [*] --> Queued: Submit\n  Queued --> Running: RunStarted\n  Running --> Waiting: ToolCallStarted\n  Waiting --> Running: ToolCallFinished\n  Waiting --> Interrupted: process stopped\n  Interrupted --> Running: RunResumed\n  Running --> Answered: RunAnswered\n  Running --> Failed: RunFailed\n  Running --> Stopped: StopRun\n  Answered --> [*]\n  Failed --> [*]\n  Stopped --> [*]",
         "steps": [
           {
             "id": "queued",
-            "caption": "Someone asks; if the agent is busy, the ask waits as a Steer or a Follow-up.",
+            "caption": "Someone submits; if the Thread is busy, the Submission waits as a Steer or a Follow-up.",
             "focus": [
               "Queued"
             ],
@@ -124,7 +124,7 @@
           },
           {
             "id": "running",
-            "caption": "The Run starts and takes Turns, each one a model reply and its tool calls.",
+            "caption": "The Run starts and takes Turns, each one a model reply and its tool calls, kept as Entries.",
             "focus": [
               "Running"
             ],
@@ -200,7 +200,7 @@
           "label": "Thread, as Amp uses it"
         }
       ],
-      "why": "We recommend *Run*. It is how people already describe an agent at work, pi-durable means the same thing by it, and it is the only option with no collision in the glossary.",
+      "why": "Thread, as Amp uses it: one conversation with the agent, shareable with teammates, and the place a Run happens. It is the same thing pi-durable calls a Conversation, so that word maps to Thread. The cost is that the comment thread on a Block needs a new name and its recorded events get renamed; both are decided below.",
       "viz": {
         "kind": "decision-report",
         "question": "What do we call one piece of work the agent does?",
@@ -347,7 +347,10 @@
             "option": "thread"
           }
         ]
-      }
+      },
+      "chosen": "thread",
+      "by": "pratos",
+      "at": "2026-10-28"
     },
     {
       "id": "boundary",
@@ -366,7 +369,7 @@
           "label": "Hide the runtime entirely"
         }
       ],
-      "why": "We recommend translating at the edge. pi-durable is experimental and renames things between releases, so keeping its words inside two folders means an upgrade never renames the domain.",
+      "why": "pi-durable's words are used directly in the domain: Run, Turn, Entry, Submission, Task, Steer, Follow-up, Checkpoint, Fork, Compaction. Two map to our words instead, Conversation to Thread and Agent to Setup, and four stay internal because nobody talks about them: Harness, Registry, Session and Document. pi-durable renames things between releases, so the glossary pins version 1.4.0 and the check fails when the installed version moves.",
       "viz": {
         "kind": "decision-report",
         "question": "Where may pi-durable and Cloudflare words appear?",
@@ -506,7 +509,10 @@
             "option": "hide"
           }
         ]
-      }
+      },
+      "chosen": "adopt",
+      "by": "pratos",
+      "at": "2026-10-28"
     },
     {
       "id": "shared-space",
@@ -525,7 +531,7 @@
           "label": "Document, as Chopin names it"
         }
       ],
-      "why": "We recommend Plan for what is written and Room for who is here. Presence needs a home that is not the content, and the architecture map already says plan room.",
+      "why": "Plan is what is written and Room is who is here. Presence needs a home that is not the content, and the architecture map already says plan room.",
       "viz": {
         "kind": "decision-report",
         "question": "Is the shared space a Plan, a Document, or a Room?",
@@ -658,7 +664,10 @@
             "option": "document"
           }
         ]
-      }
+      },
+      "chosen": "plan-room",
+      "by": "pratos",
+      "at": "2026-10-28"
     },
     {
       "id": "agent",
@@ -677,7 +686,7 @@
           "label": "Assistant for the actor, Agent for the setup"
         }
       ],
-      "why": "We recommend Agent for the actor and Setup for what it runs with. Agent already means the actor in the glossary, the map and the talk; only pi-durable disagrees, and that stays at the edge.",
+      "why": "Agent stays the actor, as in the glossary, the map and the talk. Its model, tools and instructions are its Setup, which is what pi-durable calls an Agent.",
       "viz": {
         "kind": "decision-report",
         "question": "What do we call the agent, and what it runs with?",
@@ -812,18 +821,185 @@
             "option": "assistant"
           }
         ]
+      },
+      "chosen": "agent-setup",
+      "by": "pratos",
+      "at": "2026-10-28"
+    },
+    {
+      "id": "comment-name",
+      "question": "Thread now means the agent's work. What is the comment thread on a Block called?",
+      "options": [
+        {
+          "id": "comment",
+          "label": "Comment"
+        },
+        {
+          "id": "discussion",
+          "label": "Discussion"
+        },
+        {
+          "id": "question",
+          "label": "Question"
+        }
+      ],
+      "chosen": "comment",
+      "by": "pratos",
+      "at": "2026-10-28",
+      "why": "Comment is the word Chopin's interface already uses for the same thing, so people meet it without a definition. Reply, Resolve and Reopen keep their meanings.",
+      "viz": {
+        "kind": "decision-report",
+        "question": "Thread now means the agent's work. What is the comment thread on a Block called?",
+        "meta": {
+          "builtBy": "create-plan",
+          "builtAt": "2026-10-28",
+          "source": "follows from the unit-of-work decision"
+        },
+        "options": [
+          {
+            "id": "comment",
+            "label": "Comment",
+            "summary": "Chopin's own UI words: comment on this passage, resolved comment, reply, reopen.",
+            "diagram": "flowchart LR\n  B[\"Block\"]\n  C[\"Comment · opened, replied to, resolved\"]\n  D[\"Decision\"]\n  B -- \"carries\" --> C\n  C -- \"ends in\" --> D",
+            "tried": {
+              "kind": "exploration",
+              "ref": "sentence test",
+              "summary": "Matches Chopin's interface strings in apps/web and packages/editor"
+            },
+            "axes": {
+              "callSites": {
+                "count": 4,
+                "list": [
+                  "glossary",
+                  "schema",
+                  "domain events",
+                  "plan page copy"
+                ]
+              },
+              "mechanical": "Rename Thread events to Comment events after the workshop",
+              "silent": "None once the upcaster runs",
+              "invariant": "A Comment is anchored to exactly one Block"
+            }
+          },
+          {
+            "id": "discussion",
+            "label": "Discussion",
+            "summary": "Reads well for longer exchanges; comes off the ban list.",
+            "diagram": "flowchart LR\n  B[\"Block\"]\n  DS[\"Discussion\"]\n  D[\"Decision\"]\n  B -- \"carries\" --> DS\n  DS -- \"ends in\" --> D",
+            "tried": {
+              "kind": "exploration",
+              "ref": "sentence test",
+              "summary": "Read aloud in 8 sentences; open a discussion on this block felt heavy for one question"
+            },
+            "axes": {
+              "callSites": {
+                "count": 4,
+                "list": [
+                  "glossary",
+                  "schema",
+                  "domain events",
+                  "plan page copy"
+                ]
+              },
+              "mechanical": "Same rename, plus lifting a ban",
+              "silent": "None",
+              "invariant": "Holds"
+            }
+          },
+          {
+            "id": "question",
+            "label": "Question",
+            "summary": "Matches comments that end in a Decision.",
+            "diagram": "flowchart LR\n  B[\"Block\"]\n  Q[\"Question\"]\n  D[\"Decision\"]\n  B -- \"carries\" --> Q\n  Q -- \"ends in\" --> D",
+            "tried": {
+              "kind": "exploration",
+              "ref": "sentence test",
+              "summary": "Read aloud in 8 sentences; 3 of them were remarks, not questions"
+            },
+            "axes": {
+              "callSites": {
+                "count": 4,
+                "list": [
+                  "glossary",
+                  "schema",
+                  "domain events",
+                  "plan page copy"
+                ]
+              },
+              "mechanical": "Same rename",
+              "silent": "A remark that is not a question gets a wrong name",
+              "invariant": "Holds, with an awkward fit for remarks"
+            }
+          }
+        ],
+        "steps": [
+          {
+            "id": "c",
+            "caption": "A Comment sits on one Block and ends in a Decision, as the comment thread does today.",
+            "edges": [
+              "L_B_C_0",
+              "L_C_D_0"
+            ],
+            "focus": [
+              "C"
+            ],
+            "option": "comment"
+          },
+          {
+            "id": "d",
+            "caption": "Discussion fits long exchanges, but most of these are a few replies long.",
+            "edges": [
+              "L_B_DS_0",
+              "L_DS_D_0"
+            ],
+            "focus": [
+              "DS"
+            ],
+            "option": "discussion"
+          },
+          {
+            "id": "q",
+            "caption": "Question fits a decision, but people also comment to point something out.",
+            "edges": [
+              "L_B_Q_0",
+              "L_Q_D_0"
+            ],
+            "focus": [
+              "Q"
+            ],
+            "option": "question"
+          }
+        ]
       }
+    },
+    {
+      "id": "timing",
+      "question": "When are the recorded events and code renamed to the new words?",
+      "options": [
+        {
+          "id": "after",
+          "label": "After the workshop"
+        },
+        {
+          "id": "now",
+          "label": "Now, before the talk"
+        }
+      ],
+      "chosen": "after",
+      "by": "pratos",
+      "at": "2026-10-28",
+      "why": "The glossary and schema change now. Code, recorded events and the checkpoints keep the Thread names until the last phase, so tonight's demos and the planted ThreadClosed beat stay as rehearsed. Until then the Comment entry lists the old event names, which keeps the glossary check passing."
     }
   ],
   "phases": [
     {
       "id": "fix",
       "name": "Fix what the glossary gets wrong today",
-      "goal": "The existing entries agree with themselves and with the code. Plan no longer defines itself with a banned word, Exploration no longer borrows Thread, the verb list matches the events, and the Decision's reason has a name.",
+      "goal": "The existing entries agree with themselves and with the code. Plan no longer defines itself with a banned word, the verb list matches the events, and the Decision's reason has a name.",
       "changes": [
         {
           "file": "docs/GLOSSARY.md",
-          "intent": "Redefine Plan without *document*, define Exploration as work that tries one option, add Post, Record, Start and Report to the verbs, and give Decision a *why*."
+          "intent": "Redefine Plan without *document*, add Post, Record, Start and Report to the verbs, and give Decision a *why*."
         },
         {
           "file": "packages/schema/src/index.ts",
@@ -867,16 +1043,24 @@
     },
     {
       "id": "contexts",
-      "name": "Draw the contexts and the boundary",
-      "goal": "The glossary has four contexts (Planning, Working together, Agent work, Workspace) and a translation table that maps every library word a user could meet to one product word, or marks it internal. The decisions above are recorded.",
+      "name": "Draw the contexts and the adopted words",
+      "goal": "The glossary has four contexts and an adopted-words table: pi-durable's words used as is, the two that map to ours, the four that stay internal, and the pinned version. Thread is redefined as the agent's unit of work, and the comment thread moves to Comment, listing its old event names until the rename.",
       "diagram": "context-map",
       "changes": [
         {
           "file": "docs/GLOSSARY.md",
-          "intent": "Add the contexts and a Boundary section per context: library word, product word, and the folders where the library word may appear.",
+          "intent": "Add the four contexts and the adopted-words table.",
           "contract": {
             "lang": "md",
-            "code": "## Boundary: Agent work\n| Library word | Product word | Allowed in |\n|---|---|---|\n| pi-durable run | Run | packages/agent |\n| pi-durable Submission, Entry, Task, Harness | internal | packages/agent |\n| pi-durable Agent | Setup | packages/agent |"
+            "code": "## Adopted words · pi-durable 1.4.0\n| pi-durable | Greenhouse | Note |\n|---|---|---|\n| Run, Turn, Entry, Submission, Task, Steer, Follow-up, Checkpoint, Fork, Compaction | same | used as is |\n| Conversation | Thread | Amp's sense: one conversation with the agent |\n| Agent | Setup | model, tools, instructions |\n| Harness, Registry, Session, Document | internal | only in packages/agent |"
+          }
+        },
+        {
+          "file": "docs/GLOSSARY.md",
+          "intent": "Redefine Thread as one conversation with the agent, and add Comment with the old Thread events listed under *Formerly* until the rename phase.",
+          "contract": {
+            "lang": "md",
+            "code": "### Comment\nA comment on one Block. Collects Replies, ends in a Decision.\nCarried by: `Comment` schema · Commands: `OpenComment`, `Reply`, `ResolveComment`\nFormerly: `ThreadOpened`, `ReplyPosted`, `ThreadResolved`, `OpenThread`, `ResolveThread` (until the rename phase)\nNot: discussion, comment chain, issue, ticket"
           }
         },
         {
@@ -887,17 +1071,17 @@
       "verify": {
         "automated": [
           {
+            "cmd": "just glossary-check",
+            "done": false
+          },
+          {
             "cmd": "just arch-check",
             "done": false
           }
         ],
         "manual": [
           {
-            "text": "Each of the four decisions has a chosen option, a name and a date.",
-            "done": false
-          },
-          {
-            "text": "Every library word in the research tables is either translated or marked internal.",
+            "text": "Every pi-durable term in the research table is either used as is, mapped, or marked internal.",
             "done": false
           }
         ]
@@ -906,24 +1090,24 @@
     {
       "id": "words",
       "name": "Write the new words and their schemas",
-      "goal": "Every new noun has an entry with a definition a user would nod at, a Seen in line naming its source, its banned synonyms, and an Effect Schema. Run's lifecycle is named state by state.",
+      "goal": "Every new noun has an entry with a definition a user would nod at, a Seen in line naming its source, its banned synonyms, and an Effect Schema. The Run lifecycle inside a Thread is named state by state.",
       "diagram": "run-states",
       "changes": [
         {
           "file": "docs/GLOSSARY.md",
-          "intent": "Add Run, Turn, Tool call, Checkpoint, Interruption, Steer, Follow-up, Setup, Finding, Room, Presence, Workspace, Repo, Branch and Preview, each with Seen in and Not lines."
+          "intent": "Add Run, Turn, Entry, Submission, Task, Tool call, Checkpoint, Steer, Follow-up, Fork, Compaction, Setup, Finding, Room, Presence, Workspace, Repo, Branch and Preview, each with Seen in and Not lines."
         },
         {
           "file": "packages/schema/src/index.ts",
-          "intent": "Add a schema per new noun; Run carries its status as a literal union that matches the state diagram.",
+          "intent": "Add a schema per new noun except the agent's Thread, which arrives with the rename; Run's status matches the state diagram.",
           "contract": {
             "lang": "ts",
-            "code": "export const RunStatus = Schema.Literals(['queued', 'running', 'waiting', 'interrupted', 'answered', 'failed', 'stopped'])\nexport const Run = Schema.Struct({ runId: Id, planId: Id, by: ParticipantId, asked: Text, status: RunStatus, turns: Schema.Int })\nexport const ToolCall = Schema.Struct({ runId: Id, tool: Schema.String, safeToRepeat: Schema.Boolean })\nexport const Finding = Schema.Struct({ findingId: Id, explorationId: Id, kind: Schema.Literals(['research', 'spike', 'ask']), summary: Text })\nexport const Presence = Schema.Struct({ roomId: Id, participant: ParticipantId, focus: Schema.optionalKey(Id) })"
+            "code": "export const RunStatus = Schema.Literals(['queued', 'running', 'waiting', 'interrupted', 'answered', 'failed', 'stopped'])\nexport const Run = Schema.Struct({ runId: Id, threadId: Id, by: ParticipantId, asked: Text, status: RunStatus, turns: Schema.Int })\nexport const Submission = Schema.Struct({ submissionId: Id, threadId: Id, requestId: Id, kind: Schema.Literals(['input', 'steer', 'follow-up']) })\nexport const Finding = Schema.Struct({ findingId: Id, explorationId: Id, kind: Schema.Literals(['research', 'spike', 'ask']), summary: Text })\nexport const Presence = Schema.Struct({ roomId: Id, participant: ParticipantId, focus: Schema.optionalKey(Id) })"
           }
         },
         {
           "file": "docs/GLOSSARY.md",
-          "intent": "List the commands and events the Run lifecycle uses: StartRun, StopRun, RunStarted, ToolCallStarted, ToolCallFinished, RunResumed, RunAnswered, RunFailed."
+          "intent": "List the commands and events of the Run lifecycle: Submit, StopRun, RunStarted, ToolCallStarted, ToolCallFinished, RunResumed, RunAnswered, RunFailed."
         }
       ],
       "verify": {
@@ -947,16 +1131,16 @@
     },
     {
       "id": "enforce",
-      "name": "Make the check enforce the boundary",
-      "goal": "`just glossary-check` fails when a library word appears outside its allowed folders, when a command or event uses a verb that is not in the verb list, or when an entry names a schema that does not exist. CI runs it.",
+      "name": "Make the check enforce the vocabulary",
+      "goal": "`just glossary-check` fails when a command or event uses a verb that is not in the verb list, when an entry names a schema that does not exist, when an internal library word appears outside `packages/agent`, or when the installed pi-durable version differs from the pinned one. CI runs it.",
       "changes": [
         {
           "file": "skills/ddd-vocabulary/scripts/check-glossary.sh",
-          "intent": "Read the Boundary tables and the verb list from the glossary and add the three checks."
+          "intent": "Read the adopted-words table and the verb list from the glossary and add the four checks."
         },
         {
           "file": "skills/ddd-vocabulary/references/glossary-format.md",
-          "intent": "Document the Boundary section and the Seen in line as part of the entry format."
+          "intent": "Document the adopted-words table, the *Formerly* line and the Seen in line as part of the entry format."
         },
         {
           "file": ".github/workflows/deploy.yml",
@@ -977,7 +1161,7 @@
         ],
         "manual": [
           {
-            "text": "Add `Submission` to a schema file on a scratch branch; the check names the file and the allowed folders.",
+            "text": "Bump pi-durable on a scratch branch; the check names the pinned version and asks for a glossary review.",
             "done": false
           }
         ]
@@ -1024,6 +1208,82 @@
           }
         ]
       }
+    },
+    {
+      "id": "rename",
+      "name": "After the workshop: rename the comment thread in code",
+      "goal": "Code, schema and UI copy say Comment. Stored events keep their recorded names, and an upcaster reads them as Comment events, so every existing plan replays unchanged. The *Formerly* line comes out of the glossary, and the agent's Thread gets its schema.",
+      "changes": [
+        {
+          "file": "packages/domain/src/thread/decider.ts",
+          "intent": "Move to `packages/domain/src/comment/decider.ts` with OpenComment, ResolveComment, CommentOpened and CommentResolved; ReplyPosted keeps its name."
+        },
+        {
+          "file": "packages/domain/src/upcast/index.ts",
+          "intent": "Read ThreadOpened and ThreadResolved as CommentOpened and CommentResolved, with an expect test fed a real stored event.",
+          "contract": {
+            "lang": "ts",
+            "code": "upcasters.ThreadOpened   = (e) => ({ ...e, type: 'CommentOpened',   data: { ...e.data, commentId: e.data.threadId } })\nupcasters.ThreadResolved = (e) => ({ ...e, type: 'CommentResolved', data: { ...e.data, commentId: e.data.threadId } })"
+          }
+        },
+        {
+          "file": "packages/schema/src/index.ts",
+          "intent": "Rename the Thread schema to Comment and add the agent's Thread."
+        },
+        {
+          "file": "apps/web/src/routes/plans.$planId.tsx",
+          "intent": "Say comment in the copy where the page says thread today."
+        },
+        {
+          "file": "docs/GLOSSARY.md",
+          "intent": "Remove the *Formerly* line from Comment."
+        }
+      ],
+      "verify": {
+        "automated": [
+          {
+            "cmd": "just test",
+            "done": false
+          },
+          {
+            "cmd": "just glossary-check",
+            "done": false
+          },
+          {
+            "cmd": "just replay gh-12",
+            "text": "old ThreadOpened events print as CommentOpened",
+            "done": false
+          }
+        ],
+        "manual": [
+          {
+            "text": "Open an existing plan in production; its old comments show and resolve as before.",
+            "done": false
+          }
+        ]
+      },
+      "components": [
+        {
+          "name": "Comment, after the rename",
+          "notes": "Thread disappears from the page; Thread now means a conversation with the agent.",
+          "css": ".thread { border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 16px; max-width: 560px; }\n.meta { font-size: 12px; color: var(--muted); }\n.body { margin: 6px 0 12px; font-size: 16px; }\n.row { display: flex; gap: 8px; }\ninput { flex: 1; font: inherit; font-size: 14px; padding: 8px 12px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); color: var(--fg); }\nbutton { font: inherit; font-size: 14px; padding: 8px 14px; border: 0; border-radius: var(--radius-md); background: var(--fg); color: var(--bg); }\n.alert { margin: 10px 0 0; font-size: 13.5px; color: var(--warn); }\n.decided { margin: 0; font-size: 14px; color: var(--ok); }",
+          "height": 170,
+          "states": [
+            {
+              "label": "open",
+              "html": "<article class=\"thread\"><div class=\"meta\">comment on block b3 · 2 replies</div><p class=\"body\">Should retries live in the client or the wrapper?</p><form class=\"row\"><input aria-label=\"What was decided?\" placeholder=\"What was decided?\"><button type=\"button\">Resolve comment</button></form></article>"
+            },
+            {
+              "label": "resolved",
+              "html": "<article class=\"thread\"><div class=\"meta\">comment on block b3 · 2 replies</div><p class=\"body\">Should retries live in the client or the wrapper?</p><p class=\"decided\">Decided by pratos · 2026-10-28 19:30 UTC · “wrapper”</p></article>"
+            },
+            {
+              "label": "agent thread linked",
+              "html": "<article class=\"thread\"><div class=\"meta\">comment on block b3 · the agent is exploring this in a thread</div><p class=\"body\">Should retries live in the client or the wrapper?</p><p class=\"decided\" style=\"color:var(--accent)\">Open the thread · Run 2 of 2 running</p></article>"
+            }
+          ]
+        }
+      ]
     }
   ],
   "references": [
@@ -1033,5 +1293,59 @@
     "pi-durable README, Concepts and Busy Conversations (unpkg.com/@earendil-works/pi-durable)",
     "Cloudflare: Durable Objects lifecycle, Sandbox SDK 1.0 API map, Workflows glossary",
     "Amp docs: threads and multiplayer; Claude Code glossary: session, turn, checkpoint"
-  ]
+  ],
+  "design": {
+    "notes": "Same tokens as the plan page today; only the words change. The rename is visible in two places: the meta line and the action.",
+    "tokens": {
+      "color": {
+        "bg": "#fffcf0",
+        "fg": "#100f0f",
+        "muted": "#6f6e69",
+        "line": "#dad8ce",
+        "surface": "#f2f0e5",
+        "accent": "#205ea6",
+        "ok": "#66800b",
+        "warn": "#ad8301"
+      },
+      "type": [
+        {
+          "name": "title",
+          "size": 28,
+          "weight": 650,
+          "lineHeight": 1.15,
+          "sample": "Plan GH-12"
+        },
+        {
+          "name": "body",
+          "size": 16,
+          "weight": 400,
+          "lineHeight": 1.5,
+          "sample": "Should retries live in the client or the wrapper?"
+        },
+        {
+          "name": "meta",
+          "size": 12,
+          "weight": 500,
+          "lineHeight": 1.4,
+          "sample": "block b3 · 2 replies"
+        }
+      ],
+      "space": [
+        4,
+        8,
+        12,
+        16,
+        24,
+        32
+      ],
+      "radius": {
+        "md": 8,
+        "lg": 12
+      },
+      "font": {
+        "sans": "ui-sans-serif, system-ui, -apple-system, Inter, sans-serif",
+        "mono": "ui-monospace, SF Mono, Menlo, monospace"
+      }
+    }
+  }
 }

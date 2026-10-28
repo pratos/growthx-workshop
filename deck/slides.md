@@ -596,7 +596,7 @@ Feed user feedback and post-mortems back in so the next session starts smarter.
 
 ## Climb the trust ladder
 
-<div class="ladder">
+<div class="ladder stair">
   <div><span class="n">1</span><span>small, vanilla agent. <em>start here.</em></span></div>
   <div><span class="n">2</span><span>add plugins and skills: your conventions</span></div>
   <div><span class="n">3</span><span>add connectors (MCP): your systems</span></div>
