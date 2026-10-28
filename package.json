@@ -7,7 +7,7 @@
     "packages/*"
   ],
   "scripts": {
-    "lint": "oxlint --type-aware apps packages && tsc -p apps/api/tsconfig.json --noEmit",
+    "lint": "oxlint --type-aware --disable-nested-config apps packages && tsc -p apps/api/tsconfig.json --noEmit",
     "fmt": "oxfmt .",
     "typecheck": "tsc -b",
     "test": "bun test packages/domain packages/schema apps/api/test"
