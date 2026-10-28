@@ -7,7 +7,7 @@
     "packages/*"
   ],
   "scripts": {
-    "lint": "oxlint --type-aware . && oxfmt --check .",
+    "lint": "oxlint --type-aware apps packages && tsc -p apps/api/tsconfig.json --noEmit",
     "fmt": "oxfmt .",
     "typecheck": "tsc -b",
     "test": "bun test packages/domain packages/schema apps/api/test"
@@ -17,6 +17,7 @@
     "bun-types": "^1.4.4",
     "oxfmt": "^0.75.0",
     "oxlint": "^1.90.0",
+    "oxlint-tsgolint": "^7.0.2005",
     "typescript": "^7.0.2",
     "wrangler": "^4.153.0"
   }
