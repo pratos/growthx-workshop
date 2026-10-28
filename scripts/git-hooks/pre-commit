@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Rebuild the architecture map when its source changes, and refuse a new app or package that is not on it.
+# Covers commits made by people and by pi; Claude Code also runs scripts/hooks/arch-hook.sh on every edit.
+set -euo pipefail
+root="$(git rev-parse --show-toplevel)"; cd "$root"
+# On a workshop branch, commit only what the stage's plan lists (STAGE_GUARD=off overrides once).
+[ -f .stage ] && { bun scripts/stage.ts staged || exit 1; }
+staged="$(git diff --cached --name-only --diff-filter=ACMR)"
+if grep -qE '^(apps|packages)/[^/]+/package\.json$' <<<"$staged"; then bun scripts/arch.ts --coverage; fi
+if grep -qx 'docs/ARCHITECTURE.md' <<<"$staged"; then
+  bun scripts/arch.ts >/dev/null
+  git add docs/architecture/index.html docs/architecture/architecture.spec.json
+  echo "pre-commit: architecture map rebuilt and staged"
+fi
+for f in $(grep -E '\.plan\.json$' <<<"$staged" || true); do
+  bun skills/create-plan/scripts/build.mjs "$f" >/dev/null
+  git add "${f%.plan.json}.plan.html" "${f%.plan.json}.plan.versions.jsonl"
+done

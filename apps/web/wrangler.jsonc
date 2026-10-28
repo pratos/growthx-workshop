@@ -1,0 +1,26 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  // The finished site at greenhouse.tarp.sh (deployed by hand from the last stage); `--env demo` is the workshop's demo
+  // site at greenhouse-demo.tarp.sh (GitHub Actions, every merge to main). Each reaches its own API over the binding.
+  "name": "greenhouse-web",
+  // The account that owns the tarp.sh zone, the D1 databases and these Workers. Pinned so a cached account cannot win.
+  "account_id": "e36a0d53cbe993dac321c2ac8dea60f6",
+  "compatibility_date": "2026-10-20",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "@tanstack/react-start/server-entry",
+  "observability": { "enabled": true, "logs": { "enabled": true, "head_sampling_rate": 1 }, "traces": { "enabled": true, "head_sampling_rate": 0.1 } },
+  "version_metadata": { "binding": "VERSION" },
+  "vars": { "GIT_DESCRIBE": "dev" },
+  "services": [{ "binding": "API", "service": "greenhouse-api" }],
+  "routes": [{ "pattern": "greenhouse.tarp.sh", "custom_domain": true }],
+  "env": {
+    "demo": {
+      "name": "greenhouse-demo-web",
+      "vars": { "GIT_DESCRIBE": "dev" },
+      "version_metadata": { "binding": "VERSION" },
+      "services": [{ "binding": "API", "service": "greenhouse-demo-api" }],
+      "routes": [{ "pattern": "greenhouse-demo.tarp.sh", "custom_domain": true }],
+      "observability": { "enabled": true, "logs": { "enabled": true, "head_sampling_rate": 1 }, "traces": { "enabled": true, "head_sampling_rate": 0.1 } }
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "kind": "architecture-map",
+  "question": "What runs, before the product exists?",
+  "meta": {
+    "builtBy": "just arch",
+    "builtAt": "2026-10-28",
+    "source": "docs/ARCHITECTURE.md"
+  },
+  "diagram": "flowchart LR\n  P[\"You · in a browser\"]\n  subgraph cf[\"Runs on Cloudflare\"]\n    W[\"Web app\"]\n    A[\"API\"]\n    D[(\"Database · empty for now\")]\n  end\n  P -- \"opens the app\" --> W\n  W -- \"asks on your behalf\" --> A\n  A -- \"checks it can reach\" --> D",
+  "steps": [
+    {
+      "id": "open",
+      "caption": "You open the web app; it answers before anyone has signed in.",
+      "focus": [
+        "P",
+        "W"
+      ],
+      "edges": [
+        "L_P_W_0"
+      ]
+    },
+    {
+      "id": "ask",
+      "caption": "The web app reaches the API over a private binding, never the database.",
+      "focus": [
+        "W",
+        "A"
+      ],
+      "edges": [
+        "L_W_A_0"
+      ]
+    },
+    {
+      "id": "ready",
+      "caption": "The API says it is ready only when it can reach the database.",
+      "focus": [
+        "A",
+        "D"
+      ],
+      "edges": [
+        "L_A_D_0"
+      ]
+    }
+  ]
+}
