@@ -1,0 +1,3 @@
+given  PlanEdited         by pratos content="{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Retries live in the wrapper.\"}]}]}"
+when   EditPlan           by agent content="{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Retries live in the wrapper, three tries.\"}]}]}" basedOn=1
+then   PlanEdited         by agent content="{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Retries live in the wrapper, three tries.\"}]}]}"

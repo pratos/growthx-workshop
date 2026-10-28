@@ -18,6 +18,8 @@ import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminAccountsRouteImport } from './routes/admin.accounts'
 import { Route as AdminEventsRouteImport } from './routes/admin.events'
 import { Route as AdminFlagsRouteImport } from './routes/admin.flags'
+import { Route as PlansPlanIdRouteImport } from './routes/plans.$planId'
+import { Route as PlansPlanIdWsRouteImport } from './routes/plans.$planId.ws'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -64,6 +66,16 @@ const AdminFlagsRoute = AdminFlagsRouteImport.update({
   path: '/admin/flags',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlansPlanIdRoute = PlansPlanIdRouteImport.update({
+  id: '/plans/$planId',
+  path: '/plans/$planId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlansPlanIdWsRoute = PlansPlanIdWsRouteImport.update({
+  id: '/ws',
+  path: '/ws',
+  getParentRoute: () => PlansPlanIdRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -74,7 +86,9 @@ export interface FileRoutesByFullPath {
   '/admin/accounts': typeof AdminAccountsRoute
   '/admin/events': typeof AdminEventsRoute
   '/admin/flags': typeof AdminFlagsRoute
+  '/plans/$planId': typeof PlansPlanIdRouteWithChildren
   '/admin/': typeof AdminIndexRoute
+  '/plans/$planId/ws': typeof PlansPlanIdWsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -85,7 +99,9 @@ export interface FileRoutesByTo {
   '/admin/accounts': typeof AdminAccountsRoute
   '/admin/events': typeof AdminEventsRoute
   '/admin/flags': typeof AdminFlagsRoute
+  '/plans/$planId': typeof PlansPlanIdRouteWithChildren
   '/admin': typeof AdminIndexRoute
+  '/plans/$planId/ws': typeof PlansPlanIdWsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -97,7 +113,9 @@ export interface FileRoutesById {
   '/admin/accounts': typeof AdminAccountsRoute
   '/admin/events': typeof AdminEventsRoute
   '/admin/flags': typeof AdminFlagsRoute
+  '/plans/$planId': typeof PlansPlanIdRouteWithChildren
   '/admin/': typeof AdminIndexRoute
+  '/plans/$planId/ws': typeof PlansPlanIdWsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -110,7 +128,9 @@ export interface FileRouteTypes {
     | '/admin/accounts'
     | '/admin/events'
     | '/admin/flags'
+    | '/plans/$planId'
     | '/admin/'
+    | '/plans/$planId/ws'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -121,7 +141,9 @@ export interface FileRouteTypes {
     | '/admin/accounts'
     | '/admin/events'
     | '/admin/flags'
+    | '/plans/$planId'
     | '/admin'
+    | '/plans/$planId/ws'
   id:
     | '__root__'
     | '/'
@@ -132,7 +154,9 @@ export interface FileRouteTypes {
     | '/admin/accounts'
     | '/admin/events'
     | '/admin/flags'
+    | '/plans/$planId'
     | '/admin/'
+    | '/plans/$planId/ws'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -144,6 +168,7 @@ export interface RootRouteChildren {
   AdminAccountsRoute: typeof AdminAccountsRoute
   AdminEventsRoute: typeof AdminEventsRoute
   AdminFlagsRoute: typeof AdminFlagsRoute
+  PlansPlanIdRoute: typeof PlansPlanIdRouteWithChildren
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
@@ -212,8 +237,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminFlagsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/plans/$planId': {
+      id: '/plans/$planId'
+      path: '/plans/$planId'
+      fullPath: '/plans/$planId'
+      preLoaderRoute: typeof PlansPlanIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/plans/$planId/ws': {
+      id: '/plans/$planId/ws'
+      path: '/ws'
+      fullPath: '/plans/$planId/ws'
+      preLoaderRoute: typeof PlansPlanIdWsRouteImport
+      parentRoute: typeof PlansPlanIdRoute
+    }
   }
 }
+
+interface PlansPlanIdRouteChildren {
+  PlansPlanIdWsRoute: typeof PlansPlanIdWsRoute
+}
+
+const PlansPlanIdRouteChildren: PlansPlanIdRouteChildren = {
+  PlansPlanIdWsRoute: PlansPlanIdWsRoute,
+}
+
+const PlansPlanIdRouteWithChildren = PlansPlanIdRoute._addFileChildren(
+  PlansPlanIdRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -224,6 +275,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminAccountsRoute: AdminAccountsRoute,
   AdminEventsRoute: AdminEventsRoute,
   AdminFlagsRoute: AdminFlagsRoute,
+  PlansPlanIdRoute: PlansPlanIdRouteWithChildren,
   AdminIndexRoute: AdminIndexRoute,
 }
 export const routeTree = rootRouteImport

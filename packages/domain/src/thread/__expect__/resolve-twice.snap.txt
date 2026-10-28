@@ -1,0 +1,4 @@
+given  ThreadOpened       t7 on b3 by pratos "retries in the client or the wrapper?"
+       ThreadResolved     t7 by pratos
+when   ResolveThread      t7 by agent decision "client"
+then   rejected           thread is not open

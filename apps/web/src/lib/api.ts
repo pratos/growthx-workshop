@@ -30,6 +30,11 @@ export async function apiPost<T extends Record<string, unknown>>(path: string, b
   const data = (await r.json().catch(() => ({}))) as T;
   return { status: r.status, ...data };
 }
+export async function apiCommand(planId: string, type: string, by: string, data: Record<string, unknown>) {
+  const r = await api().fetch(`https://api/plans/${planId}/commands`, { method: 'POST', headers: headers(true), body: JSON.stringify({ type, by, data }) });
+  const body = (await r.json()) as Record<string, unknown>;
+  return { status: r.status, ...body };
+}
 export async function apiPut<T extends Record<string, unknown>>(path: string, body: unknown) {
   const r = await api().fetch(`https://api${path}`, { method: 'PUT', headers: headers(true), body: JSON.stringify(body) });
   const data = (await r.json()) as T;

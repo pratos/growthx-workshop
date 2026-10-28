@@ -47,6 +47,14 @@ reset:
 flag action name="" id="":
     @scripts/flag.sh {{action}} {{name}} {{id}}
 
+# Replay a plan's stream from the local DO and print it as a story
+replay plan:
+    @scripts/replay.sh {{plan}}
+
+# Scaffold: just new command Name | just new event Name
+new kind name:
+    @scripts/new.sh {{kind}} {{name}}
+
 # Rebuild the architecture map from docs/ARCHITECTURE.md (a hook does this on every edit)
 arch:
     bun scripts/arch.ts
@@ -113,6 +121,10 @@ slop file:
     @if [ -f .dev.vars ]; then set -a; . ./.dev.vars; set +a; fi; \
     if [ -n "${TYPESAFE_API_KEY:-}" ]; then [ -x tools/slop-jev/slop-jev ] || bun build --compile --minify tools/slop-jev/src/main.ts --outfile tools/slop-jev/slop-jev >/dev/null; tools/slop-jev/slop-jev {{file}}; \
     else echo "(jev layer skipped: just secret put TYPESAFE_API_KEY)"; fi
+
+# Review the current branch with a different model than the one that authored it
+review base="main":
+    @scripts/review.sh {{base}}
 
 # A secret for a site's API Worker, from your terminal without echo: just secret-remote ANTHROPIC_API_KEY prod|demo
 secret-remote name site="prod":

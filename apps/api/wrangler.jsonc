@@ -13,6 +13,8 @@
   "version_metadata": { "binding": "VERSION" },
   "vars": { "GIT_DESCRIBE": "dev" },
   "d1_databases": [{ "binding": "DB", "database_name": "greenhouse", "database_id": "96c06c57-93db-4a43-99d0-3a14bd1e55a5", "migrations_dir": "migrations" }],
+  "durable_objects": { "bindings": [{ "name": "PLAN_ROOM", "class_name": "PlanRoom" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["PlanRoom"] }],
   // Rate limits: sign-up and sign-in per IP (AUTH_LIMIT), writes per account (WRITE_LIMIT). Requests over the limit get 429.
   "ratelimits": [
     { "name": "AUTH_LIMIT", "namespace_id": "1001", "simple": { "limit": 20, "period": 60 } },
@@ -24,6 +26,8 @@
       "vars": { "GIT_DESCRIBE": "dev" },
       "version_metadata": { "binding": "VERSION" },
       "d1_databases": [{ "binding": "DB", "database_name": "greenhouse-demo", "database_id": "859ec79d-95bb-4ae6-aa81-62eddfd68c0d", "migrations_dir": "migrations" }],
+      "durable_objects": { "bindings": [{ "name": "PLAN_ROOM", "class_name": "PlanRoom" }] },
+      "migrations": [{ "tag": "v1", "new_sqlite_classes": ["PlanRoom"] }],
       "ratelimits": [
         { "name": "AUTH_LIMIT", "namespace_id": "1003", "simple": { "limit": 20, "period": 60 } },
         { "name": "WRITE_LIMIT", "namespace_id": "1004", "simple": { "limit": 120, "period": 60 } }
