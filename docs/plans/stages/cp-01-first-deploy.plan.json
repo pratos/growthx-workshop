@@ -188,7 +188,7 @@
       "changes": [
         {
           "file": "scripts/deploy.sh",
-          "intent": "Exit 0 only when every step passed; print the lines a person needs. Runs cf-account.sh and cf-audit.ts before anything is uploaded.",
+          "intent": "Exit 0 only when every step passed; check the account and audit first.",
           "contract": {
             "lang": "sh",
             "code": "# just deploy [env]\nwrangler d1 migrations list greenhouse --remote   # fails, or lists any NNNN_ → exit 1, nothing deployed\nlabel=\"$(git describe --tags --always --dirty)\"\n(cd apps/api && wrangler deploy --var \"GIT_DESCRIBE:$label\")\n(cd apps/web && bun run build && wrangler deploy --var \"GIT_DESCRIBE:$label\")\ncurl -sf \"https://greenhouse-api.$WORKERS_SUBDOMAIN.workers.dev/healthz\" | jq -e '.ok and .version'"
@@ -208,11 +208,11 @@
         },
         {
           "file": "scripts/cf-audit.ts",
-          "intent": "The Cloudflare security and spending audit: hibernating sockets, auto-answered pings, no timers, plan rooms behind sign-in and an id check, rate limits, pinned account, no secrets in vars. A failing check stops the deploy."
+          "intent": "Security and spending audit; any failing check stops the deploy."
         },
         {
           "file": "scripts/cf-account.sh",
-          "intent": "Stops any command that reaches Cloudflare when wrangler is logged in to another account than the one pinned in wrangler.jsonc, and says how to fix it."
+          "intent": "Stop any Cloudflare command run while logged in to the wrong account."
         }
       ],
       "verify": {
@@ -325,6 +325,6 @@
     "`skills/vendor/wrangler/SKILL.md`, `skills/scaffold/SKILL.md`"
   ],
   "change": {
-    "intent": "Every deploy now checks the account and audits cost and security first."
+    "intent": "Intents cut to the 15-word budget."
   }
 }

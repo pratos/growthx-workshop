@@ -356,46 +356,62 @@
     }
   ],
   "design": {
-    "notes": "The plan page is a working surface, read often and quickly. Tailwind greys on the theme background until cp-07 restyles it; black for the action, emerald only for live and decided, amber for a refusal.",
+    "notes": "Chopin's language (GitHub Next, MIT): a white page on a warm olive ground; petrol is the one accent, for the action you can take; colour otherwise only for outcomes. Inter for the interface, Lora for document headings; light only.",
     "tokens": {
       "color": {
-        "bg": "#e7f3ec",
-        "fg": "#173a40",
-        "ink": "#111827",
-        "muted": "#6b7280",
-        "line": "#e5e7eb",
+        "bg": "#f4f4f1",
+        "fg": "#0e0d0a",
+        "muted": "#47453f",
+        "line": "rgba(0, 0, 0, 0.07)",
         "surface": "#ffffff",
-        "accent": "#000000",
-        "ok": "#047857",
-        "alert": "#fffbeb",
-        "alertLine": "#fcd34d",
-        "warn": "#78350f"
+        "inset": "#f8f8f6",
+        "selected": "#ecece9",
+        "accent": "#06707e",
+        "accent-hover": "#045a66",
+        "ok": "#236228",
+        "warn": "#704a02"
       },
       "type": [
         {
           "name": "title",
           "size": 30,
-          "weight": 600,
+          "weight": 400,
           "lineHeight": 1.15,
           "sample": "gh-12"
         },
         {
+          "name": "section",
+          "size": 23,
+          "weight": 400,
+          "lineHeight": 1.25,
+          "sample": "Retry policy"
+        },
+        {
           "name": "body",
           "size": 16,
-          "weight": 500,
+          "weight": 400,
+          "lineHeight": 1.6,
+          "sample": "Retries live in the wrapper, so there is one place to change them."
+        },
+        {
+          "name": "interface",
+          "size": 14,
+          "weight": 400,
           "lineHeight": 1.5,
-          "sample": "retries in the client or the wrapper?"
+          "sample": "Saved, last edit by agent"
         },
         {
           "name": "meta",
           "size": 12,
-          "weight": 500,
-          "lineHeight": 1.4,
-          "sample": "block b3 · 2 replies"
+          "weight": 400,
+          "lineHeight": 1.35,
+          "sample": "Block b3   2 replies"
         }
       ],
       "space": [
+        2,
         4,
+        6,
         8,
         12,
         16,
@@ -403,12 +419,15 @@
         32
       ],
       "radius": {
-        "md": 4,
-        "lg": 8
+        "sm": 4,
+        "md": 6,
+        "lg": 8,
+        "xl": 10
       },
       "font": {
-        "sans": "Manrope, ui-sans-serif, system-ui, sans-serif",
-        "mono": "ui-monospace, SF Mono, Menlo, monospace"
+        "sans": "Inter, ui-sans-serif, system-ui, sans-serif",
+        "serif": "Lora, Georgia, serif",
+        "mono": "ui-monospace, Menlo, monospace"
       }
     }
   },
@@ -421,7 +440,7 @@
       "changes": [
         {
           "file": "packages/schema/src/index.ts",
-          "intent": "Add Thread, Decision, PlanView and the CommandEnvelope for the three thread commands. PlanContent and PlanBody { content, edits, by?, at? }; PlanView gains body; CommandEnvelope accepts EditPlan.",
+          "intent": "Thread, Decision, PlanBody, PlanView; the envelope takes the thread commands and EditPlan.",
           "contract": {
             "lang": "ts",
             "code": "Thread   = { threadId, blockId, openedBy, body, replies: Int, status: 'open' | 'resolved' }\nDecision = { threadId, blockId, by, at, decision }\nPlanView = { threads: Thread[], decisions: Decision[], version: Int }\nCommandEnvelope = { type: 'OpenThread' | 'Reply' | 'ResolveThread', data: Record<string, unknown>, by: ParticipantId }"
@@ -437,7 +456,7 @@
         },
         {
           "file": "packages/domain/src/index.ts",
-          "intent": "`route` gives a command its Thread's events; `project` folds a Plan's events into a PlanView. route sends EditPlan to the plan decider over the PlanEdited events; project folds them into body.",
+          "intent": "`route` picks the Thread or Plan decider; `project` folds events into a PlanView.",
           "contract": {
             "lang": "ts",
             "code": "route(history: readonly StoredEvent[], command: Command, ctx: Ctx): DomainEvent[] | Rejection\nproject(events: readonly StoredEvent[]): PlanView\nclass CommandRejected { reason }      class InvalidCommand { type, message }"
@@ -461,11 +480,11 @@
         },
         {
           "file": "packages/domain/src/plan/decider.ts",
-          "intent": "EditPlan { by, content, basedOn } records PlanEdited { by, content }; refused when basedOn is not the latest edit; the same text again records nothing."
+          "intent": "EditPlan records PlanEdited; refused on a stale `basedOn`; the same text records nothing."
         },
         {
           "file": "packages/domain/src/plan/plan.expect.test.ts",
-          "intent": "Expect stories: the first edit, the next edit, a stale edit refused, the same text again."
+          "intent": "Stories: first edit, next edit, a stale edit refused, the same text again."
         },
         {
           "file": "docs/DOMAIN-VOCABULARY.md",
@@ -473,7 +492,7 @@
         },
         {
           "file": "e2e/flow.spec.ts",
-          "intent": "The plan is written in the editor: \"/\" makes a heading, the text is saved and there after a reload."
+          "intent": "Flows, plus the editor: a heading from \"/\", saved and back after reload."
         }
       ],
       "verify": {
@@ -511,7 +530,7 @@
         },
         {
           "file": "apps/api/src/plan-room.ts",
-          "intent": "One object per Plan: an `events` table in its SQLite, synchronous appends, every socket told. Socket pings are answered by the runtime (setWebSocketAutoResponse), so keep-alives never wake the room.",
+          "intent": "One object per Plan; synchronous appends; sockets told; pings answered without waking it.",
           "contract": {
             "lang": "ts",
             "code": "export class PlanRoom extends DurableObject<Env> {\n  dispatch(command: Command, enabledFlags: string[]): { events: StoredEvent[] } | Rejection;\n  events(): StoredEvent[];\n  read(): PlanView;\n  version(): number;\n  fetch(request: Request): Promise<Response>;   // WebSocket upgrade, then { type: 'hello', version }\n}\n// after each append, every socket gets { type: 'events', events }"
@@ -527,7 +546,7 @@
         },
         {
           "file": "apps/api/src/index.ts",
-          "intent": "Command, PlanView, events and socket routes; `/readyz` also pings a room. Every /plans route needs a sign-in and an id of 1 to 40 lowercase letters, digits or dashes; writes are rate-limited per account; by comes from the sign-in.",
+          "intent": "Plan routes behind sign-in and an id check; writes rate-limited; `by` from the sign-in.",
           "contract": {
             "lang": "text",
             "code": "POST /plans/:planId/commands → 201 { events } | 400 { rejected } | 409 { rejected }\nGET  /plans/:planId          → PlanView\nGET  /plans/:planId/events   → StoredEvent[]\nGET  /plans/:planId/ws       → 101, a hibernating WebSocket"
@@ -564,7 +583,7 @@
       "changes": [
         {
           "file": "apps/web/src/routes/plans.$planId.tsx",
-          "intent": "Threads with reply counts, Resolve on open ones, the open form, live marker and refusal. The editor on the plan page; the plan is remembered for home; signed out, the page says to sign in."
+          "intent": "The editor, threads, Resolve, the open form, live marker; signed out says sign in."
         },
         {
           "file": "apps/web/src/routes/plans.$planId.ws.ts",
@@ -584,7 +603,7 @@
         },
         {
           "file": "apps/web/src/components/PlanEditor.tsx",
-          "intent": "The Tiptap editor: autosave 700ms after typing, based on the edit it loaded; others' saves arrive live; \"/\" opens the blocks menu (heading, subheading, lists, tasks, quote, code, divider)."
+          "intent": "Tiptap: autosave, others' saves arrive live, \"/\" opens the blocks menu."
         },
         {
           "file": "apps/web/src/components/plan-editor.css",
@@ -600,7 +619,7 @@
         },
         {
           "file": "apps/web/src/routes/index.tsx",
-          "intent": "Signed in, home has Plans: open or start one by id, and the ones opened here (gh-12 as the example)."
+          "intent": "Signed in, home opens or starts a plan and lists the ones opened here."
         }
       ],
       "components": [
@@ -641,6 +660,30 @@
             {
               "label": "offline",
               "html": "<main class=\"page\"><header><div><p class=\"kicker\">Plan</p><h1>gh-12</h1></div><label title=\"Comments are written as this participant.\">acting as <input value=\"pratos\"></label></header><p class=\"counts\"><span>1 thread</span><span>0 decisions</span><span>version 1</span><span data-live=\"off\">○ offline</span></p></main>"
+            }
+          ]
+        },
+        {
+          "name": "Plan text, in the editor",
+          "notes": "The plan is written here; it saves itself a moment after you stop typing. \"/\" opens the blocks menu.",
+          "height": 260,
+          "css": ".doc{font:16px/1.6 var(--font);color:var(--fg);background:var(--surface);padding:24px 32px;max-width:650px}.doc h1,.doc h2{font-family:Lora,Georgia,serif;font-weight:400;margin:0 0 8px}.doc h1{font-size:30px}.doc h2{font-size:23px;margin-top:18px}.doc p{margin:0 0 10px}.ph{color:#78766e}.status{font-size:12px;color:#605e56;margin-top:14px}.refused{color:var(--warn)}.asked{font-style:italic}.menu{width:290px;padding:4px;border-radius:8px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.07),0 7px 6px rgba(14,13,10,.09)}.item{display:flex;justify-content:space-between;gap:12px;padding:4px 6px;border-radius:6px;font-size:14px}.item[aria-selected=true]{background:var(--selected)}.hint{color:#605e56;font-size:12px}",
+          "states": [
+            {
+              "label": "empty",
+              "html": "<div class=\"doc\"><h1>gh-12</h1><p class=\"ph\">Write the plan. Type / for blocks.</p><p class=\"status\" role=\"status\">Nothing written yet</p></div>"
+            },
+            {
+              "label": "\"/\" menu",
+              "html": "<div class=\"doc\"><h1>gh-12</h1><p>/h</p><div class=\"menu\" role=\"listbox\" aria-label=\"Blocks\"><div class=\"item\" role=\"option\" aria-selected=\"true\"><span>Heading</span><span class=\"hint\">A section of the plan</span></div><div class=\"item\" role=\"option\"><span>Subheading</span><span class=\"hint\">A part of a section</span></div></div></div>"
+            },
+            {
+              "label": "saved",
+              "html": "<div class=\"doc\"><h1>gh-12</h1><h2>Retry policy</h2><p>Retries live in the wrapper, so there is one place to change them.</p><p class=\"status\" role=\"status\">Saved, last edit by sam</p></div>"
+            },
+            {
+              "label": "someone saved first",
+              "html": "<div class=\"doc\"><h1>gh-12</h1><h2>Retry policy</h2><p>Retries live in the client.</p><p class=\"status refused\" role=\"status\">Someone saved first. Their text is shown; make your change again.</p></div>"
             }
           ]
         }
@@ -719,6 +762,6 @@
     "`docs/ARCHITECTURE.md`: flags in `decide()`, multiplayer is the Durable Object's job"
   ],
   "change": {
-    "intent": "The plan is written in a Tiptap editor, saved as events."
+    "intent": "The editor as a component with its states; Chopin tokens."
   }
 }

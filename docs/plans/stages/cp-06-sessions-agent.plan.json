@@ -621,7 +621,7 @@
       "changes": [
         {
           "file": "apps/web/src/lib/sessions.ts",
-          "intent": "`listSessions` and `sessionCommand` server functions over the binding, as the signed-in account. askToWrite: the question goes to the plan's open \"Writing\" session, started or joined if needed.",
+          "intent": "Session server functions; `askToWrite` asks in the plan's Writing session.",
           "contract": {
             "lang": "ts",
             "code": "listSessions({ data: planId }) → { status, data?: { sessions: SessionView[] }, rejected? }\nsessionCommand({ data: { planId, type, data } }) → { status, events?, rejected? }"
@@ -633,7 +633,7 @@
         },
         {
           "file": "apps/web/src/routes/plans.$planId.tsx",
-          "intent": "Two columns, document and panel; a `session` frame on the socket refreshes the panel. \"/ask …\" in the editor saves first, then asks the agent to write."
+          "intent": "Two columns, plan and panel; \"/ask\" in the editor saves, then asks."
         }
       ],
       "components": [
@@ -692,6 +692,30 @@
               "html": "<aside class=\"panel\" aria-label=\"Sessions\"><header><h2>Talk to the agent</h2><p class=\"muted\">Ask in a session; the agent answers one question at a time, in order. Anyone in the session can steer the question it is working on.</p></header><ul class=\"chips\" aria-label=\"Sessions on this plan\"><li><button type=\"button\" aria-pressed=\"true\">Retry budget</button></li></ul><section data-session=\"a1b2c3d4\"><p class=\"meta\">Started by admin · here: admin, agent, sam</p></section><ol><li data-run=\"r1\" data-status=\"finished\"><p class=\"asked\"><span class=\"who\">sam asked</span>Who should own the retry budget?</p><p class=\"result\" data-result><span class=\"who\">agent · steered 1×</span>On \"Who should own the retry budget?\": noted. (faux model; set ANTHROPIC_API_KEY for a real answer)</p></li></ol><form><input aria-label=\"Ask the agent\" placeholder=\"Ask the agent…\"><button type=\"submit\" class=\"primary\">Ask</button></form><button type=\"button\" class=\"link\">End this session</button><form class=\"start\"><input aria-label=\"New session title\" placeholder=\"New session: what is it about?\"><button type=\"submit\">Start</button></form></aside>"
             }
           ]
+        },
+        {
+          "name": "Asking the agent to write",
+          "notes": "\"/ask\" leaves a line in the plan; the agent's answer takes its place, credited.",
+          "height": 240,
+          "css": ".doc{font:16px/1.6 var(--font);color:var(--fg);background:var(--surface);padding:24px 32px;max-width:650px}.doc h1,.doc h2{font-family:Lora,Georgia,serif;font-weight:400;margin:0 0 8px}.doc h1{font-size:30px}.doc h2{font-size:23px;margin-top:18px}.doc p{margin:0 0 10px}.ph{color:#78766e}.status{font-size:12px;color:#605e56;margin-top:14px}.refused{color:var(--warn)}.asked{font-style:italic}.menu{width:290px;padding:4px;border-radius:8px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.07),0 7px 6px rgba(14,13,10,.09)}.item{display:flex;justify-content:space-between;gap:12px;padding:4px 6px;border-radius:6px;font-size:14px}.item[aria-selected=true]{background:var(--selected)}.hint{color:#605e56;font-size:12px}",
+          "states": [
+            {
+              "label": "typing /ask",
+              "html": "<div class=\"doc\"><h2>Rollout</h2><p>/ask a three step rollout plan</p><div class=\"menu\" role=\"listbox\" aria-label=\"Blocks\"><div class=\"item\" role=\"option\" aria-selected=\"true\"><span>Ask the agent to write</span><span class=\"hint\">Type /ask, then what to write</span></div></div></div>"
+            },
+            {
+              "label": "asked",
+              "html": "<div class=\"doc\"><h2>Rollout</h2><p class=\"asked\">Asked the agent to write: a three step rollout plan</p><p class=\"status\" role=\"status\">Saved, last edit by pratos</p></div>"
+            },
+            {
+              "label": "written",
+              "html": "<div class=\"doc\"><h2>Rollout</h2><p class=\"asked\">Written by the agent: a three step rollout plan</p><p>Turn the flag on for pratos, then for the team, then for everyone; roll back by turning it off.</p><p class=\"status\" role=\"status\">Saved, last edit by agent</p></div>"
+            },
+            {
+              "label": "refused",
+              "html": "<div class=\"doc\"><h2>Rollout</h2><p class=\"asked\">Asked the agent to write: a three step rollout plan</p><p class=\"status refused\" role=\"status\">Sessions are not available here (401).</p></div>"
+            }
+          ]
         }
       ],
       "verify": {
@@ -721,7 +745,7 @@
       "changes": [
         {
           "file": "packages/agent/src/loop.ts",
-          "intent": "`tick` starts each Session's oldest queued Run (or resumes its own), then answers and finishes. A finished run asked with \"Write into the plan: \" is written into the plan: intoPlan puts the answer (headings, lists, paragraphs) where \"Asked the agent to write: …\" was, credited.",
+          "intent": "`tick` answers queued Runs in order; \"/ask\" answers are written into the plan.",
           "contract": {
             "lang": "ts",
             "code": "type SessionsApi = {\n  list(planId: string): Promise<SessionViewLite[]>;\n  command(planId: string, type: string, data: Record<string, unknown>): Promise<{ ok: boolean; rejected?: string }>;\n};\ntype Answerer = { answer(sessionId: string, runId: string, asked: string): Promise<string> };\ntick(planId: string, me: string, api: SessionsApi, brain: Answerer, log?: (line: string) => void): Promise<number>"
@@ -749,7 +773,7 @@
         },
         {
           "file": "packages/agent/src/serve.ts",
-          "intent": "Sign in as the agent, poll every 1.5 s, sign in again on a 401. writeIntoPlan: read the plan, intoPlan, EditPlan based on what was read, three tries; model keys from .dev.vars; listens on the room socket and backs off to 30s when idle."
+          "intent": "Sign in as the agent, listen on the socket, write answers in with EditPlan."
         },
         {
           "file": "packages/agent/test/loop.expect.test.ts",
@@ -765,7 +789,7 @@
         },
         {
           "file": "packages/agent/test/write.test.ts",
-          "intent": "The answer replaces the /ask line (also inside a list), goes at the end when the line is gone, and only \"/ask\" runs are written."
+          "intent": "The answer replaces the \"/ask\" line, even in a list; other runs are not written."
         }
       ],
       "verify": {
@@ -802,6 +826,6 @@
     "`packages/agent/README.md`: pi-durable on Bun, and the kill -9 story"
   ],
   "change": {
-    "intent": "The agent writes into the plan."
+    "intent": "\"/ask\" as a component with its states."
   }
 }

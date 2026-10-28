@@ -562,7 +562,7 @@
         },
         {
           "file": "apps/web/src/styles.css",
-          "intent": "Chopin's tokens (warm olive ground, white page, petrol accent, Inter and Lora, radii, shadows, fluid type) as --ch-*, with Greenhouse's names pointed at them; light only."
+          "intent": "Chopin's tokens as `--ch-*`; Greenhouse's colour names point at them; light only."
         },
         {
           "file": "apps/web/src/CHOPIN-LICENSE.md",
@@ -590,7 +590,21 @@
             "done": false
           }
         ]
-      }
+      },
+      "components": [
+        {
+          "name": "Chopin's surfaces",
+          "notes": "The ground, the raised page and the one accent, as every later stage uses them.",
+          "height": 170,
+          "css": ".doc{font:16px/1.6 var(--font);color:var(--fg);background:var(--surface);padding:24px 32px;max-width:650px}.doc h1,.doc h2{font-family:Lora,Georgia,serif;font-weight:400;margin:0 0 8px}.doc h1{font-size:30px}.doc h2{font-size:23px;margin-top:18px}.doc p{margin:0 0 10px}.ph{color:#78766e}.status{font-size:12px;color:#605e56;margin-top:14px}.refused{color:var(--warn)}.asked{font-style:italic}.menu{width:290px;padding:4px;border-radius:8px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.07),0 7px 6px rgba(14,13,10,.09)}.item{display:flex;justify-content:space-between;gap:12px;padding:4px 6px;border-radius:6px;font-size:14px}.item[aria-selected=true]{background:var(--selected)}.hint{color:#605e56;font-size:12px}.ground{background:var(--bg);padding:16px}.page{background:#fff;border-radius:10px;box-shadow:0 1px 2px rgba(14,13,10,.06),0 8px 5px rgba(14,13,10,.03);padding:16px 20px}.btn{display:inline-flex;align-items:center;height:32px;padding:0 12px;border-radius:8px;font-size:14px;font-weight:500;border:1px solid rgba(0,0,0,.15);background:var(--accent);color:#fff}",
+          "states": [
+            {
+              "label": "page on the ground",
+              "html": "<div class=\"ground\"><div class=\"page\"><h1 style=\"font-family:Lora,Georgia,serif;font-weight:400;font-size:30px;margin:0 0 6px\">gh-12</h1><p style=\"margin:0 0 12px;color:#47453f\">A planning room. People and an agent write a plan together.</p><button class=\"btn\" type=\"button\">Open</button></div></div>"
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "map",
@@ -612,7 +626,7 @@
         },
         {
           "file": "docs/DESIGN.md",
-          "intent": "The plan page: plan with threads on the left, sessions on the right. The design brief in Chopin's terms: workspace, colour, type, shape, copy (no middle dots, no eyebrows), motion, states."
+          "intent": "The design brief in Chopin's terms: workspace, colour, type, shape, copy, motion."
         }
       ],
       "verify": {
@@ -682,6 +696,82 @@
     "`docs/plans/2026-10-28-domain-vocabulary.plan.json`, the next round of words"
   ],
   "change": {
-    "intent": "The design language is Chopin's (GitHub Next, MIT)."
+    "intent": "Chopin's design language as the plan's design block."
+  },
+  "design": {
+    "notes": "Chopin's language (GitHub Next, MIT): a white page on a warm olive ground; petrol is the one accent, for the action you can take; colour otherwise only for outcomes. Inter for the interface, Lora for document headings; light only.",
+    "tokens": {
+      "color": {
+        "bg": "#f4f4f1",
+        "fg": "#0e0d0a",
+        "muted": "#47453f",
+        "line": "rgba(0, 0, 0, 0.07)",
+        "surface": "#ffffff",
+        "inset": "#f8f8f6",
+        "selected": "#ecece9",
+        "accent": "#06707e",
+        "accent-hover": "#045a66",
+        "ok": "#236228",
+        "warn": "#704a02"
+      },
+      "type": [
+        {
+          "name": "title",
+          "size": 30,
+          "weight": 400,
+          "lineHeight": 1.15,
+          "sample": "gh-12"
+        },
+        {
+          "name": "section",
+          "size": 23,
+          "weight": 400,
+          "lineHeight": 1.25,
+          "sample": "Retry policy"
+        },
+        {
+          "name": "body",
+          "size": 16,
+          "weight": 400,
+          "lineHeight": 1.6,
+          "sample": "Retries live in the wrapper, so there is one place to change them."
+        },
+        {
+          "name": "interface",
+          "size": 14,
+          "weight": 400,
+          "lineHeight": 1.5,
+          "sample": "Saved, last edit by agent"
+        },
+        {
+          "name": "meta",
+          "size": 12,
+          "weight": 400,
+          "lineHeight": 1.35,
+          "sample": "Block b3   2 replies"
+        }
+      ],
+      "space": [
+        2,
+        4,
+        6,
+        8,
+        12,
+        16,
+        24,
+        32
+      ],
+      "radius": {
+        "sm": 4,
+        "md": 6,
+        "lg": 8,
+        "xl": 10
+      },
+      "font": {
+        "sans": "Inter, ui-sans-serif, system-ui, sans-serif",
+        "serif": "Lora, Georgia, serif",
+        "mono": "ui-monospace, Menlo, monospace"
+      }
+    }
   }
 }

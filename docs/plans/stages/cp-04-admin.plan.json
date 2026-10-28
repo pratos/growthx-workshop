@@ -374,7 +374,7 @@
         },
         {
           "file": "apps/api/src/admin.ts",
-          "intent": "Summary counts, accounts with live sign-ins, newest events with hash, password and token masked. POST /admin/accounts: an admin opens an account (name, email, starting password, role) through Accounts.open, recorded as AccountOpened; 400 on bad input, 409 when taken.",
+          "intent": "Counts, accounts, masked events; `POST /admin/accounts` opens an account with a role.",
           "contract": {
             "lang": "ts",
             "code": "GET /admin/summary  → { accounts, admins, signIns, flags, flagsOn, events, streams }\nGET /admin/accounts → { accounts: { accountId, email, name, admin, openedAt, liveSignIns }[] }\nGET /admin/events?stream=&limit=50 → { events: { stream, version, type, by, at, data }[] }\n// in data, every key matching /hash|password|token/i is '•••'; limit is 1..200"
@@ -394,7 +394,7 @@
         },
         {
           "file": "scripts/flag.sh",
-          "intent": "`just flag list | on | off | user | pct` against local D1, or remote with `GH_REMOTE=1`."
+          "intent": "`just flag list | on | off | user | pct`, local or `GH_REMOTE=1`."
         }
       ],
       "verify": {
@@ -449,7 +449,7 @@
         },
         {
           "file": "apps/web/src/routes/admin.accounts.tsx",
-          "intent": "One row per account with its role and live sign-ins; `data-account` holds the participant id. An \"Add an account\" form under the table, with adding, refused and done states; muted text from the theme tokens."
+          "intent": "Accounts with roles and live sign-ins; an Add an account form below."
         },
         {
           "file": "apps/web/src/routes/admin.events.tsx",
@@ -596,7 +596,7 @@
         },
         {
           "file": "e2e/admin.spec.ts",
-          "intent": "Signed out gets sign in, Sam is refused, Admin sees every page with secrets masked. An admin adds an account from the page, and it can sign in."
+          "intent": "Refused signed out and as Sam; an admin sees everything and adds an account."
         },
         {
           "file": "justfile",
@@ -629,6 +629,6 @@
     "`docs/TESTING.md`, step 2: Admin"
   ],
   "change": {
-    "intent": "Admins add accounts from the page."
+    "intent": "Intents cut to the 15-word budget."
   }
 }
