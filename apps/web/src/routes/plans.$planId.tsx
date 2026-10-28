@@ -3,6 +3,7 @@ import { createServerFn } from '@tanstack/react-start';
 import { useEffect, useState } from 'react';
 import type { PlanView } from '@greenhouse/schema';
 import { apiGetOrStatus, apiCommand } from '#/lib/api';
+import { apiGet } from '#/lib/api';
 import { rememberPlan } from '#/lib/recent-plans';
 import { signInHref } from '#/lib/next';
 import { ShareMenu, CopyLink } from '#/components/Share';
@@ -36,6 +37,10 @@ const openThread = createServerFn({ method: 'POST' })
   .validator((d: Open) => d)
   .handler(({ data }) => apiCommand(data.planId, 'OpenThread', data.by, { blockId: data.blockId, body: data.body }));
 
+// Flags for the participant acting on the page: the resolve action shows only when resolve-thread is on for them.
+const loadFlags = createServerFn({ method: 'GET' })
+  .validator((by: string) => by)
+  .handler(({ data: by }) => apiGet<{ participant: string; on: string[] }>(`/participants/${encodeURIComponent(by)}/flags`));
 
 export const Route = createFileRoute('/plans/$planId')({
   loader: async ({ params }) => {
@@ -70,6 +75,18 @@ function PlanPage() {
   const by = account?.accountId ?? '';
   const [error, setError] = useState<string | null>(null);
   const [live, setLive] = useState<'connecting' | 'live' | 'off'>('connecting');
+  const [flags, setFlags] = useState<string[] | null>(null);
+
+  // Ask which flags are on for whoever is acting, and again when they come back to the tab: a flag flipped in
+  // production shows up without a deploy.
+  useEffect(() => {
+    let alive = true;
+    const refresh = () => { if (by.trim()) void loadFlags({ data: by.trim() }).then((r) => { if (alive) setFlags(r.on); }, () => { if (alive) setFlags([]); }); };
+    refresh();
+    window.addEventListener('focus', refresh);
+    return () => { alive = false; window.removeEventListener('focus', refresh); };
+  }, [by]);
+  const canResolve = flags?.includes('resolve-thread') ?? false;
 
   // Multiplayer: subscribe to the plan's stream. Any append, by anyone, reloads this page's data.
   useEffect(() => {
@@ -159,6 +176,9 @@ function PlanPage() {
                           <p><span className="gh-pill" data-tone="live">Decided</span> <strong className="font-medium">“{decision.decision}”</strong></p>
                           <p className="gh-meta mt-1"><span>{decision.by}</span><span>{decision.at.slice(0, 16).replace('T', ' ')} UTC</span></p>
                         </div>
+                      ) :
+                      !canResolve ? (
+                        <p className="gh-muted mt-3 text-sm" data-flag-off="resolve-thread">{flags === null ? 'Checking what you can do here…' : `Resolving threads is not switched on for ${by} yet.`}</p>
                       ) :
                       (
                         <form className="mt-3 flex gap-2" onSubmit={(e) => { e.preventDefault(); const f = new FormData(e.currentTarget); void run(resolveThread({ data: { planId, threadId: t.threadId, decision: field(f, 'decision'), by } })); }}>
