@@ -1,21 +1,21 @@
-# Checkpoints
+# The stack: eleven stages, one pull request each
 
-Rails gets you out of the blocks: `rails new` gives a running, deployable app with sign-in, a database, tests and an admin before anyone thinks about the product. Greenhouse does the same. cp-00 is everything any product needs, nothing specific to this one. cp-01 plans the product. From cp-02 on, every step builds the product.
+`main` is the finished product. The workshop rebuilds it as a stack of branches, `cp-00` to `cp-10`: each is the one before plus one thing that is implemented and can be demoed. Every branch has a draft pull request against the one below it, so the PR shows exactly that stage's change, and its description is the stage's plan. The stack starts from `stack-base`, a README.
 
-Each checkpoint is a branch, `cp-NN-<what it adds>`, on one linear line: every branch is the one before plus one thing that is implemented and can be demoed, so comparing two neighbours on GitHub shows exactly that step. A tag `cp-NN` points at the same commit. `just step N` opens the branch in a worktree of its own, prints what that step added, and runs its beat (`scripts/demo.sh cp-NN`), so the show works even when the live agent misbehaves. `demo/` holds recorded fallbacks.
+**To build a stage yourself:** check out the stage before it, open its plan for the next one (`docs/plans/stages/cp-NN-*.plan.html`, carried on the branch before), implement it with your own agent, then compare with the stage's PR. `just step N` opens stage N in a worktree of its own, prints what it added, and runs its demo.
 
-| Branch | Step | What it adds | `demo.sh` checks |
+| Branch | Stage | What you can demo | Plan |
 |---|---|---|---|
-| `cp-00-out-of-the-blocks` | Out of the blocks | layout, Nix (flake and lock), `just`, oxlint, skills and hooks, the architecture map; two Workers with `/healthz` and `/readyz`; the event-sourcing engine (`packages/engine`); sign-up, sign-in and sign-out on it; seeded admin, person and agent; flags admin API and page, admins only; deploy, version, rollback | health and readiness; the seeded admin signs in and reaches `/flags`, which refuses everyone else; sign-up and sign-in stories pass; `just agent-ready` has no gaps |
-| `cp-01-plan-the-product` | Plan the product | `PRODUCT.md`, `DESIGN.md`; the decision report "where should the agent's work run?"; the plans (resolve a comment, the domain vocabulary); `docs/DOMAIN-VOCABULARY.md` with the product's words | the report and the plans build with every step validated |
-| `cp-02-name-it-model-it` | Name it, model it | the product's schemas; the Thread and Session deciders; their expect stories, one person with the agent and three people with the agent | the vocabulary check passes, the stories pass, and a first pass naming ThreadClosed with a verdict fails it |
-| `cp-03-change-a-recorded-event` | Change a recorded event | `packages/domain/src/upcast` | a verbatim v1 stream reads as v2 |
-| `cp-04-api-and-plan-room` | The API and the plan room | the PlanRoom Durable Object (comments, and sessions on the engine over its SQLite), command and session routes, Effect services behind Hono | a signed-in person starts a session and asks; the agent signs in and starts the run |
-| `cp-05-the-screen-live` | The screen, live | the plan page, WebSocket fan-out through the web Worker, Agentation in dev | a socket on the plan room hears an append |
-| `cp-06-durable-agent` | The durable agent | `packages/agent` on pi-durable: kill -9 mid tool call, run again, it resumes | the agent typechecks; the kill and resume run live |
-| `cp-07-review` | Review with a second model | `just review`: diffs a branch, puts the domain vocabulary before the diff, and asks a model other than the author (`--prompt` shows exactly what it sends); `demo/review-fallback.md` | the reviewer's prompt holds the vocabulary and the ThreadClosed diff |
-| `cp-08-release-behind-a-flag` | Release behind a flag | `GET /participants/:id/flags`; the plan page shows Resolve only when `resolve-thread` is on for the participant, and rechecks when the tab regains focus | Resolve is on for admin and off for Sam; the live api returns a version label and id |
+| `cp-00-scaffold` | Scaffold and skills, running locally | `just up`; `/healthz` on both Workers through the binding; `just agent-ready` lists what is missing | `cp-00-scaffold` |
+| `cp-01-first-deploy` | First deploy of web and API | push to `main`, GitHub deploys, the live `/healthz` shows the version; roll back | `cp-01-first-deploy` |
+| `cp-02-design` | Vocabulary, architecture and event design | the map and the agent-loop decision report; the vocabulary check rejects a banned word | `cp-02-design` |
+| `cp-03-engine-identity` | Event-sourcing engine; sign-up and sign-in | sign up in the browser; read the sign-up story | `cp-03-engine-identity` |
+| `cp-04-admin` | Admin workflows and the first browser test | the dashboard and the masked event log; a participant refused; `just e2e admin` | `cp-04-admin` |
+| `cp-05-plan-document` | The plan document: comments to decisions, live | two tabs, one thread; the check and a second model catch ThreadClosed | `cp-05-plan-document` |
+| `cp-06-sessions-agent` | Chat with the agent | ask in a session; `just agent-serve` answers through pi-durable | `cp-06-sessions-agent` |
+| `cp-07-ui` | UI and UX with Impeccable, Emil's skill and Agentation | before and after of the plan page; one Agentation note fixed live | `cp-07-ui` |
+| `cp-08-agent-failures` | The agent's failures as expect tests | the failing-agent stories; `just test` | `cp-08-agent-failures` |
+| `cp-09-e2e` | End-to-end tests across the product | `just e2e`: seven tests in a real browser | `cp-09-e2e` |
+| `cp-10-release` | Release behind a flag | Resolve appears for you in production without a deploy, and goes again | `cp-10-release` |
 
-The mistake both cp-02 and cp-07 catch is made on the spot, not kept on a branch: `demo.sh` renames the event to ThreadClosed with a verdict in a throwaway worktree, where its own tests still pass. The check rejects it at cp-02; a second model flags it at cp-07.
-
-The tags are snapshots of main, not its history: each is main's tree with the later steps taken out, so every tag runs the final architecture and its lockfile, Worker types and route tree are regenerated inside it. Main also holds the workshop's own files (the deck, the check-in Worker, the workshop page), which no tag carries.
+**How the branches are made.** From `main`, by taking out what later stages add. Code that a stage adds sits between markers on `main` (`// <cp-05>` … `// </cp-05>`); a few files a later stage rewrote keep their earlier version. Each branch regenerates its own lockfile, Worker types, route tree and architecture map, and passes, in its own worktree: a frozen install, lint, its tests, the vocabulary check (from cp-02), the map, the Worker types, a clean tree, and its demo (`scripts/demo.sh cp-NN`).

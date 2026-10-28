@@ -9,24 +9,26 @@ git status                 # clean, on main
 just install               # bun workspaces + vendored skills + the artifact builder
 just reset                 # fresh local D1 and Durable Object state, migrated and seeded
 just up                    # api + web in one process; http://localhost:3000
-for n in 0 1 2 3 4 5 6 7 8; do just step $n; done   # every tag, in its own worktree
+for n in $(seq 0 10); do just step $n; done   # every stage, in its own worktree
 ```
 
 cmux panes: `just up` · a shell on main · `tail -f /tmp/gh-*.log` · the browser on http://localhost:3000/plans/gh-12 with Agentation.
 
 ## The beats
 
-| Step | Live | Twin (always works) | Fallback |
-|---|---|---|---|
-| 0 · Out of the blocks | `git clone … && just up`; `/healthz`, sign up at `/signup`, sign in as the seeded admin, `/admin/flags`; `just agent-ready` | `just step 0` | the curls in `scripts/demo.sh` (cp-00) |
-| 1 · Plan the product | `/create_plan` for the coding agent in Claude Code; it turns "where should the agent's work run?" into a report | open `docs/decisions/agent-loop.html`: compare the three places, choose one; then `docs/plans/2026-10-28-resolve-thread.plan.html` | `just step 1` |
-| 2 · Name it, model it | ask pi: "add resolve thread"; watch the names | `cat packages/domain/src/session/__expect__/three-people.snap.txt`; `just step 2` makes a first pass that names ThreadClosed and shows the check failing | `just step 2` |
-| 3 · Change a recorded event | ask Claude Code to "add rationale to decisions"; it edits the schema | `cat packages/domain/src/upcast/__expect__/*.snap.txt` | `just step 3` |
-| 4 · The API and the plan room | two terminals signed in as Sam and the agent: start a session, ask, the agent starts the run | `just step 4` | `cat packages/domain/src/session/__expect__/one-person.snap.txt` |
-| 5 · The screen, live | Claude Code with impeccable + animate on `/plans/gh-12`; one Agentation note; two tabs, open a thread in one | `just step 5` | `bun scripts/ws-check.ts <api url>` |
-| 6 · The durable agent | terminal 2: `just agent-watch`; terminal 1: `just agent-reset && just agent-demo`, at "service_status: 3s / 8s" run `pkill -9 -f src/demo.ts`, then `just agent-demo` twice | the three observed runs in `packages/agent/README.md` | read the README's output aloud |
-| 7 · Review with a second model | on a branch where pi wrote resolve thread: `just review main`, about ninety seconds; `scripts/review.sh main --prompt` shows what the model receives | `cat demo/review-fallback.md` | `just step 7` |
-| 8 · Release behind a flag | `just deploy`; on `/plans/gh-12` as yourself the Resolve button is missing; `GH_REMOTE=1 just flag user resolve-thread <you>`, switch back to the tab, it appears; `GH_REMOTE=1 just flag off resolve-thread`, it goes; `just rollback api <id>` | `just step 8` (local: admin sees Resolve, Sam does not) | `curl …/participants/<you>/flags` |
+| Stage | Live | Twin (always works) |
+|---|---|---|
+| 0 · Scaffold | `git clone … && just up`; `/healthz`; `just agent-ready` | `just step 0` |
+| 1 · First deploy | push to `main`; Actions deploys; live `/healthz`; `just rollback api <id>` | `just step 1` |
+| 2 · Design | the architecture map; `docs/decisions/agent-loop.html`; ask pi to "add resolve thread" and watch the names | `just step 2` |
+| 3 · Engine, sign-up and sign-in | sign up at `/signup`; `cat packages/domain/src/account/__expect__/sign-up.snap.txt` | `just step 3` |
+| 4 · Admin | sign in as Admin, `/admin`; as Sam, refused; `just e2e admin` | `just step 4` |
+| 5 · The plan document | two tabs on `/plans/gh-12`; resolve a thread; `just review main` on the branch the agent wrote | `just step 5` |
+| 6 · Chat with the agent | start a session, ask; `just agent-serve` answers; a second browser joins and steers | `just step 6` |
+| 7 · UI and UX | Claude Code with impeccable and animate; one Agentation note | `just step 7` |
+| 8 · The agent's failures | `cat packages/agent/test/__expect__/fails-after-three.snap.txt`; with a key, `kill -9` the agent mid-answer and run it again | `just step 8` |
+| 9 · End to end | `just e2e` | `just step 9` |
+| 10 · Release behind a flag | `GH_REMOTE=1 just flag user resolve-thread <you>`, switch back to the tab, Resolve appears; flag off, it goes | `just step 10` |
 
 ## The map
 

@@ -34,7 +34,7 @@ lint:
 
 # Apply pending D1 migrations locally (never runs on deploy)
 migrate-local:
-    cd apps/api && bunx wrangler d1 migrations apply greenhouse --local >/dev/null
+    @[ -d apps/api/migrations ] || { echo "no migrations yet"; exit 0; }; cd apps/api && bunx wrangler d1 migrations apply greenhouse --local >/dev/null
 
 # Seed the local D1 through the engine: an admin, Sam and the agent (logins in .dev.vars.example), flags default off
 seed:

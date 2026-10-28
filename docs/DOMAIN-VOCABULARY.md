@@ -51,12 +51,14 @@ One Ask, from queued to its result (pi-durable's word). One Run at a time per Se
 Carried by: `Run` schema · Events: `RunQueued`, `RunStarted`, `RunSteered`, `RunFinished`, `RunFailed` · Commands: `Ask`, `StartRun`, `Steer`, `FinishRun`, `FailRun`
 Not: job, task, prompt
 
-## Context: Identity
+## Context: Working together
 
 ### Participant
 A person or an agent in a plan room. Same commands, same rights. The agent holds no command a person cannot issue, and signs in with its own Account.
 Carried by: `ParticipantId` schema · Events: `ParticipantJoined` · Commands: none of its own; every command carries `by`, set from the sign-in
 Not: user, member, bot, assistant, actor, author
+
+## Context: Identity
 
 ### Account
 How a Participant signs in: an email, a name, a password hash, and whether they are an admin. One stream per email, so two sign-ups for one email cannot both win.
