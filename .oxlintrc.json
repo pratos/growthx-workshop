@@ -11,7 +11,15 @@
   },
   "rules": {
     "typescript/no-explicit-any": "error",
-    "no-console": "off"
+    "no-console": "off",
+    "no-underscore-dangle": [
+      "warn",
+      {
+        "allow": [
+          "_tag"
+        ]
+      }
+    ]
   },
   "ignorePatterns": [
     "**/.wrangler/**",

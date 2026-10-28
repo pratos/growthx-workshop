@@ -8,7 +8,7 @@ const upcasters: Record<string, Upcaster> = {
   DecisionRecorded: (e, stream) => {
     const d = e.data as Record<string, unknown>;
     if (typeof d.rationale === 'string') return e;
-    const lastReply = [...stream].reverse().find((x) => x.type === 'ReplyPosted' && x.version < e.version && (x.data as { threadId: string }).threadId === d.threadId);
+    const lastReply = stream.toReversed().find((x) => x.type === 'ReplyPosted' && x.version < e.version && (x.data as { threadId: string }).threadId === d.threadId);
     return { ...e, data: { ...d, rationale: lastReply ? (lastReply.data as { body: string }).body : '' } } as StoredEvent;
   },
 };

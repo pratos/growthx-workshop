@@ -14,7 +14,7 @@ export class NotReady extends Schema.TaggedError<NotReady>()('NotReady', { depen
 export class Flags extends Context.Service<Flags, {
   enabledFor(participant: string): Effect.Effect<ReadonlyArray<string>>;
 }>()('greenhouse/api/Flags') {
-  static readonly layer = (db: D1Database) => Layer.effect(Flags, Effect.gen(function* () {
+  static readonly layer = (db: D1Database) => Layer.sync(Flags, () => {
     const enabledFor = Effect.fn('Flags.enabledFor')(function* (participant: string) {
       const { results } = yield* Effect.promise(() =>
         db.prepare('SELECT name, enabled, allowlist, percent FROM flags').all<{ name: string; enabled: number; allowlist: string | null; percent: number }>());
@@ -27,7 +27,7 @@ export class Flags extends Context.Service<Flags, {
       return on;
     });
     return Flags.of({ enabledFor });
-  }));
+  });
 
   // Tests: a fixed set, or a function of the participant.
   static readonly layerTest = (on: ReadonlyArray<string> | ((p: string) => ReadonlyArray<string>)) =>
