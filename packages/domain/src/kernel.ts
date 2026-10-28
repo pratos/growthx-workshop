@@ -1,18 +1,20 @@
-import { z } from 'zod';
+import { Schema } from 'effect';
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 // A message is a type and validated data. Commands are imperative, what a Participant asks. Events are past tense, what happened.
 export type Message<T extends string = string, D = unknown> = { type: T; data: D };
 
-export function defineCommand<T extends string, S extends z.ZodType>(type: T, schema: S) {
-  const make = (data: z.input<S>): Message<T, z.output<S>> => ({ type, data: schema.parse(data) });
-  return Object.assign(make, { type, schema, kind: 'command' as const });
+// Schema validates at the boundary; what comes out is a plain, typed message the pure functions below work on.
+type Plain<F extends Schema.Struct.Fields> = Schema.Codec<Schema.Struct<F>['Type'], Schema.Struct<F>['Encoded'], never, never>;
+function define<K extends 'command' | 'event', T extends string, F extends Schema.Struct.Fields>(kind: K, type: T, fields: F) {
+  const schema = Schema.Struct(fields);
+  const decode = Schema.decodeUnknownSync(schema as unknown as Plain<F>);   // domain fields never need services to decode
+  const make = (data: Schema.Struct<F>['Encoded']): Message<T, Schema.Struct<F>['Type']> => ({ type, data: decode(data) });
+  return Object.assign(make, { type, schema, kind });
 }
-export function defineEvent<T extends string, S extends z.ZodType>(type: T, schema: S) {
-  const make = (data: z.input<S>): Message<T, z.output<S>> => ({ type, data: schema.parse(data) });
-  return Object.assign(make, { type, schema, kind: 'event' as const });
-}
+export const defineCommand = <T extends string, F extends Schema.Struct.Fields>(type: T, fields: F) => define('command', type, fields);
+export const defineEvent = <T extends string, F extends Schema.Struct.Fields>(type: T, fields: F) => define('event', type, fields);
 
 export type Rejection = { rejected: string };
 export const reject = (reason: string): Rejection => ({ rejected: reason });

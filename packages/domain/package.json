@@ -1,2 +1,12 @@
-{ "name": "@greenhouse/domain", "private": true, "type": "module", "exports": { ".": "./src/index.ts" },
-  "dependencies": { "@greenhouse/schema": "workspace:*", "zod": "^4.1.0" } }
+{
+  "name": "@greenhouse/domain",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@greenhouse/schema": "workspace:*",
+    "effect": "4.0.7"
+  }
+}

@@ -10,10 +10,11 @@
     "lint": "oxlint --type-aware . && oxfmt --check .",
     "fmt": "oxfmt .",
     "typecheck": "tsc -b",
-    "test": "bun test packages"
+    "test": "bun test packages/domain packages/schema apps/api/test"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20261027.1",
+    "bun-types": "^1.4.4",
     "oxfmt": "^0.75.0",
     "oxlint": "^1.90.0",
     "typescript": "^7.0.2",

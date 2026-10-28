@@ -1,48 +1,51 @@
 import { Hono } from 'hono';
-import { z } from 'zod';
-import { CommandEnvelope } from '@greenhouse/domain';
+import { Effect, Schema } from 'effect';
+import { Commands, PlanRooms, readiness, runtimeFor, type Env } from './services';
 import { PlanRoom } from './plan-room';
 
 export { PlanRoom };
 
-type Bindings = { DB: D1Database; PLAN_ROOM: DurableObjectNamespace<PlanRoom>; VERSION: { id: string; tag: string }; GIT_DESCRIBE: string };
-const app = new Hono<{ Bindings: Bindings }>();
+// Hono is the edge: routing, status codes, JSON. Everything behind it is an Effect program run through one runtime per env.
+const app = new Hono<{ Bindings: Env }>();
+const planId = Schema.decodeUnknownSync(Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(64)));
 
 // Health: public, dumb. `label` is what a person reads (git describe, passed in at deploy); `id` is what rollback needs.
 app.get('/healthz', (c) => c.json({ ok: true, version: { label: c.env.GIT_DESCRIBE ?? 'dev', id: c.env.VERSION?.id ?? 'dev', tag: c.env.VERSION?.tag ?? '' }, at: new Date().toISOString() }));
 
-// Readiness: touches D1 and one Durable Object.
+// Readiness: D1 and one Durable Object, through the services.
 app.get('/readyz', async (c) => {
   try {
     await c.env.DB.prepare('SELECT 1').first();
-    const v = await c.env.PLAN_ROOM.getByName('readyz').version();
-    return c.json({ ok: true, d1: 'ok', planRoom: 'ok', version: v });
+    const r = await runtimeFor(c.env).runPromise(readiness.pipe(Effect.catchTag('NotReady', (e) => Effect.succeed({ planRoom: `not ready: ${e.message}`, version: -1 }))));
+    return c.json({ ok: r.version >= 0, d1: 'ok', ...r }, r.version >= 0 ? 200 : 503);
   } catch (e) {
     return c.json({ ok: false, error: e instanceof Error ? e.message : String(e) }, 503);
   }
 });
 
-const planId = z.string().min(1).max(64);
-
 app.post('/plans/:planId/commands', async (c) => {
-  const id = planId.parse(c.req.param('planId'));
-  const body = CommandEnvelope.safeParse(await c.req.json());
-  if (!body.success) return c.json({ rejected: 'invalid command', issues: body.error.issues }, 400);
-  const flags = await loadFlags(c.env.DB, body.data.by);
-  const room = c.env.PLAN_ROOM.getByName(id);
-  const result = await room.dispatch(body.data, flags);
-  if ('rejected' in result) return c.json(result, 409);
-  return c.json(result, 201);
+  const id = planId(c.req.param('planId'));
+  const body = await c.req.json().catch(() => null);
+  const outcome = await runtimeFor(c.env).runPromise(
+    Commands.use((cmds) => cmds.dispatch(id, body)).pipe(
+      Effect.map((events) => ({ status: 201 as const, body: { events } })),
+      Effect.catchTags({
+        InvalidCommand: (e) => Effect.succeed({ status: 400 as const, body: { rejected: `invalid ${e.type}: ${e.message}` } }),
+        CommandRejected: (e) => Effect.succeed({ status: 409 as const, body: { rejected: e.reason } }),
+      }),
+    ),
+  );
+  return c.json(outcome.body, outcome.status);
 });
 
 app.get('/plans/:planId/events', async (c) => {
-  const id = planId.parse(c.req.param('planId'));
-  return c.json(await c.env.PLAN_ROOM.getByName(id).events());
+  const id = planId(c.req.param('planId'));
+  return c.json(await runtimeFor(c.env).runPromise(PlanRooms.use((r) => r.events(id))));
 });
 
 app.get('/plans/:planId', async (c) => {
-  const id = planId.parse(c.req.param('planId'));
-  return c.json(await c.env.PLAN_ROOM.getByName(id).read());
+  const id = planId(c.req.param('planId'));
+  return c.json(await runtimeFor(c.env).runPromise(PlanRooms.use((r) => r.read(id))));
 });
 
 app.notFound((c) => c.json({ error: 'not found' }, 404));
@@ -50,25 +53,5 @@ app.onError((e, c) => {
   console.error(JSON.stringify({ message: 'request failed', path: c.req.path, error: e.message }));
   return c.json({ error: 'internal' }, 500);
 });
-
-// Flags live in one table, read once per request, evaluated inside decide(). Default off.
-// Returns plain data: a function would cross the Durable Object RPC boundary as an async stub, and a Promise is always truthy.
-async function loadFlags(db: D1Database, participant: string): Promise<string[]> {
-  const { results } = await db.prepare('SELECT name, enabled, allowlist, percent FROM flags').all<{ name: string; enabled: number; allowlist: string | null; percent: number }>();
-  const on = new Set<string>();
-  for (const f of results) {
-    if (f.enabled) on.add(f.name);
-    else if (f.allowlist && f.allowlist.split(',').map((s) => s.trim()).includes(participant)) on.add(f.name);
-    else if (f.percent > 0 && bucket(participant, f.name) < f.percent) on.add(f.name);
-  }
-  return [...on];
-}
-
-// Stable 0..99 bucket per participant and flag, so a percentage rollout is deterministic per person.
-function bucket(participant: string, flag: string): number {
-  let h = 2166136261;
-  for (const ch of `${flag}:${participant}`) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619) >>> 0; }
-  return h % 100;
-}
 
 export default app;

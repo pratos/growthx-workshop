@@ -10,7 +10,7 @@
   "dependencies": {
     "@greenhouse/domain": "workspace:*",
     "@greenhouse/schema": "workspace:*",
-    "hono": "^4.10.0",
-    "zod": "^4.1.0"
+    "effect": "4.0.7",
+    "hono": "^4.10.0"
   }
 }

@@ -1,9 +1,10 @@
 import { DurableObject } from 'cloudflare:workers';
 import { route, type Command, type DomainEvent, type Rejection, type StoredEvent, project } from '@greenhouse/domain';
+import type { Env } from './services';
 
 // One Durable Object per Plan. Its SQLite is the plan's event log: the system of record.
-export class PlanRoom extends DurableObject {
-  constructor(ctx: DurableObjectState, env: unknown) {
+export class PlanRoom extends DurableObject<Env> {
+  constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
     ctx.blockConcurrencyWhile(async () => {
       this.ctx.storage.sql.exec(`CREATE TABLE IF NOT EXISTS events (

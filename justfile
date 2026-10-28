@@ -24,7 +24,7 @@ checkin action:
 
 # Expect tests (ms), then api tests
 test:
-    bun test packages apps/api
+    bun test packages/domain packages/schema apps/api/test
 
 # Lint and typecheck: oxlint type-aware, oxfmt, tsc
 lint:

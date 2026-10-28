@@ -1,5 +1,5 @@
-import { z } from 'zod';
 import type { PlanView, Thread, Decision } from '@greenhouse/schema';
+import { Schema } from 'effect';
 import { handle, isRejection, type Ctx, type Message, type Rejection } from './kernel';
 import { thread, threadKey, OpenThread, Reply, ResolveThread, type ThreadEvent } from './thread/decider';
 
@@ -10,12 +10,11 @@ export type Command = Message & { by: string };
 export type DomainEvent = ThreadEvent;
 export type StoredEvent = DomainEvent & { version: number; at: string; by: string };
 
-// The wire shape of a command. `by` is the Participant issuing it; the api fills it from the session.
-export const CommandEnvelope = z.object({
-  type: z.enum(['OpenThread', 'Reply', 'ResolveThread']),
-  data: z.record(z.string(), z.unknown()),
-  by: z.string().min(1),
-});
+export { CommandEnvelope } from '@greenhouse/schema';
+
+// Typed errors for the services in apps/api. The domain itself stays pure and returns a Rejection value.
+export class CommandRejected extends Schema.TaggedError<CommandRejected>()('CommandRejected', { reason: Schema.String }) {}
+export class InvalidCommand extends Schema.TaggedError<InvalidCommand>()('InvalidCommand', { type: Schema.String, message: Schema.String }) {}
 
 const commands = { OpenThread, Reply, ResolveThread } as const;
 
@@ -33,7 +32,7 @@ export function route(history: readonly StoredEvent[], command: Command, ctx: Ct
 
 // A projection is a pure fold over the stream. Rebuilt on every read here; cached in D1 by `just replay` for cross-plan views.
 export function project(events: readonly StoredEvent[]): PlanView {
-  const threads = new Map<string, Thread>();
+  const threads = new Map<string, { -readonly [K in keyof Thread]: Thread[K] }>();
   const decisions: Decision[] = [];
   for (const e of events) {
     switch (e.type) {
