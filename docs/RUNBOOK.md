@@ -34,6 +34,8 @@ cmux panes: `just up` · a shell on main · `tail -f /tmp/gh-*.log` · the brows
 
 ## Live
 
+- Deploying from GitHub (secrets, the first deploy, failures): `docs/DEPLOY.md`
+
 - api: https://greenhouse-api.prthamesh-sarang.workers.dev · `/healthz` returns `version.label` (git describe, for people) and `version.id` (for rollback)
 - web: https://greenhouse-web.prthamesh-sarang.workers.dev · `/healthz` and `/readyz` through the binding · `/admin/flags`
 - check-in: https://growthx-eng.tarp.sh · `just checkin deploy`
