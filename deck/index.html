@@ -14,7 +14,6 @@
     <div class="reveal">
       <div class="slides">
         <section
-          id="slides-source"
           data-markdown="slides.md"
           data-separator="^---$"
           data-separator-vertical="^--$"
@@ -24,6 +23,7 @@
       </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/pele@1.12.0/dist/pele.global.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/markdown/markdown.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
@@ -31,7 +31,7 @@
     <script>
       // Each slide becomes an order ticket: ORDER # · running section · agenda clock (IST).
       function ticket() {
-        const leaves = [...document.querySelectorAll(".reveal .slides section")].filter((s) => !s.querySelector("section"));
+        const leaves = [...document.querySelectorAll(".reveal .slides section")].filter((s) => !s.querySelector("section") && !s.classList.contains("stack") && s.children.length > 0);
         let fig = 0, section = "GrowthX · The engineering playbook", clock = "";
         leaves.forEach((s, i) => {
           if (s.querySelector(".kot-hd")) return;
@@ -45,16 +45,25 @@
           const btw = s.classList.contains("btw-slide");
           const hd = document.createElement("header");
           hd.className = "kot-hd";
-          hd.setAttribute("aria-hidden", "true");
+          
           const cell = (cls, text) => { const e = document.createElement("span"); e.className = cls; e.textContent = text; return e; };
+          const num = String(i + 1).padStart(3, "0");
+          if (!s.id) s.id = num; // the URL then reads #/051, the same number as the header
           hd.append(
-            cell("no", "#" + String(i + 1).padStart(3, "0") + (btw ? " · /btw" : "")),
+            cell("no", "#" + num + (btw ? " · /btw" : "")),
             cell("item", s.dataset.section || section),
             cell("clock", s.dataset.cp || s.dataset.clock || clock),
           );
           const live = s.querySelector(".live");
           if (live) { live.textContent = "Fire"; hd.append(live); }
           s.prepend(hd);
+          if (!s.querySelector(".howto")) {
+            const keys = document.createElement("div");
+            keys.className = "howto-mini";
+            keys.setAttribute("aria-hidden", "true");
+            keys.innerHTML = "<kbd>→</kbd> next <kbd>↓</kbd> aside <kbd>G</kbd> go to any slide <kbd>S</kbd> speaker notes";
+            s.append(keys);
+          }
           const img = s.querySelector(".meme-image");
           if (img) {
             const f = cell("fig", "FIG. " + String(++fig).padStart(2, "0"));
@@ -64,18 +73,176 @@
           }
         });
       }
-      Reveal.on("ready", ticket);
+      // The URL carries the header number (#/051). Reveal's own hash reads numbers as positions, so it is off.
+      const goto = () => {
+        const m = location.hash.match(/^#\/(\d{3})$/);
+        const el = m && document.getElementById(m[1]);
+        if (!el) return;
+        const page = Reveal.isScrollView && Reveal.isScrollView() ? el.closest(".scroll-page") : null;
+        if (page) { page.scrollIntoView({ block: "start" }); return; }
+        const at = Reveal.getIndices(el); Reveal.slide(at.h, at.v);
+      };
+      const mark = () => {
+        if (Reveal.isScrollView && Reveal.isScrollView()) return; // scroll view: the header shows the number; links still work
+        const id = Reveal.getCurrentSlide()?.id;
+        if (id && location.hash !== "#/" + id) history.replaceState(null, "", "#/" + id);
+      };
+      // Charts: a <textarea class="pele-src"> holds Mermaid; Pele draws it as SVG in the deck's ink.
+      const charts = () => document.querySelectorAll("textarea.pele-src").forEach((t) => {
+        const box = document.createElement("div");
+        box.className = "pele-chart";
+        t.replaceWith(box);
+        window.pele.mount(box, t.value.trim(), { fontSize: 18, zoom: false });
+      });
+      // Tenet self-score: 0/1/2 per row, total out of 20, kept only in this browser.
+      const scorer = () => document.querySelectorAll(".scorer").forEach((box) => {
+        const key = "tenet-scores";
+        let saved = {};
+        try { saved = JSON.parse(localStorage.getItem(key) || "{}"); } catch {}
+        const rows = [...box.children];
+        const paint = () => {
+          let total = 0, all = true;
+          rows.forEach((r, i) => {
+            const v = saved[i];
+            r.querySelectorAll("button").forEach((b) => b.classList.toggle("on", String(v) === b.dataset.v));
+            if (v === undefined) all = false; else total += v;
+          });
+          const out = box.parentElement.querySelector(".total b");
+          if (out) out.textContent = Object.keys(saved).length ? total + (all ? "" : "…") : "–";
+        };
+        rows.forEach((r, i) => r.querySelectorAll("button").forEach((b) => b.addEventListener("click", (e) => {
+          e.stopPropagation();
+          saved[i] = Number(b.dataset.v);
+          try { localStorage.setItem(key, JSON.stringify(saved)); } catch {}
+          paint();
+        })));
+        paint();
+      });
+      // PR hours: four inputs, a live bar against Brooks, kept only in this browser.
+      const prHours = () => document.querySelectorAll(".pr-hours").forEach((box) => {
+        const key = "pr-hours";
+        let saved = {};
+        try { saved = JSON.parse(localStorage.getItem(key) || "{}"); } catch {}
+        const slide = box.closest("section");
+        const inputs = [...box.querySelectorAll("input")];
+        const paint = () => {
+          const v = Object.fromEntries(inputs.map((i) => [i.dataset.k, Math.max(0, parseFloat(i.value) || 0)]));
+          const total = Object.values(v).reduce((a, b) => a + b, 0);
+          const out = slide.querySelector(".pr-result");
+          out.innerHTML = total
+            ? "Coding was <b>" + Math.round((100 * v.code) / total) + "%</b> of your " + total + " hours. Brooks, 1975: <b>17%</b>."
+            : "Fill in your last PR. Brooks, 1975: coding was <b>17%</b>.";
+        };
+        inputs.forEach((i) => {
+          if (saved[i.dataset.k] != null) i.value = saved[i.dataset.k];
+          ["keydown", "keyup", "keypress"].forEach((t) => i.addEventListener(t, (e) => e.stopPropagation()));
+          i.addEventListener("input", () => {
+            saved[i.dataset.k] = i.value;
+            try { localStorage.setItem(key, JSON.stringify(saved)); } catch {}
+            paint();
+          });
+        });
+        paint();
+      });
+      // Go to slide: click the number in the header, or press G. Filter by number or title.
+      const jumper = () => {
+        const leaves = [...document.querySelectorAll(".reveal .slides section[id]")].filter((x) => /^\d{3}$/.test(x.id));
+        const items = leaves.map((x) => ({ id: x.id, n: String(+x.id), title: (x.querySelector("h1, h2")?.textContent || "untitled").replace(/\s+/g, " ").trim() }));
+        const box = document.createElement("div");
+        box.className = "jump";
+        box.hidden = true;
+        box.innerHTML = '<div class="jump-panel" role="dialog" aria-label="Go to slide"><input type="text" inputmode="search" placeholder="Type a slide number or a word from its title" aria-label="Slide number or title"><ol></ol></div>';
+        document.body.append(box);
+        const input = box.querySelector("input"), list = box.querySelector("ol");
+        const render = () => {
+          const q = input.value.trim().toLowerCase().replace(/^#/, "");
+          const words = (t) => t.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+          const rank = (it) => {
+            if (!q) return 3;
+            if (/^\d+$/.test(q)) return it.n === String(+q) ? 0 : it.n.startsWith(String(+q)) ? 1 : -1;
+            const t = it.title.toLowerCase();
+            if (t.startsWith(q)) return 0;
+            const ws = words(t), qs = words(q);
+            if (qs.length && qs.every((w) => ws.some((x) => x.startsWith(w)))) return 1;
+            return -1;
+          };
+          const hits = items.map((it) => [rank(it), it]).filter(([r]) => r >= 0).sort((a, b) => a[0] - b[0] || a[1].id.localeCompare(b[1].id)).map(([, it]) => it);
+          list.innerHTML = (hits.length ? '' : '<li class="none">No slide matches</li>') + hits.map((it) => `<li><button type="button" data-id="${it.id}"><span>#${it.id}</span>${it.title.replace(/</g, "&lt;")}</button></li>`).join("");
+        };
+        const open = () => { box.hidden = false; input.value = ""; render(); input.focus(); };
+        window.openJump = open;
+        const close = () => { box.hidden = true; };
+        const go = (id) => { close(); history.replaceState(null, "", "#/" + id); goto(); };
+        list.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) go(b.dataset.id); });
+        box.addEventListener("click", (e) => { if (e.target === box) close(); });
+        input.addEventListener("input", render);
+        input.addEventListener("keydown", (e) => {
+          e.stopPropagation();
+          if (e.key === "Escape") close();
+          if (e.key === "Enter") { const first = list.querySelector("button"); if (first) go(first.dataset.id); }
+        });
+        document.querySelectorAll(".kot-hd .no").forEach((n) => {
+          n.setAttribute("role", "button"); n.title = "Go to slide (G)";
+          n.addEventListener("click", (e) => { e.stopPropagation(); open(); });
+        });
+        Reveal.addKeyBinding({ keyCode: 71, key: "G", description: "Go to slide" }, open);
+        document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !box.hidden) close(); });
+      };
+      Reveal.on("ready", () => { charts(); ticket(); scorer(); prHours(); jumper(); goto(); mark(); });
+      // Phones: a bottom bar with previous, the slide number (opens Go to slide), and next.
+      Reveal.on("ready", () => {
+        if (!document.documentElement.classList.contains("phone")) return;
+        const chev = (d) => `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="${d}" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square"/></svg>`;
+        const bar = document.createElement("nav");
+        bar.className = "phone-nav";
+        bar.setAttribute("aria-label", "Slides");
+        bar.innerHTML = `<button type="button" class="prev" aria-label="Previous slide">${chev("M15 5 8 12l7 7")}</button>`
+          + `<button type="button" class="where" aria-label="Go to slide"><span></span><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4"/></svg></button>`
+          + `<button type="button" class="next" aria-label="Next slide">${chev("m9 5 7 7-7 7")}</button>`;
+        document.body.append(bar);
+        const where = bar.querySelector(".where span");
+        const sync = () => {
+          where.textContent = "#" + (Reveal.getCurrentSlide()?.id || "");
+          const r = Reveal.availableRoutes();
+          bar.querySelector(".prev").disabled = !(r.left || r.up);
+          bar.querySelector(".next").disabled = !(r.right || r.down);
+        };
+        bar.querySelector(".prev").addEventListener("click", () => Reveal.prev());
+        bar.querySelector(".next").addEventListener("click", () => Reveal.next());
+        bar.querySelector(".where").addEventListener("click", () => window.openJump && window.openJump());
+        Reveal.on("slidechanged", sync); sync();
+      });
+      Reveal.on("slidechanged", mark);
+      window.addEventListener("hashchange", () => setTimeout(() => { goto(); mark(); }, 0)); // after reveal reads the hash itself
 
+      // MORE tag: the next click reveals a fragment on this slide rather than changing slide
+      const more = () => {
+        document.documentElement.classList.toggle("kot-more", Reveal.availableFragments().next);
+        document.documentElement.classList.toggle("kot-down", Reveal.availableRoutes().down);
+      };
+      ["ready", "slidechanged", "fragmentshown", "fragmenthidden"].forEach((e) => Reveal.on(e, more));
+
+      // Phones in portrait get a tall slide and a scrolling deck instead of a shrunken 16:9 one.
+      const phone = window.matchMedia("(max-width: 760px) and (orientation: portrait)").matches;
+      if (phone) document.documentElement.classList.add("phone");
       Reveal.initialize({
-        hash: true,
-        width: 1280,
-        height: 720,
+        hash: false,
+        jumpToSlide: false,
+        scrollActivationWidth: null, // reveal would switch phones to its scroll view on its own
+        width: phone ? 720 : 1280,
+        height: phone ? Math.round(Math.min(1600, Math.max(1040, (720 * innerHeight) / innerWidth))) : 720,
         margin: 0,
         center: false,
-        transition: "none",
+        transition: phone ? "slide" : "none",
+        transitionSpeed: "fast",
+        fragments: !phone,
+        touch: true,
         backgroundTransition: "none",
         slideNumber: false,
-        controls: false,
+        controls: true,
+        controlsLayout: "bottom-right",
+        controlsBackArrows: "hidden",
+        controlsTutorial: false,
         progress: false,
         plugins: [RevealMarkdown, RevealNotes, RevealHighlight],
       });

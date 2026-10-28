@@ -1,5 +1,6 @@
 import { validate } from "./questions.js";
 import { formPage, resultsPage, resultsCsv } from "./pages.js";
+import { handbookPage } from "./handbook.js";
 
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
 const TOKEN_COOKIE = "aicl_t";
@@ -11,6 +12,7 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname === "/" && request.method === "GET") return html(formPage());
+    if (url.pathname === "/handbook" && request.method === "GET") return html(handbookPage());
     if (url.pathname === "/api/submit" && request.method === "POST") return submit(request, env);
 
     if (url.pathname === "/results" || url.pathname === "/results.csv") {
