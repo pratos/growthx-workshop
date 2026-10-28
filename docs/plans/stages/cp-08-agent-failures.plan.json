@@ -1,0 +1,545 @@
+{
+  "title": "The agent's failures, as expect tests",
+  "ticket": "cp-08",
+  "date": "2026-10-28",
+  "status": "final",
+  "author": "pratos with Claude Code",
+  "summary": "When the model keeps failing, the agent's Run should end as a fact everyone can read, not hang. This stage adds `FailRun` and `RunFailed`, fails a Run with the reason after three tries, and tells it as stories: the domain, the agent loop, pi-durable after a restart.",
+  "current": "cp-07 has the restyled plan page and sessions panel, and `just agent-serve` answering through pi-durable. When the model throws, the Run stays running: the loop retries it every 1.5 s forever, the queue behind it waits, and nobody in the Session is told.",
+  "discoveries": [
+    "Only whoever started a Run can finish it (`packages/domain/src/session/decider.ts`); failing follows the same rule, so a person cannot fail the agent's Run.",
+    "The `runs` projection already has a `result` column; a failed Run keeps its reason there, so the panel needs no new field.",
+    "`packages/agent/src/loop.ts` takes the API and the brain as arguments, so tests drive it with the real session model and engine.",
+    "The faux model counts its calls (`fauxCallCount` in `model.ts`): that is how a test proves a restart made no second call.",
+    "`apps/api/src/plan-room.ts` lists the session commands it accepts; `FailRun` must join that list."
+  ],
+  "endState": "A Run the model cannot answer in three tries ends in `RunFailed` with the reason, and the next question is answered. Three stories read aloud like what happened, `just test` is green, and the panel shows the failed bubble.",
+  "notDoing": [
+    "Retrying a failed Run; a person asks again, which queues a new one.",
+    "Backoff between tries; three quick tries, then the reason.",
+    "Failing a Run someone else started; only its starter can.",
+    "Alerts outside the plan room."
+  ],
+  "approach": "Domain first: the event is the contract the projection, the loop and the panel read. Then the loop and its stories. The bubble last, once a failed Run exists to show.",
+  "approachDiagram": "run",
+  "contexts": [
+    {
+      "name": "Agent work",
+      "about": "Sessions where Participants ask the agent, and the Runs that answer them."
+    }
+  ],
+  "vocabulary": [
+    {
+      "term": "FailRun",
+      "context": "Agent work",
+      "status": "new",
+      "meaning": "Command: whoever started a running Run ends it with a reason instead of a result.",
+      "not": [
+        "CancelRun",
+        "AbortRun",
+        "DropRun"
+      ]
+    },
+    {
+      "term": "RunFailed",
+      "context": "Agent work",
+      "status": "new",
+      "meaning": "Event: a Run ended without a result; carries who failed it and why.",
+      "not": [
+        "RunErrored",
+        "RunCancelled"
+      ]
+    },
+    {
+      "term": "Fail",
+      "context": "Agent work",
+      "status": "new",
+      "meaning": "The verb behind FailRun and RunFailed.",
+      "not": [
+        "abort",
+        "cancel",
+        "error"
+      ]
+    }
+  ],
+  "diagrams": [
+    {
+      "id": "run",
+      "spec": {
+        "kind": "state-explorer",
+        "question": "How does a Run move from asked to its end?",
+        "meta": {
+          "builtBy": "create-plan",
+          "builtAt": "2026-10-28",
+          "source": "packages/domain/src/session/decider.ts"
+        },
+        "diagram": "stateDiagram-v2\n  [*] --> Queued: Ask\n  Queued --> Running: StartRun\n  Running --> Running: Steer\n  Running --> Finished: FinishRun\n  Running --> Failed: FailRun\n  Finished --> [*]\n  Failed --> [*]\n  note right of Failed: RunFailed, with the reason",
+        "steps": [
+          {
+            "id": "ask",
+            "caption": "Ask queues a Run behind any others in the Session.",
+            "focus": [
+              "Queued"
+            ],
+            "edges": [
+              "edge0"
+            ]
+          },
+          {
+            "id": "start",
+            "caption": "StartRun takes the oldest queued Run; one runs at a time.",
+            "focus": [
+              "Running"
+            ],
+            "edges": [
+              "edge1"
+            ]
+          },
+          {
+            "id": "steer",
+            "caption": "Anyone in the Session can steer it while it runs.",
+            "focus": [
+              "Running"
+            ],
+            "edges": [
+              "edge2"
+            ]
+          },
+          {
+            "id": "finish",
+            "caption": "Whoever started it finishes it with a result.",
+            "focus": [
+              "Finished"
+            ],
+            "edges": [
+              "edge3"
+            ]
+          },
+          {
+            "id": "fail",
+            "caption": "New: whoever started it fails it with the reason.",
+            "focus": [
+              "Failed"
+            ],
+            "edges": [
+              "edge4"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "decisions": [
+    {
+      "id": "keeps-failing",
+      "question": "What happens when the model keeps failing?",
+      "options": [
+        {
+          "id": "fail-after-three",
+          "label": "Fail it after three tries"
+        },
+        {
+          "id": "retry-forever",
+          "label": "Retry forever"
+        },
+        {
+          "id": "drop",
+          "label": "Drop it silently"
+        }
+      ],
+      "chosen": "fail-after-three",
+      "by": "pratos",
+      "at": "2026-10-28",
+      "why": "A failed Run is a fact with a reason: everyone in the Session sees why, and the queue moves on. Retrying forever blocks the queue; dropping it records an answer that never came.",
+      "viz": {
+        "kind": "decision-report",
+        "question": "What happens when the model keeps failing?",
+        "meta": {
+          "builtBy": "create-plan",
+          "builtAt": "2026-10-28",
+          "source": "packages/agent/src/loop.ts"
+        },
+        "options": [
+          {
+            "id": "fail-after-three",
+            "label": "Fail it after three tries",
+            "summary": "Three tries, then FailRun with the last error; the next question starts.",
+            "diagram": "sequenceDiagram\n  participant L as Agent loop\n  participant M as Model\n  participant R as Plan room\n  L->>M: answer r1, try 1\n  M-->>L: model unavailable\n  L->>M: tries 2 and 3\n  M-->>L: model unavailable\n  L->>R: FailRun r1, with the reason\n  R-->>L: RunFailed, r2 can start",
+            "tried": {
+              "kind": "branch",
+              "ref": "cp-08",
+              "summary": "three stories green"
+            },
+            "axes": {
+              "seen": "Who could not answer, and why",
+              "queue": "Answered next",
+              "fact": "Yes: RunFailed with the reason",
+              "files": "decider, view, loop, panel"
+            }
+          },
+          {
+            "id": "retry-forever",
+            "label": "Retry forever",
+            "summary": "The loop keeps trying the same run every pass. What cp-07 does.",
+            "diagram": "sequenceDiagram\n  participant L as Agent loop\n  participant M as Model\n  participant R as Plan room\n  L->>M: answer r1\n  M-->>L: model unavailable\n  L->>M: again, every 1.5 s\n  M-->>L: model unavailable",
+            "tried": {
+              "kind": "snapshot",
+              "ref": "cp-07",
+              "summary": "the run stays running"
+            },
+            "axes": {
+              "seen": "The agent is working on it, forever",
+              "queue": "Waits forever",
+              "fact": "No",
+              "files": "None"
+            }
+          },
+          {
+            "id": "drop",
+            "label": "Drop it silently",
+            "summary": "Finish the run with no answer and move on.",
+            "diagram": "sequenceDiagram\n  participant L as Agent loop\n  participant M as Model\n  participant R as Plan room\n  L->>M: answer r1\n  M-->>L: model unavailable\n  L->>R: FinishRun r1, empty result",
+            "tried": null,
+            "axes": {
+              "seen": "An empty answer",
+              "queue": "Answered next",
+              "fact": "A false RunFinished",
+              "files": "The loop only"
+            }
+          }
+        ],
+        "steps": [
+          {
+            "id": "try",
+            "option": "fail-after-three",
+            "caption": "The agent asks the model; it fails.",
+            "focus": [
+              "L",
+              "M"
+            ],
+            "edges": [
+              "i0",
+              "i1"
+            ]
+          },
+          {
+            "id": "again",
+            "option": "fail-after-three",
+            "caption": "Two more tries fail the same way.",
+            "focus": [
+              "M"
+            ],
+            "edges": [
+              "i2",
+              "i3"
+            ]
+          },
+          {
+            "id": "fail",
+            "option": "fail-after-three",
+            "caption": "FailRun records why; everyone in the Session reads it.",
+            "focus": [
+              "R"
+            ],
+            "edges": [
+              "i4"
+            ]
+          },
+          {
+            "id": "next",
+            "option": "fail-after-three",
+            "caption": "The queue moves on to the next question.",
+            "focus": [
+              "R",
+              "L"
+            ],
+            "edges": [
+              "i5"
+            ]
+          },
+          {
+            "id": "try",
+            "option": "retry-forever",
+            "caption": "The same failure, every pass, with no end.",
+            "focus": [
+              "L",
+              "M"
+            ],
+            "edges": [
+              "i0",
+              "i1",
+              "i2",
+              "i3"
+            ]
+          },
+          {
+            "id": "try",
+            "option": "drop",
+            "caption": "The run finishes as if answered; the question is lost.",
+            "focus": [
+              "R"
+            ],
+            "edges": [
+              "i0",
+              "i1",
+              "i2"
+            ]
+          }
+        ],
+        "axes": [
+          {
+            "key": "seen",
+            "label": "What the Session sees"
+          },
+          {
+            "key": "queue",
+            "label": "The question behind it"
+          },
+          {
+            "key": "fact",
+            "label": "Recorded as a fact"
+          },
+          {
+            "key": "files",
+            "label": "Code that changes"
+          }
+        ]
+      }
+    }
+  ],
+  "design": {
+    "notes": "Chopin's language (GitHub Next, MIT): a white page on a warm olive ground; petrol is the one accent, for the action you can take; colour otherwise only for outcomes. Inter for the interface, Lora for document headings; light only.",
+    "tokens": {
+      "color": {
+        "bg": "#f4f4f1",
+        "fg": "#0e0d0a",
+        "muted": "#47453f",
+        "line": "rgba(0, 0, 0, 0.07)",
+        "surface": "#ffffff",
+        "inset": "#f8f8f6",
+        "selected": "#ecece9",
+        "accent": "#06707e",
+        "accent-hover": "#045a66",
+        "ok": "#236228",
+        "warn": "#704a02"
+      },
+      "type": [
+        {
+          "name": "title",
+          "size": 30,
+          "weight": 400,
+          "lineHeight": 1.15,
+          "sample": "gh-12"
+        },
+        {
+          "name": "section",
+          "size": 23,
+          "weight": 400,
+          "lineHeight": 1.25,
+          "sample": "Retry policy"
+        },
+        {
+          "name": "body",
+          "size": 16,
+          "weight": 400,
+          "lineHeight": 1.6,
+          "sample": "Retries live in the wrapper, so there is one place to change them."
+        },
+        {
+          "name": "interface",
+          "size": 14,
+          "weight": 400,
+          "lineHeight": 1.5,
+          "sample": "Saved, last edit by agent"
+        },
+        {
+          "name": "meta",
+          "size": 12,
+          "weight": 400,
+          "lineHeight": 1.35,
+          "sample": "Block b3   2 replies"
+        }
+      ],
+      "space": [
+        2,
+        4,
+        6,
+        8,
+        12,
+        16,
+        24,
+        32
+      ],
+      "radius": {
+        "sm": 4,
+        "md": 6,
+        "lg": 8,
+        "xl": 10
+      },
+      "font": {
+        "sans": "Inter, ui-sans-serif, system-ui, sans-serif",
+        "serif": "Lora, Georgia, serif",
+        "mono": "ui-monospace, Menlo, monospace"
+      }
+    }
+  },
+  "phases": [
+    {
+      "id": "domain",
+      "name": "Domain: a Run can fail, with a reason",
+      "goal": "The session decider accepts `FailRun` from whoever started the running Run and records `RunFailed`; the projection marks it `failed`.",
+      "diagram": "run",
+      "changes": [
+        {
+          "file": "docs/DOMAIN-VOCABULARY.md",
+          "intent": "Add `FailRun`, `RunFailed` and the verb Fail under Run, before code names them."
+        },
+        {
+          "file": "packages/domain/src/session/decider.ts",
+          "intent": "The command, the event, and the `FailRun` case in `decide`.",
+          "contract": {
+            "lang": "ts",
+            "code": "FailRun   = defineCommand('FailRun', { sessionId: Id, runId: Id, by: ParticipantId, reason: Text })\nRunFailed = defineEvent('RunFailed',   { sessionId: Id, runId: Id, by: ParticipantId, reason: Text })\ntype RunState = { runId: string; status: 'queued' | 'running' | 'finished' | 'failed'; startedBy?: string }\n// rejects: \"r1 is not running\" · \"only agent, who started r1, can fail it\""
+          }
+        },
+        {
+          "file": "packages/domain/src/session/view.ts",
+          "intent": "`RunFailed` sets the Run's status to `failed` and keeps the reason in `result`."
+        },
+        {
+          "file": "packages/schema/src/index.ts",
+          "intent": "`RunStatus` gains `failed`.",
+          "contract": {
+            "lang": "ts",
+            "code": "export const RunStatus = Schema.Literals(['queued', 'running', 'finished', 'failed']);"
+          }
+        },
+        {
+          "file": "apps/api/src/plan-room.ts",
+          "intent": "Accept `FailRun` among the session commands."
+        },
+        {
+          "file": "packages/domain/src/session/session.expect.test.ts",
+          "intent": "The story 'the agent cannot finish, and says why', snapshot `__expect__/agent-fails.snap.txt`."
+        }
+      ],
+      "verify": {
+        "automated": [
+          {
+            "cmd": "just test",
+            "done": false
+          },
+          {
+            "cmd": "just domain-vocabulary-check",
+            "done": false
+          }
+        ],
+        "manual": [
+          {
+            "text": "Read `agent-fails.snap.txt` aloud: Pratos is refused, then the agent fails it.",
+            "done": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "loop",
+      "name": "The loop: three tries, then FailRun",
+      "goal": "The agent fails its own Run with the last error after three thrown answers, and its stories run on the real session model and engine.",
+      "changes": [
+        {
+          "file": "packages/agent/src/loop.ts",
+          "intent": "After `ATTEMPTS` thrown answers, send `FailRun` with the last error as the reason.",
+          "contract": {
+            "lang": "ts",
+            "code": "export const ATTEMPTS = 3;\nexport type Answerer = { answer(sessionId: string, runId: string, asked: string): Promise<string> };\nexport function tick(planId: string, me: string, api: SessionsApi, brain: Answerer,\n  log?: (line: string) => void): Promise<number>;\n// reason: `could not answer after ${ATTEMPTS} tries: ${lastError}`, at most 400 characters"
+          }
+        },
+        {
+          "file": "packages/agent/test/loop.expect.test.ts",
+          "intent": "Two stories on in-memory SQLite: answers in order and resumes its own; fails after three."
+        },
+        {
+          "file": "packages/agent/test/__expect__/",
+          "intent": "`answers-in-order.snap.txt` and `fails-after-three.snap.txt`, committed and read in review."
+        },
+        {
+          "file": "packages/agent/test/brain.test.ts",
+          "intent": "Faux model: the same Run after a restart is answered from the store, one call."
+        }
+      ],
+      "verify": {
+        "automated": [
+          {
+            "cmd": "just test",
+            "done": false
+          }
+        ],
+        "manual": [
+          {
+            "text": "Read `fails-after-three.snap.txt` aloud; the next question is still answered.",
+            "done": false
+          },
+          {
+            "text": "In `answers-in-order`, the agent leaves Pratos's Run alone and resumes its own.",
+            "done": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "panel",
+      "name": "The failed bubble",
+      "goal": "A failed Run shows in the sessions panel where the answer would be: who could not answer, and the reason.",
+      "changes": [
+        {
+          "file": "apps/web/src/components/SessionsPanel.tsx",
+          "intent": "Status `failed` renders `gh-bubble-failed` with the reason from `result`."
+        }
+      ],
+      "components": [
+        {
+          "name": "Run, ended",
+          "notes": "A failed run says who could not answer and the reason, in amber, where the answer would be.",
+          "height": 250,
+          "css": ".gh-card { border: 1px solid var(--line); background: var(--surface); border-radius: var(--radius-lg); padding: var(--space-5); max-width: 560px; }\n.gh-muted { color: var(--muted); }\n.gh-kicker { margin: 0; color: var(--muted); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }\n.gh-input { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--surface-strong); color: var(--fg); border-radius: var(--radius-md); padding: 8px 12px; font: inherit; font-size: 14px; }\n.gh-btn { border: 1px solid var(--line); border-radius: var(--radius-md); padding: 8px 13px; font: inherit; font-size: 14px; font-weight: 600; color: var(--fg); background: var(--chip); white-space: nowrap; }\n.gh-btn-primary { background: var(--accent); border-color: transparent; color: var(--bg); }\n.gh-pill { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--chip-line); background: var(--chip); border-radius: 999px; padding: 1px 9px; font-size: 11.5px; color: var(--muted); }\n.gh-pill[data-tone=\"live\"] { color: var(--palm); border-color: color-mix(in oklab, var(--palm) 45%, transparent); }\n.gh-pill[data-tone=\"warn\"] { color: var(--warn); border-color: rgba(180, 83, 9, 0.35); }\n.gh-bubble { margin: 0; border-radius: var(--radius-lg); padding: 9px 13px; font-size: 14px; line-height: 1.45; max-width: 92%; }\n.gh-bubble-asked { align-self: flex-end; background: color-mix(in oklab, var(--lagoon) 16%, var(--surface-strong)); border-bottom-right-radius: 4px; }\n.gh-bubble-answer { align-self: flex-start; border: 1px solid var(--line); background: var(--surface-strong); border-bottom-left-radius: 4px; }\n.gh-bubble-failed { align-self: flex-start; border: 1px solid rgba(180, 83, 9, 0.35); color: var(--warn); }\n.who { display: block; font-size: 11px; color: var(--muted); }\n.gh-bubble-failed .who { color: var(--warn); }\n.row { display: flex; gap: var(--space-2); align-items: center; }\n.col { display: flex; flex-direction: column; gap: 10px; }\n.wrap { display: flex; flex-wrap: wrap; gap: var(--space-2); }\n.small { margin: 0; font-size: 13px; }\n.meta { font-size: 12px; color: var(--muted); }\n.list { list-style: none; margin: 0; padding: 0; }\n.tight { gap: 6px; }\n.panel { max-width: 380px; }\n.divider { border-top: 1px solid var(--line); padding-top: var(--space-4); }\n.tab { padding: 4px 12px; font-size: 12px; }\n.tab[aria-pressed=\"true\"] { border-color: var(--lagoon); }\n.body { font-weight: 500; }\nh2 { margin: 0; font-size: 18px; font-weight: 600; }\np { margin: 0; }\na { color: var(--accent); }\n.gh-arrive { animation: gh-arrive 180ms cubic-bezier(0.23, 1, 0.32, 1); }\n@keyframes gh-arrive { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }\n.gh-working::after { content: \"…\"; display: inline-block; width: 1ch; overflow: hidden; vertical-align: bottom; animation: gh-blink 1.2s steps(4, end) infinite; }\n@keyframes gh-blink { from { width: 0; } to { width: 1.1ch; } }\n@media (prefers-reduced-motion: reduce) { .gh-arrive { animation: none; } .gh-working::after { animation: none; width: auto; } }",
+          "states": [
+            {
+              "label": "finished",
+              "html": "<ol class=\"col list\"><li class=\"col tight\" data-status=\"finished\"><p class=\"gh-bubble gh-bubble-asked\"><span class=\"who\">sam asked</span>Who should own the retry budget?</p><p class=\"gh-bubble gh-bubble-answer gh-arrive\"><span class=\"who\">agent</span>The wrapper: one place to change, and the client stays simple.</p></li></ol>"
+            },
+            {
+              "label": "failed",
+              "html": "<ol class=\"col list\"><li class=\"col tight\" data-status=\"failed\"><p class=\"gh-bubble gh-bubble-asked\"><span class=\"who\">sam asked</span>Who should own the retry budget?</p><p class=\"gh-bubble gh-bubble-failed gh-arrive\"><span class=\"who\">agent could not answer</span>could not answer after 3 tries: model unavailable</p></li></ol>"
+            },
+            {
+              "label": "failed, then asked again",
+              "html": "<ol class=\"col list\"><li class=\"col tight\" data-status=\"failed\"><p class=\"gh-bubble gh-bubble-asked\"><span class=\"who\">sam asked</span>Who should own the retry budget?</p><p class=\"gh-bubble gh-bubble-failed gh-arrive\"><span class=\"who\">agent could not answer</span>could not answer after 3 tries: model unavailable</p></li><li class=\"col tight\" data-status=\"running\"><p class=\"gh-bubble gh-bubble-asked\"><span class=\"who\">sam asked</span>Who should own the retry budget, again?</p><p class=\"gh-muted gh-working small\">The agent is working on it</p></li></ol>"
+            }
+          ]
+        }
+      ],
+      "verify": {
+        "automated": [
+          {
+            "cmd": "just lint",
+            "done": false
+          }
+        ],
+        "manual": [
+          {
+            "text": "`ANTHROPIC_API_KEY=bad just agent-serve`: a question ends in the failed bubble.",
+            "done": false
+          }
+        ]
+      }
+    }
+  ],
+  "references": [
+    "the `event-sourcing` skill: every command has an expect test",
+    "`docs/plans/stages/cp-07-ui.plan.json`, where the failed bubble was styled"
+  ],
+  "change": {
+    "intent": "Chopin's tokens and notes replace the dark lagoon ones."
+  }
+}
