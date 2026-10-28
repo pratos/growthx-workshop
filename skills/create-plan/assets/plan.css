@@ -113,3 +113,7 @@ table { border-collapse: collapse; width: 100%; font-size: 15px; }
 th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-top: 1px solid var(--line); }
 th { color: var(--muted); font-weight: 600; font-size: 13px; }
 main > footer { margin-top: 72px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13.5px; }
+
+details.report { margin-top: 8px; }
+details.report > summary { font-size: 14px; color: var(--accent); width: fit-content; }
+details.report[open] > summary { margin-bottom: 4px; }

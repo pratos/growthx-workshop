@@ -70,4 +70,20 @@ One JSON object. Prose fields are Markdown and are rendered; keep them to short 
 | every phase has `verify.automated` and `verify.manual` | Done must be checkable |
 | `diagram` and `approachDiagram` refer to real ids | A broken reference is a silent gap |
 
-Warnings: an intent longer than two sentences, more than 40 contract lines in a phase, UI files changed without a component or without a design block.
+Warnings: an intent longer than two sentences, more than 40 contract lines in a phase, UI files changed without a component or without a design block, and every field over its word budget.
+
+## Word budgets
+
+| Field | Words |
+|---|---|
+| summary, current | 50 |
+| endState | 40 |
+| approach | 35 |
+| discoveries | 5 items, 25 each |
+| notDoing item, change intent, manual check, caption, option summary | 15 |
+| phase goal | 25 |
+| decision why | 35 |
+| component notes | 20 |
+| whole page, decided reports closed | about 1,000 |
+
+The build line prints the visible word count and reading time; the page shows the reading time in its byline. A decided decision's report renders collapsed, so its option text does not count.

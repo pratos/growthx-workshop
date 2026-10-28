@@ -68,8 +68,36 @@ for (const [i, ph] of (plan.phases ?? []).entries()) {
 if (uiTouched && componentCount === 0) warnings.push('the plan changes UI files but shows no component; add an inline component (with its states) to the phase that builds it');
 if (uiTouched && !plan.design) warnings.push('the plan changes UI files but has no design block; add the tokens the components use');
 
-for (const w of warnings) console.warn(`! ${w}`);
+// ---------- word budgets: a plan is read at 240 words a minute, so every field earns its words
+const words = (s) => String(s ?? '').replace(/`[^`]*`/g, 'x').split(/\s+/).filter(Boolean).length;
+const BUDGET = { summary: 50, current: 50, endState: 40, approach: 35, discovery: 25, discoveries: 5, notDoing: 15, why: 35, goal: 25, intent: 15, check: 15, option: 15, caption: 15, component: 20, total: 1000 };
+const over = (label, text, max) => { const n = words(text); if (n > max) warnings.push(`${label} is ${n} words; budget ${max}`); };
+for (const k of ['summary', 'current', 'endState', 'approach']) over(k, plan[k], BUDGET[k]);
+if ((plan.discoveries ?? []).length > BUDGET.discoveries) warnings.push(`${plan.discoveries.length} discoveries; keep the ${BUDGET.discoveries} that change a decision`);
+(plan.discoveries ?? []).forEach((x, i) => over(`discovery ${i + 1}`, x, BUDGET.discovery));
+(plan.notDoing ?? []).forEach((x, i) => over(`not doing ${i + 1}`, x, BUDGET.notDoing));
+for (const d of plan.decisions ?? []) {
+  over(`decision ${d.id}: why`, d.why, BUDGET.why);
+  for (const o of d.viz?.options ?? []) over(`decision ${d.id}, option ${o.id}: summary`, o.summary, BUDGET.option);
+  for (const s of d.viz?.steps ?? []) over(`decision ${d.id}, step ${s.id}: caption`, s.caption, BUDGET.caption);
+}
+for (const dg of plan.diagrams ?? []) for (const s of dg.spec?.steps ?? []) over(`diagram ${dg.id}, step ${s.id}: caption`, s.caption, BUDGET.caption);
+for (const ph of plan.phases ?? []) {
+  over(`phase ${ph.id}: goal`, ph.goal, BUDGET.goal);
+  for (const c of ph.changes ?? []) over(`phase ${ph.id}, ${c.file}: intent`, c.intent, BUDGET.intent);
+  for (const v of ph.verify?.manual ?? []) over(`phase ${ph.id}: manual check`, v.text, BUDGET.check);
+  for (const comp of ph.components ?? []) over(`phase ${ph.id}, component ${comp.name}: notes`, comp.notes, BUDGET.component);
+}
+// What a reader meets with every disclosure closed: decided reports are collapsed, open ones are not.
+const visible = [plan.summary, plan.current, plan.endState, plan.approach, ...(plan.discoveries ?? []), ...(plan.notDoing ?? []),
+  ...(plan.decisions ?? []).flatMap((d) => [d.question, d.why, ...(d.chosen ? [] : (d.viz?.options ?? []).map((o) => o.summary))]),
+  ...(plan.phases ?? []).flatMap((ph) => [ph.name, ph.goal, ...ph.changes.map((c) => c.intent), ...[...ph.verify.automated, ...ph.verify.manual].map((v) => v.text)]),
+  ...(plan.references ?? [])].reduce((n, s) => n + words(s), 0);
+if (visible > BUDGET.total) warnings.push(`the page reads ${visible} words with reports closed; budget ${BUDGET.total}. Cut repetition before cutting facts.`);
+const readMinutes = Math.max(1, Math.round(visible / 240));
+
 if (errors.length) { for (const e of errors) console.error(`✗ ${e}`); process.exit(1); }
+for (const w of warnings) console.warn(`! ${w}`);
 if (checkOnly) { console.log(`✓ ${basename(planPath)}: ${plan.phases.length} phases, ${(plan.decisions ?? []).length} decisions, ${diagrams.size} diagrams`); process.exit(0); }
 
 // ---------- rendering ----------
@@ -153,7 +181,9 @@ function decision(d) {
     <h3>${esc(d.question)}</h3>
     ${chosen ? `<p class="chosen">Chosen: <b>${esc(chosen)}</b>${d.by ? ` · ${esc(d.by)}` : ''}${d.at ? ` · ${esc(d.at)}` : ''}</p>` : `<p class="open">Not decided yet. A final plan has no open questions.</p>`}
     ${d.why ? md(d.why) : ''}
-    ${d.viz ? vizFrame(d.chosen ? { ...d.viz, decision: { optionId: d.chosen, label: chosen, by: { name: d.by ?? 'unknown' }, at: d.at ?? '' } } : d.viz, `decision-${d.id}`) : ''}
+    ${d.viz ? (d.chosen
+      ? `<details class="report"><summary>Compare the ${(d.viz.options ?? []).length} options</summary>${vizFrame({ ...d.viz, decision: { optionId: d.chosen, label: chosen, by: { name: d.by ?? 'unknown' }, at: d.at ?? '' } }, `decision-${d.id}`)}</details>`
+      : vizFrame(d.viz, `decision-${d.id}`)) : ''}
   </article>`;
 }
 
@@ -193,7 +223,7 @@ const html = `<!doctype html>
 <main>
   <header class="plan-head">
     <h1>${esc(plan.title)}</h1>
-    <p class="byline">${plan.ticket ? `<b>${esc(plan.ticket)}</b> · ` : ''}${esc(plan.date ?? '')} · <span class="pill pill-${esc(plan.status)}">${esc(plan.status)}</span>${plan.author ? ` · ${esc(plan.author)}` : ''} · built from <code>${esc(source)}</code></p>
+    <p class="byline">${plan.ticket ? `<b>${esc(plan.ticket)}</b> · ` : ''}${esc(plan.date ?? '')} · <span class="pill pill-${esc(plan.status)}">${esc(plan.status)}</span>${plan.author ? ` · ${esc(plan.author)}` : ''} · ${readMinutes} min read · built from <code>${esc(source)}</code></p>
   </header>
   <section id="summary" class="lede">${md(plan.summary)}</section>
   <section id="current"><h2>Where we are</h2>${md(plan.current ?? '')}${(plan.discoveries ?? []).length ? `<ul class="discoveries">${plan.discoveries.map((x) => `<li>${mdi(x)}</li>`).join('')}</ul>` : ''}</section>
@@ -218,4 +248,4 @@ const html = `<!doctype html>
 `;
 writeFileSync(outPath, html);
 rmSync(tmp, { recursive: true, force: true });
-console.log(`✓ ${basename(planPath)} → ${outPath}${warnings.length ? ` (${warnings.length} warning${warnings.length > 1 ? 's' : ''})` : ''}`);
+console.log(`✓ ${basename(planPath)} → ${outPath} · ${visible} words, ${readMinutes} min read${warnings.length ? ` (${warnings.length} warning${warnings.length > 1 ? 's' : ''})` : ''}`);

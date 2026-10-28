@@ -8,16 +8,16 @@
   "current": "Threads can be opened and replied to. Nothing records how a thread ended, so the same question gets argued again a week later. The plan room already keeps every change as an event, so a decision can be one more fact in that log.",
   "discoveries": [
     "The plan room appends every event a command produces in one synchronous block, so two events from one command land together or not at all.",
-    "Flags are read once per request in the API and passed to the plan room as a list of names; a function would arrive as a promise and read as true.",
+    "Flags are read once per request and passed to the plan room as names; a function would arrive as a promise and read as true.",
     "The glossary already names **Decision** and bans *resolution*, *verdict* and *outcome*."
   ],
   "endState": "Resolving a thread records two facts, `ThreadResolved` and `DecisionRecorded`. A second resolve is refused. The plan page shows the decision on the thread, and every open tab sees it at once. People without the flag see the thread as before.",
   "notDoing": [
-    "Reopening a resolved thread. It is a new command and a new event, and nobody has asked for it.",
-    "Editing a decision after it is recorded. Events are facts; a change of mind is a new thread.",
+    "Reopening a resolved thread; nobody has asked for it yet.",
+    "Editing a recorded decision; a change of mind is a new thread.",
     "Notifications outside the plan page."
   ],
-  "approach": "Domain first, because the event shapes are the contract everything else reads. Then the flag and the API, so the behaviour exists and is off. Then the page, built against the design language below with every state shown before it is coded.",
+  "approach": "Domain first, because event shapes are the contract everything else reads. Then the flag and API, so the behaviour exists and is off. Then the page, with every state shown first.",
   "approachDiagram": "lifecycle",
   "diagrams": [
     {
@@ -64,7 +64,7 @@
           },
           {
             "id": "twice",
-            "caption": "Resolved is the end. A second resolve is rejected, and the type system is what rejects it.",
+            "caption": "Resolved is the end; the type system rejects a second resolve.",
             "focus": [
               "Resolved",
               "root_end"
@@ -98,7 +98,7 @@
       "chosen": "two-events",
       "by": "pratos",
       "at": "2026-10-27",
-      "why": "Two events keep *a thread closed* and *a decision was made* as separate facts, so a later projection can count decisions without reading thread state. Both explorations passed their expect tests; this one touched one more projection.",
+      "why": "Two events keep a closed thread and a made decision as separate facts, so a projection can count decisions without reading thread state. Both explorations passed their expect tests.",
       "viz": {
         "kind": "decision-report",
         "question": "Is a decision its own fact, or part of ThreadResolved?",
@@ -111,7 +111,7 @@
           {
             "id": "two-events",
             "label": "Two events",
-            "summary": "The thread is resolved in one event and the decision is recorded in a second. A thread can close without a decision.",
+            "summary": "ThreadResolved, then DecisionRecorded; a thread can close without a decision.",
             "diagram": "sequenceDiagram\n  participant P as Person\n  participant A as API\n  participant L as Event log\n  participant D as Decision log\n  P->>A: ResolveThread(thread-7, \"wrapper\")\n  A->>L: ThreadResolved\n  A->>L: DecisionRecorded\n  L->>D: project decision",
             "tried": {
               "kind": "exploration",
@@ -136,7 +136,7 @@
           {
             "id": "one-event",
             "label": "One event",
-            "summary": "The resolve event carries the decision. A thread cannot close without one.",
+            "summary": "ThreadResolved carries the decision; closing without one is impossible.",
             "diagram": "sequenceDiagram\n  participant P as Person\n  participant A as API\n  participant L as Event log\n  participant D as Decision log\n  P->>A: ResolveThread(thread-7, \"wrapper\")\n  A->>L: ThreadResolved{decision}\n  L->>D: project decision",
             "tried": {
               "kind": "exploration",
@@ -203,7 +203,7 @@
           {
             "id": "decided",
             "option": "two-events",
-            "caption": "The log records who decided and what they chose. This second event can be left out.",
+            "caption": "The log records who decided what; this second event can be left out.",
             "edges": [
               "i2"
             ],
@@ -237,7 +237,7 @@
           {
             "id": "resolved",
             "option": "one-event",
-            "caption": "One event records that the thread is resolved and what was decided. Without a decision there is no resolve.",
+            "caption": "One event records the resolve and the decision; no decision, no resolve.",
             "edges": [
               "i1"
             ],
@@ -372,11 +372,11 @@
     {
       "id": "flag",
       "name": "Flag and API: the behaviour exists and is off",
-      "goal": "The API runs the command through the Effect services. `resolve-thread` is checked inside `decide`, read once per request, off by default, on for the two seeded people.",
+      "goal": "The API runs the command through Effect services. `resolve-thread` is checked in `decide`, off by default, on for the two seeded people.",
       "changes": [
         {
           "file": "apps/api/src/services.ts",
-          "intent": "`Commands.dispatch` decodes the envelope, reads flags for the participant, and turns a rejection into a typed error.",
+          "intent": "Decode, read flags, dispatch, and turn a rejection into a typed error.",
           "contract": {
             "lang": "ts",
             "code": "dispatch(planId: string, body: unknown):\n  Effect<StoredEvent[], InvalidCommand | CommandRejected>"
@@ -414,11 +414,11 @@
     {
       "id": "page",
       "name": "Plan page: resolve where the thread is",
-      "goal": "Each open thread gets a one-line field and a Resolve button. A resolved thread shows who decided what and when, in green, and the field is gone. Other tabs update without a refresh.",
+      "goal": "Open threads get a field and a Resolve button; resolved ones show who decided what and when. Other tabs update without a refresh.",
       "changes": [
         {
           "file": "apps/web/src/routes/plans.$planId.tsx",
-          "intent": "Add the resolve form to open threads and the decision line to resolved ones; subscribe to the plan's socket."
+          "intent": "Resolve form on open threads, decision line on resolved ones, live socket."
         },
         {
           "file": "apps/web/src/routes/plans.$planId.ws.ts",
@@ -465,7 +465,7 @@
             "done": true
           },
           {
-            "text": "As a guest, the refusal reads as a sentence and the field keeps what was typed.",
+            "text": "As a guest, the refusal is a sentence and the field keeps its text.",
             "done": false
           }
         ]

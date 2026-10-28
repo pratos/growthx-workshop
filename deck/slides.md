@@ -406,7 +406,7 @@ One check-in said it plainly: watching the timeline, it feels like everyone else
   </div>
 </div>
 
-<p class="kicker mono">DX is agent DX</p>
+<p class="kicker">DX is agent DX.</p>
 
 Note:
 Postgres locally, config in env files, no shared staging dependency for everyday work. Object storage behind a local stand-in (MinIO for S3), fixtures that seed a believable state. Twelve-factor is still the cheapest checklist. One team spent two to three weeks on a single problem: getting a repo to run on a laptop.
@@ -427,7 +427,7 @@ Postgres locally, config in env files, no shared staging dependency for everyday
   </div>
 </div>
 
-<p class="kicker mono">make illegal states unrepresentable</p>
+<p class="kicker">make illegal states unrepresentable.</p>
 
 Note:
 Application-specific invariants get their own types, not a comment. Anti-slop rules for your language live in the type config and lint config, not in a prompt the agent may skim.
@@ -448,7 +448,7 @@ Application-specific invariants get their own types, not a comment. Anti-slop ru
   </div>
 </div>
 
-<p class="kicker mono">agents thrive on feedback</p>
+<p class="kicker">agents thrive on feedback.</p>
 
 Note:
 No unit tests for their own sake. Three layers: expect tests at the library level, event-replay end-to-end through the domain, Stagehand for the few flows where the browser is the point. Expect tests are the legible kind: a human reads the output and says "yes, that". Example-based over clever.
@@ -469,7 +469,7 @@ No unit tests for their own sake. Three layers: expect tests at the library leve
   </div>
 </div>
 
-<p class="kicker mono">simple code · simple components · simple tech choices</p>
+<p class="kicker">simple code · simple components · simple tech choices.</p>
 
 ---
 <!-- .slide: data-section="The playbook · 05 of 10" -->
@@ -487,7 +487,7 @@ No unit tests for their own sake. Three layers: expect tests at the library leve
   </div>
 </div>
 
-<p class="kicker mono">your understanding ↔ the agent's</p>
+<p class="kicker">your understanding ↔ the agent's.</p>
 
 Note:
 Correct code can be wrong: a diff that passes every test can still contradict how the codebase works. Review agents fail predictably: missed bugs, missing context, nitpicks; tell them to skip the nitpicks. Model inversion: author with one model, review with a different one. Different blind spots.
@@ -517,7 +517,7 @@ Correct code can be wrong: a diff that passes every test can still contradict ho
   </div>
 </div>
 
-<p class="kicker mono">domain-driven design</p>
+<p class="kicker">domain-driven design.</p>
 
 Note:
 If Order, Booking and Reservation all mean the same thing, it will invent a fourth. Bounded contexts tell the agent where a word stops meaning what it meant. Put the glossary in the repo, next to the code. When a user's phrase does not map to a type, that is a design finding, not a naming chore.
@@ -547,7 +547,7 @@ If Order, Booking and Reservation all mean the same thing, it will invent a four
   </div>
 </div>
 
-<p class="kicker mono">make the data visible</p>
+<p class="kicker">make the data visible.</p>
 
 Note:
 Browser e2e is slow, flaky and expensive for an agent to iterate on. Pair event sourcing with the expect idiom: the snapshot is the event stream, reviewed like a story. Audits over the log let the agent verify its own work. Keep the browser for the flows where it is the point.
@@ -568,7 +568,7 @@ Browser e2e is slow, flaky and expensive for an agent to iterate on. Pair event 
   </div>
 </div>
 
-<p class="kicker mono">codebase context</p>
+<p class="kicker">codebase context.</p>
 
 Note:
 Feed user feedback and post-mortems back in so the next session starts smarter.
@@ -589,7 +589,7 @@ Feed user feedback and post-mortems back in so the next session starts smarter.
   </div>
 </div>
 
-<p class="kicker mono">no substitute</p>
+<p class="kicker">no substitute.</p>
 
 ---
 <!-- .slide: data-section="The playbook · 10 of 10" -->

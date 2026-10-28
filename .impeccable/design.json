@@ -1,0 +1,155 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-28T00:00:00Z",
+  "title": "Design System: Shipping Reliable Products (workshop deck)",
+  "extensions": {
+    "colorMeta": {
+      "paper":   { "role": "neutral",   "displayName": "Thermal Paper", "canonical": "#fbfaf6", "tonalRamp": ["#1f1e24", "#47464d", "#66656b", "#a6a5a9", "#dddbd4", "#efede6", "#f6f5f0", "#fbfaf6"] },
+      "paper-2": { "role": "neutral",   "displayName": "Second Ticket", "canonical": "#efede6", "tonalRamp": ["#1f1e24", "#47464d", "#66656b", "#a6a5a9", "#dddbd4", "#efede6", "#f6f5f0", "#fbfaf6"] },
+      "ink":     { "role": "primary",   "displayName": "Thermal Ink",   "canonical": "#1f1e24", "tonalRamp": ["#1f1e24", "#47464d", "#66656b", "#a6a5a9", "#dddbd4", "#efede6", "#f6f5f0", "#fbfaf6"] },
+      "ink-2":   { "role": "neutral",   "displayName": "Faded Ink",     "canonical": "#47464d", "tonalRamp": ["#1f1e24", "#47464d", "#66656b", "#a6a5a9", "#dddbd4", "#efede6", "#f6f5f0", "#fbfaf6"] },
+      "ink-3":   { "role": "neutral",   "displayName": "Pale Ink",      "canonical": "#66656b", "tonalRamp": ["#1f1e24", "#47464d", "#66656b", "#a6a5a9", "#dddbd4", "#efede6", "#f6f5f0", "#fbfaf6"] },
+      "ink-4":   { "role": "neutral",   "displayName": "Ghost Ink",     "canonical": "#a6a5a9", "tonalRamp": ["#1f1e24", "#47464d", "#66656b", "#a6a5a9", "#dddbd4", "#efede6", "#f6f5f0", "#fbfaf6"] },
+      "ink-5":   { "role": "neutral",   "displayName": "Paper Shadow",  "canonical": "#dddbd4", "tonalRamp": ["#1f1e24", "#47464d", "#66656b", "#a6a5a9", "#dddbd4", "#efede6", "#f6f5f0", "#fbfaf6"] },
+      "you":     { "role": "secondary", "displayName": "Red Thermal Ink", "canonical": "#c4372a", "tonalRamp": ["#3f1410", "#661d16", "#91281e", "#c4372a", "#d4645a", "#e2928a", "#efc0bb", "#f9e8e6"] }
+    },
+    "typographyMeta": {
+      "display":  { "displayName": "Display", "purpose": "Slide headlines; 96px default, 112px statements, 104px section openers, 240px for the closing Fin., fraction numerals at 96px. font-stretch 75%." },
+      "headline": { "displayName": "Headline", "purpose": "Default h2 headline; 76px on statements, 52px over plates, 60px over the agenda." },
+      "title":    { "displayName": "Title", "purpose": "Column and line-item heads, font-stretch 85%." },
+      "body":     { "displayName": "Body", "purpose": "Subtitles, running lines and the foot line; max 960px." },
+      "body-sm":  { "displayName": "Body small", "purpose": "Text inside splits, line items, tables and captions (21-23px)." },
+      "label":    { "displayName": "Ticket label", "purpose": "Running ticket header and FIRE marker; uppercase." },
+      "label-sm": { "displayName": "Stamp label", "purpose": "YOU/AGENT tags, FIG. numbers, table heads, fraction labels, row numbers; uppercase where stamped." },
+      "code":     { "displayName": "Code", "purpose": "Code blocks between two tear rules; comments in pale ink." }
+    },
+    "shadows": [
+      { "name": "outline-stamp", "value": "inset 0 0 0 1.5px currentColor", "purpose": "Not elevation: the outline of YOU and SHARED tags (2px ink for the FIRE marker). The deck has no offset or ambient shadows." }
+    ],
+    "motion": [
+      { "name": "slide-transition", "value": "none", "purpose": "Tickets cut, they do not slide; reveal transition and backgroundTransition are none." },
+      { "name": "fragment-fade-in", "value": "reveal fade-in", "purpose": "Foot lines and subtitles land on a click." },
+      { "name": "fragment-semi-out", "value": "opacity 0.35", "purpose": "Spent fragments dim once the next one appears." }
+    ],
+    "breakpoints": [
+      { "name": "projector", "value": "1280x720 fixed canvas, margin 0" }
+    ],
+    "rules": {
+      "tear": "2px dashed #a6a5a9 between rows, columns and code",
+      "tear-heavy": "3px dashed #1f1e24 under the ticket header and at the head of tables and fraction bands",
+      "perforation": "radial-gradient(circle at 8px 12px, #a6a5a9 5px, transparent 5.5px) 0 0 / 16px 12px repeat-x, 12px tall at the slide foot",
+      "ownership-bar": "3px solid top border, #c4372a for you, #1f1e24 for agent; workflow strip only"
+    }
+  },
+  "components": [
+    {
+      "name": "Ticket Header",
+      "kind": "nav",
+      "refersTo": "ticket-header",
+      "description": "Running header on every slide: order number, running section, clock cell, optional FIRE marker, over a heavy dashed rule.",
+      "html": "<header class=\"ds-kot-hd\"><span class=\"ds-no\">Order #041</span><span class=\"ds-item\">The playbook · 04 of 10</span><span class=\"ds-clock\"></span><span class=\"ds-live\">Fire</span></header>",
+      "css": ".ds-kot-hd { display: flex; gap: 24px; align-items: baseline; padding-bottom: 18px; border-bottom: 3px dashed var(--ink, #1f1e24); font: 500 17px/1 'Spline Sans Mono', ui-monospace, Menlo, monospace; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink, #1f1e24); background: var(--paper, #fbfaf6); } .ds-kot-hd .ds-no { flex: none; } .ds-kot-hd .ds-item { flex: 1; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ds-kot-hd .ds-clock { flex: none; min-width: 120px; text-align: right; } .ds-kot-hd .ds-live { flex: none; padding: 4px 10px; margin: -4px 0; box-shadow: inset 0 0 0 2px var(--ink, #1f1e24); }"
+    },
+    {
+      "name": "YOU Tag",
+      "kind": "chip",
+      "refersTo": "tag-you",
+      "description": "Red thermal ink stamp marking what the human does.",
+      "html": "<span class=\"ds-tag-you\">You</span>",
+      "css": ".ds-tag-you { display: inline-block; font: 500 18px/1 'Spline Sans Mono', ui-monospace, Menlo, monospace; letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 7px; color: var(--you, #c4372a); box-shadow: inset 0 0 0 1.5px var(--you, #c4372a); background: var(--paper, #fbfaf6); } .ds-tag-you:focus-visible { outline: 2px dashed var(--you, #c4372a); outline-offset: 3px; }"
+    },
+    {
+      "name": "AGENT Tag",
+      "kind": "chip",
+      "refersTo": "tag-agent",
+      "description": "Reverse-printed stamp marking what the agent does.",
+      "html": "<span class=\"ds-tag-agent\">Agent</span>",
+      "css": ".ds-tag-agent { display: inline-block; font: 500 18px/1 'Spline Sans Mono', ui-monospace, Menlo, monospace; letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 7px; color: var(--paper, #fbfaf6); background: var(--ink, #1f1e24); } .ds-tag-agent:focus-visible { outline: 2px dashed var(--ink, #1f1e24); outline-offset: 3px; }"
+    },
+    {
+      "name": "SHARED Tag",
+      "kind": "chip",
+      "refersTo": "tag-both",
+      "description": "Pale outlined stamp for work both sides share.",
+      "html": "<span class=\"ds-tag-both\">Shared</span>",
+      "css": ".ds-tag-both { display: inline-block; font: 500 18px/1 'Spline Sans Mono', ui-monospace, Menlo, monospace; letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 7px; color: var(--ink-3, #66656b); box-shadow: inset 0 0 0 1.5px var(--ink-4, #a6a5a9); }"
+    },
+    {
+      "name": "Split with Tear",
+      "kind": "card",
+      "refersTo": "agent-bar",
+      "description": "Two columns divided by a vertical tear rule; each column owned by YOU or AGENT.",
+      "html": "<div class=\"ds-split\"><div><span class=\"ds-t ds-y\">You</span><p>Committed examples prove intent in a way prose cannot.</p></div><div><span class=\"ds-t ds-a\">Agent</span><p>Feedback in milliseconds beats feedback in a code review.</p></div></div>",
+      "css": ".ds-split { display: grid; grid-template-columns: 1fr 1fr; background: var(--paper, #fbfaf6); font-family: Archivo, 'Arial Narrow', sans-serif; } .ds-split > div { padding: 4px 36px 0 0; } .ds-split > div + div { padding: 4px 0 0 36px; border-left: 2px dashed var(--ink-4, #a6a5a9); } .ds-split p { margin: 14px 0 0; font-size: 23px; line-height: 1.32; color: var(--ink-2, #47464d); } .ds-t { display: inline-block; font: 500 18px/1 'Spline Sans Mono', monospace; letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 7px; } .ds-y { color: var(--you, #c4372a); box-shadow: inset 0 0 0 1.5px var(--you, #c4372a); } .ds-a { color: var(--paper, #fbfaf6); background: var(--ink, #1f1e24); }"
+    },
+    {
+      "name": "Fraction Band",
+      "kind": "custom",
+      "refersTo": "agent-slice",
+      "description": "Big condensed numerals between dashed rules; the agent's share reverse-printed.",
+      "html": "<div class=\"ds-fr\"><div><strong>1/3</strong><span>planning</span></div><div class=\"ds-ag\"><strong>1/6</strong><span>coding</span></div><div><strong>1/4</strong><span>component test</span></div><div><strong>1/4</strong><span>system test</span></div></div>",
+      "css": ".ds-fr { display: grid; grid-template-columns: 2fr 1fr 1.5fr 1.5fr; border-top: 3px dashed var(--ink, #1f1e24); border-bottom: 2px dashed var(--ink-4, #a6a5a9); background: var(--paper, #fbfaf6); } .ds-fr > div { padding: 30px 22px; } .ds-fr > div + div { border-left: 2px dashed var(--ink-4, #a6a5a9); } .ds-fr strong { display: block; font: 800 96px/1 Archivo, 'Arial Narrow', sans-serif; font-stretch: 75%; letter-spacing: -0.02em; color: var(--ink, #1f1e24); } .ds-fr span { display: block; margin-top: 14px; font: 500 16px/1 'Spline Sans Mono', monospace; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3, #66656b); } .ds-fr .ds-ag { background: var(--ink, #1f1e24); } .ds-fr .ds-ag strong, .ds-fr .ds-ag span { color: var(--paper, #fbfaf6); }"
+    },
+    {
+      "name": "Ticket Table",
+      "kind": "custom",
+      "description": "Mono heads over a heavy dashed rule, rows on tear rules, first column bold ink.",
+      "html": "<table class=\"ds-tb\"><tr><th>Role</th><th>Filled by</th></tr><tr><td>Surgeon</td><td>owns the problem, the design, the final call</td></tr><tr><td>Copilot</td><td>argues with the design, writes a lot of the code</td></tr></table>",
+      "css": ".ds-tb { border-collapse: collapse; width: 100%; background: var(--paper, #fbfaf6); font-family: Archivo, 'Arial Narrow', sans-serif; } .ds-tb th { font: 500 18px/1.2 'Spline Sans Mono', monospace; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3, #66656b); text-align: left; padding: 10px 12px 10px 0; border-bottom: 3px dashed var(--ink, #1f1e24); } .ds-tb td { padding: 10px 12px 10px 0; border-bottom: 2px dashed var(--ink-4, #a6a5a9); color: var(--ink-2, #47464d); font-size: 21px; line-height: 1.3; } .ds-tb td:first-child { color: var(--ink, #1f1e24); font-weight: 700; white-space: nowrap; }"
+    },
+    {
+      "name": "/btw Ticket",
+      "kind": "card",
+      "refersTo": "btw-ticket",
+      "description": "Vertical aside as a second ticket on darker stock with the first ticket's paper strip above.",
+      "html": "<section class=\"ds-btw\"><div class=\"ds-btw-hd\">Order #066 · /btw</div><h2>Changing a recorded event</h2></section>",
+      "css": ".ds-btw { position: relative; padding: 46px 32px 32px; background: var(--paper-2, #efede6); } .ds-btw::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 22px; background: var(--paper, #fbfaf6); border-bottom: 2px dashed var(--ink-4, #a6a5a9); } .ds-btw-hd { padding-bottom: 12px; border-bottom: 3px dashed var(--ink, #1f1e24); font: 500 17px/1 'Spline Sans Mono', monospace; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink, #1f1e24); } .ds-btw h2 { margin: 24px 0 0; font: 800 48px/0.96 Archivo, 'Arial Narrow', sans-serif; font-stretch: 75%; letter-spacing: -0.015em; color: var(--ink, #1f1e24); }"
+    },
+    {
+      "name": "Plate with FIG. number",
+      "kind": "custom",
+      "refersTo": "plate",
+      "description": "1-bit ink+paper print at its native on-slide height, pixelated, numbered FIG. NN ahead of the caption.",
+      "html": "<figure class=\"ds-plate\"><div class=\"ds-print\"></div><figcaption><span class=\"ds-fig\">FIG. 02</span>wait, it's all product engineering? · always has been.</figcaption></figure>",
+      "css": ".ds-plate { margin: 0; background: var(--paper, #fbfaf6); font-family: Archivo, 'Arial Narrow', sans-serif; } .ds-print { width: 320px; height: 180px; image-rendering: pixelated; background: repeating-conic-gradient(var(--ink, #1f1e24) 0 25%, var(--paper, #fbfaf6) 0 50%) 0 0 / 4px 4px; } .ds-plate figcaption { margin-top: 16px; font-size: 23px; color: var(--ink-2, #47464d); } .ds-fig { display: inline-block; margin-right: 14px; font: 500 16px/1 'Spline Sans Mono', monospace; letter-spacing: 0.06em; color: var(--ink, #1f1e24); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Kitchen Order Ticket",
+    "overview": "Every slide is one order ticket handed to the kitchen, because an agent will cook. The ground is thermal paper, the type is thermal ink, and the only structure is what a ticket printer can make: a running header, dashed tear rules, a perforated foot, reverse-printed bars. The room reads one order at a time and always knows where it is from the header: order number left, running section centre.\n\nThe deck is sparse by design. A slide carries one headline, one supporting line, and at most one structure (a split, a ladder, a table, a strip, a plate). Section openers are mostly blank stock with the headline sitting low. Detail lives in the speaker's mouth and the notes, not on the paper.\n\nWho did the work is the one semantic distinction the world encodes: the human prints in red thermal ink, the agent prints in reverse (paper on an ink bar). Everything else is ink on paper.",
+    "keyCharacteristics": [
+      "Thermal paper ground, a five-step ink ramp, one red ink for the human.",
+      "Condensed Archivo 800 headlines, Archivo 400 lines, Spline Sans Mono for ticket furniture.",
+      "Dashed tear rules as the divider language; no boxes, no radius, no shadows.",
+      "Running ticket header and perforated foot on every slide.",
+      "1-bit two-colour plates numbered FIG. NN."
+    ],
+    "rules": [
+      { "name": "The Five-Step Ramp Rule", "body": "The ink ramp is the only grey. No tints, no opacities standing in for colour, except the reveal `semi-out` fragment state (0.35).", "section": "colors" },
+      { "name": "The Red Means You Rule", "body": "Red appears only where the human acted or owns the step. If a red mark cannot be read as \"you did this\", it is wrong.", "section": "colors" },
+      { "name": "The Ghost Ink Carries No Words Rule", "body": "`ink-4` draws rules and dots; it is too faint to carry text on a projector.", "section": "colors" },
+      { "name": "The Two Sizes Rule", "body": "Each slide reads in one display size and one line size; mono furniture does not count. Add a structure, not a third text size.", "section": "typography" },
+      { "name": "The Mono Is Printed Rule", "body": "Spline Sans Mono is for what the ticket printer stamps: header, tags, numbers, figure marks, table heads, code, paths and commands. Argument and prose are never mono.", "section": "typography" },
+      { "name": "The Blank Stock Rule", "body": "Section openers stay mostly empty paper; never fill the top half.", "section": "layout" },
+      { "name": "The Staircase Is Opt-In Rule", "body": "Ladders are flush by default; the 56px-per-step indent applies only to a ladder explicitly marked as a staircase.", "section": "layout" },
+      { "name": "The Print Has No Lift Rule", "body": "Nothing floats. If something needs weight, reverse-print it; if something is an aside, put it on the second ticket.", "section": "elevation" },
+      { "name": "The Tear Rule", "body": "Dividers are dashed. Two weights: 3px ink for the header and the top of a table or fraction band, 2px ghost ink for everything between. A solid 3px top bar exists only as an ownership mark (red for you, ink for the agent) in the workflow strip, never as a divider.", "section": "shapes" }
+    ],
+    "dos": [
+      "Do keep every slide on `paper` (#fbfaf6) with the running ticket header and the perforated foot.",
+      "Do mark ownership with red ink for the human and reverse print for the agent, and nothing else.",
+      "Do separate with dashed tear rules: 3px ink at the head of a block, 2px ghost ink between.",
+      "Do set headlines in Archivo 800 at 75% width, 0.96 leading, -0.015em tracking.",
+      "Do export plates as 1-bit ink+paper at their exact on-slide height, render them pixelated, and number them FIG. NN.",
+      "Do put /btw asides on `paper-2` with the paper strip above, except plate asides, which stay on `paper`."
+    ],
+    "donts": [
+      "Don't draw boxed tiles, cards, rounded corners, or offset shadows; the ticket has no containers.",
+      "Don't use solid rules as dividers; solid bars are ownership marks only.",
+      "Don't put eyebrow labels or section numbers above headlines; location lives in the ticket header.",
+      "Don't introduce a grey, tint, or accent outside the five-step ink ramp and the one red.",
+      "Don't set prose, slogans, or category labels in mono.",
+      "Don't show grid-paper or other background chrome."
+    ]
+  }
+}
