@@ -22,7 +22,7 @@ cmux panes: `just up` · a shell on main · `tail -f /tmp/gh-*.log` · the brows
 | Agent names it ThreadClosed | ask pi: "add resolve thread"; watch the names | `git checkout wrong/cp-01 && just glossary-check` fails; on `cp-01` it passes | `just demo cp-01` |
 | Tests the agent learns from | ask pi for a test; it writes a mock | `just test`, then `cat packages/domain/src/thread/__expect__/resolve.snap.txt` | `just demo cp-02` |
 | Changing a recorded event | ask Claude Code to "add rationale to decisions"; it edits the schema | `cat packages/domain/src/upcast/__expect__/*.snap.txt` | `just demo cp-03` |
-| Plan as a wall of Markdown | `/create_plan GH-12` in Claude Code | open `docs/decisions/gh-12.html`, click an option | `just demo cp-04` |
+| A plan you look at | `/create_plan GH-12` in Claude Code; the hook builds the page | open `docs/plans/2026-10-28-resolve-thread.plan.html`: decision, components, phases | `just plans`, then open the page |
 | UI half | Claude Code with impeccable + animate on `/plans/gh-12`; one Agentation note | open a thread, resolve it, see the decision | `just demo cp-05` |
 | Correct code that is wrong | `HEAD_REF=wrong/cp-01 just review cp-02` live, about ninety seconds | `cat demo/cp-06-review.md` | `just demo cp-06` |
 | A durable agent | terminal 2: `just agent-watch`; terminal 1: `just agent-reset && just agent-demo`, at "service_status: 3s / 8s" run `pkill -9 -f src/demo.ts`, then `just agent-demo` twice | the three observed runs in `packages/agent/README.md` | read the README's output aloud |
@@ -48,7 +48,8 @@ just up                                  # api + web locally, D1 and DO in minif
 just test                                # expect tests then api tests
 just glossary-check                      # cp-01
 just replay gh-12                        # the stream as a story (api must be up on :8787, or GH_API=<url>)
-just artifact docs/decisions/gh-12.spec.json docs/decisions/gh-12.html
+just plan docs/plans/2026-10-28-resolve-thread.plan.json   # the plan page; a hook rebuilds it on edit
+just plans                               # every plan with status and progress
 HEAD_REF=wrong/cp-01 just review cp-02   # model inversion, live
 just deploy                              # wrangler: api then web; refuses if a D1 migration is pending
 GH_REMOTE=1 just flag user resolve-thread pratos

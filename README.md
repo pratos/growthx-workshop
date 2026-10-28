@@ -21,6 +21,6 @@ Read `AGENTS.md` first, then `docs/GLOSSARY.md` and `docs/ARCHITECTURE.md`. The 
 | `packages/domain` | The decider: commands validate, events are facts, projections are pure. Expect tests read as a story. |
 | `packages/schema` | The vocabulary as types. |
 | `apps/*/wrangler.jsonc` | Each Worker's bindings as config. `just deploy` runs wrangler for api then web, passes a `git describe` label, and never runs migrations. |
-| `docs/` | Glossary, architecture, release checklist, checkpoints, runbook, and the decisions folder with built artifacts. |
+| `docs/` | Glossary, architecture and its map, release checklist, checkpoints, runbook, decisions, and `plans/`: each plan is JSON rendered to an HTML page by the create-plan skill. |
 | `deck/`, `workshop-page/`, `reliable-products-workshop.html` | The talk itself. |
 | `skills/` | Loaded by Claude Code and pi. Ours in place; third-party vendored at pinned commits by `just skills`. |

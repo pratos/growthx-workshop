@@ -946,18 +946,20 @@ Minute 6 to 9. Say the planning question out loud before the agent hears it. Ope
 
 <div class="poster-label">GREENHOUSE · THE DEMO · 02 PLAN THE PRODUCT · cp-04</div>
 
-## The plan is a report you click, not a wall of Markdown
+## The plan is a page you look at, not a wall of Markdown
 
 ```sh
-just artifact docs/decisions/gh-12.spec.json docs/decisions/gh-12.html
+just plan docs/plans/2026-10-28-resolve-thread.plan.json
 ```
 
-<p>Each option has a diagram, a cost and the Block it changes.</p>
-<p>Clicking one records a Decision on the Thread.</p>
+<p>Every choice is a decision report you click, every new screen is the real component in all its states.</p>
+<p>Code appears only as contracts, fifteen lines at most; the builder refuses more.</p>
 <p>Plans orient. They do not bind.</p>
 
+<p class="kicker mono"><a href="../docs/plans/2026-10-28-resolve-thread.plan.html">plan: docs/plans/2026-10-28-resolve-thread.plan.html</a></p>
+
 Note:
-Minute 9 to 13. Run `/create_plan GH-12` in Claude Code and let the Markdown scroll for ten seconds, then open docs/decisions/gh-12.html and click an option. Point at the Decision appearing on the Block. Say: the plan tells the agent where to look, the tests tell it when it is done.
+Minute 9 to 13. Run `/create_plan GH-12` in Claude Code; it writes the plan JSON and the hook builds the page. Open it: scroll the summary, open the decision and point at the locked choice, then the three states of the resolve component. Say: the plan tells the agent where to look and what must be true; the tests tell it when it is done.
 
 ---
 
