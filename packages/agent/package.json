@@ -1,0 +1,19 @@
+{
+  "name": "@greenhouse/agent",
+  "private": true,
+  "description": "Durable, resumable agent loop on pi-durable: kill -9 mid tool call, run again, it resumes.",
+  "type": "module",
+  "scripts": {
+    "demo": "bun run src/demo.ts",
+    "watch": "bun run src/watch.ts",
+    "reset": "rm -f agent.sqlite agent.sqlite-wal agent.sqlite-shm"
+  },
+  "dependencies": {
+    "@earendil-works/chord": "^1.4.0",
+    "@earendil-works/pi-ai": "^1.4.0",
+    "@earendil-works/pi-durable": "^1.4.0"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.4"
+  }
+}

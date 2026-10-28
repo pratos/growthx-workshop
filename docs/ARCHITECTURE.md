@@ -20,6 +20,7 @@ apps/web (TanStack Start · Worker)  ──service binding──▶  apps/api (H
 |---|---|---|
 | apps/web | packages/schema, the API over `env.API` | packages/domain, packages/db, any database client |
 | apps/api | packages/domain, packages/schema | apps/web |
+| packages/agent | @earendil-works/pi-durable, pi-ai, chord; bun:sqlite | apps/*, packages/domain (for now: a standalone harness demo) |
 | apps/checkin | nothing; a standalone Worker that shares the toolchain | packages/* |
 | packages/domain | packages/schema, zod | anything with I/O |
 | packages/schema | zod | everything else |
