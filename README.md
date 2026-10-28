@@ -29,3 +29,6 @@ Read `AGENTS.md` first, then `docs/DOMAIN-VOCABULARY.md` and `docs/ARCHITECTURE.
 
 One task, end to end, in nine steps: [`docs/WORKFLOW.md`](docs/WORKFLOW.md). Before anything ships, three questions: [`docs/RELEASE.md`](docs/RELEASE.md); every pull request asks them.
 
+## Deploying
+
+Two sites: GitHub Actions deploys `main` to greenhouse-demo.tarp.sh on every merge; the finished product goes to greenhouse.tarp.sh by hand from the last stage. Migrations are applied by hand. Setup, the order of first deploys, and what each failure means: [`docs/DEPLOY.md`](docs/DEPLOY.md).
