@@ -1,0 +1,5 @@
+{
+  "start": "node server.js",
+  "health": "/",
+  "migrate": "npm run migrate --silent"
+}

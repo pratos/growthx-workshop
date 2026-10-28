@@ -1,0 +1,11 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "greenhouse-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-20",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true, "logs": { "enabled": true, "head_sampling_rate": 1 }, "traces": { "enabled": true, "head_sampling_rate": 0.1 } },
+  "version_metadata": { "binding": "VERSION" },
+  "vars": { "GIT_DESCRIBE": "dev" },
+  "d1_databases": [{ "binding": "DB", "database_name": "greenhouse", "database_id": "96c06c57-93db-4a43-99d0-3a14bd1e55a5", "migrations_dir": "migrations" }]
+}
