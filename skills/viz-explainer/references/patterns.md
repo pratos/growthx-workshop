@@ -12,25 +12,28 @@ Each kind answers one shape of question, replaces one habit, and maps to one pat
 
 ## Architecture map
 
-Mermaid: `flowchart LR` with one `subgraph` per deployable unit or bounded context. Node ids are the package or binding names. Edge labels are the mechanism (service binding, RPC, SQL, WebSocket).
+One map per project, not one per commit or checkpoint. Its source is the project's architecture document (here `docs/ARCHITECTURE.md`): a Mermaid block, a walkthrough table and a "Where it lives" table. `just arch` builds it; a hook rebuilds it when the document changes and refuses a new app or package that has no place on it.
 
-Steps: one per boundary. Step 1 shows the whole map faded, then each step focuses one subgraph and the edges that cross its boundary. The last step shows the one edge that is optional or deferred, drawn dashed.
+Plain language, no code. Nodes are the parts a person would name: "Web app", "API", "Plan room", "Agent", "Settings and summaries". No file names, function names, routes, bindings or library names in labels or captions; the build rejects labels that read like code. Edge labels say what happens in a person's words: "asks on your behalf", "records it", "shows it at once".
 
-Evidence: each node may carry `evidence: ["apps/api/src/index.ts:12"]`. The template shows it under the caption when the node is focused. A map without evidence is a drawing; the point is that the agent proves it.
+Steps are states a person works through, in the order they meet them: open, ask, check, record, share. A step is a moment in someone's use of the product, not a box in the diagram. Eight at most.
+
+Where the code lives is a separate table in the source document, read by the coverage check, never drawn. Readers who want the code follow it from there.
 
 ```mermaid
 flowchart LR
-  subgraph web[apps/web · Worker]
-    R[TanStack routes]
+  P["You · in a plan"]
+  subgraph cf["Runs on Cloudflare"]
+    W["Web app"]
+    A["API"]
+    R[("Plan room · what happened, in order")]
   end
-  subgraph api[apps/api · Worker]
-    H[Hono] --> AUTH[Better Auth]
-    H --> DO[(PlanRoom DO · event log)]
-    H --> D1[(D1 · auth + projections)]
-  end
-  R -- service binding --> H
-  D1 -. optional: Hyperdrive .-> PG[(Postgres)]
+  P -- "opens a plan, writes, decides" --> W
+  W -- "asks on your behalf" --> A
+  A -- "records it" --> R
 ```
+
+Deep links: `index.html#record` opens on that step, which is how a slide or a PR points at one moment of the map.
 
 ## State explorer
 

@@ -16,6 +16,7 @@ Three sources set the bar. Maggie Appleton's "Planning with Agents": the plan is
 - You are about to ask a question in prose whose answers are options the reader has to picture.
 - A plan, PR or review needs "what did the agent touch, and why" attached to it.
 - A `just explain`, `just trace` or `just plan` recipe asks for an artifact.
+- The project's architecture document changed: rebuild the one architecture map with `just arch` (a hook usually does this already).
 
 Do not fire for a single fact, a code snippet, or anything a one-line sentence already says. A diagram with two boxes is prose wearing a costume.
 
@@ -27,15 +28,16 @@ Do not fire for a single fact, a code snippet, or anything a one-line sentence a
 4. **One artifact, one question.** The title is the question. If you need two titles, build two artifacts.
 5. **Under a minute to read.** Eight steps at most, captions under twenty words, one diagram on screen at a time.
 6. **Motion only for state change.** Steps, focus, edge drawing and the camera animate because they show order and place. Nothing decorative. Load the `animate` skill for curve and duration decisions; do not invent values here.
-7. **Readable at the size it ships.** The page owns the SVG's viewBox. A diagram that fits the stage at natural size is shown whole, no camera. A wider one gets a camera that frames each step's focus plus both ends of its edges, never zooming past 1.25:1, with `f` for the whole map. If a step's frame still reads small, the step focuses too much; split it.
+7. **Readable at the size it ships.** The page owns the SVG's viewBox. A diagram that fits the stage at natural size is shown whole, no camera. A wider one gets a camera that frames each step's focus plus both ends of its edges, never zooming past 1.1:1 and never framing past the map's edge, with `f` for the whole map and `r` to return to step 1. If a step's frame still reads small, the step focuses too much; split it.
 8. **Craft is someone else's skill.** Layout, type and the "AI-generated look" belong to `impeccable`. Load it for anything the reader will see more than once (product artifacts, talk slides). Do not duplicate its guidance.
 9. **Captions are sentences someone would say aloud.** Subject, verb, under twenty words. No colon fragments ("First fact: resolved"), no telegraphic labels ("Same command."). Before building, collect every caption, summary and option label into one text file and run the `slop-guard` skill on it; fix what it names and fix any fragment it does not catch.
-10. **Plans orient, they do not bind.** An artifact that meets a reality it did not predict says so in a step, instead of hiding it.
+10. **Architecture maps are plain language and singular.** One map per project, built from the architecture document, never one per checkpoint. Parts a person names, steps a person works through, no code; folders live in the document's "Where it lives" table. See `references/patterns.md`.
+11. **Plans orient, they do not bind.** An artifact that meets a reality it did not predict says so in a step, instead of hiding it.
 
 ## Build sequence
 
 1. **Name the question** in one sentence. That is the `<title>` and the header.
-2. **Pick the kind** from `references/patterns.md`: architecture map, state explorer, event-stream story, decision report, trace view. One kind per artifact.
+2. **Pick the kind** from `references/patterns.md`: architecture map, state explorer, event-stream story, decision report, trace view. One kind per artifact. An architecture map is not hand-built: edit the architecture document and run `just arch`.
 3. **Write the Mermaid** for it. Keep node ids short and stable; they become `data-id` hooks. Validate with Pele before you build the page: `bun -e "import('pele').then(p=>p.render(src))"` or the check in `references/pele.md`.
 4. **Write the steps**: `{ id, caption, focus: [nodeIds], edges: [edgeIds] }`. Each step changes exactly one thing the reader should notice.
 5. **If a decision is needed**, write the options with `tried` evidence and the invariant each risks.

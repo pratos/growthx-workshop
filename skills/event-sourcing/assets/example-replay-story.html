@@ -41,8 +41,11 @@
   .tabs button[aria-selected="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
   main { display: grid; grid-template-columns: 1fr; gap: 18px; padding-top: 20px; padding-bottom: 28px; flex: 1; align-content: start; }
   .stage { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 0; height: min(62vh, 760px); min-height: 340px; overflow: hidden; transition: height .24s var(--ease-out); }
-  .stage .fit { position: absolute; right: 10px; top: 10px; font: inherit; font-size: 12.5px; padding: 5px 10px; border: 1px solid var(--line); background: var(--bg); color: var(--muted); border-radius: 999px; cursor: pointer; }
-  .stage .fit[aria-pressed="true"] { color: var(--fg); border-color: var(--fg); }
+  .stage-controls { position: absolute; right: 10px; top: 10px; display: flex; gap: 6px; }
+  .stage-controls button { font: inherit; font-size: 12.5px; padding: 5px 10px; border: 1px solid var(--line); background: var(--bg); color: var(--muted); border-radius: 999px; cursor: pointer; transition: color .15s ease, border-color .15s ease; }
+  @media (hover: hover) and (pointer: fine) { .stage-controls button:hover { color: var(--fg); } }
+  .stage-controls button[aria-pressed="true"] { color: var(--fg); border-color: var(--fg); }
+  .stage-controls button:disabled { opacity: .4; cursor: default; }
   #diagram { width: 100%; height: 100%; }
   #diagram svg { width: 100%; height: 100%; display: block; }
   .rail { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px 40px; align-items: start; }
@@ -101,7 +104,7 @@
   <nav class="tabs" id="tabs" role="tablist" hidden></nav>
 </header>
 <main>
-  <section class="stage"><div id="diagram"></div><button class="fit" id="fit" aria-pressed="false" title="f">fit all</button></section>
+  <section class="stage"><div id="diagram"></div><div class="stage-controls"><button id="reset" title="r" aria-label="Reset to the first step">reset</button><button id="fit" aria-pressed="false" title="f">fit all</button></div></section>
   <section class="rail">
     <div class="rail-text">
       <p class="step-label" id="stepLabel"></p>
@@ -127,7 +130,7 @@
     <button id="pSend">Propose</button>
   </section>
 </main>
-<footer><span id="hint">← → to step · f to fit all · one question, one artifact</span><span id="status">standalone</span></footer>
+<footer><span id="hint">← → to step · f to fit all · r to reset · one question, one artifact</span><span id="status">standalone</span></footer>
 
 <script type="application/json" id="spec">
 {
@@ -271,6 +274,7 @@
         fitStage();
         $('fit').hidden = fitsWhole();
         applyStep(stepIndex, false);
+        updateReset();
       },
       onError: e => console.error('[viz-explainer] diagram error', e),
     });
@@ -289,9 +293,14 @@
     }
     const stage = $('diagram').getBoundingClientRect(); const aspect = stage.width / Math.max(1, stage.height);
     const pad = 64; let w = x2 - x1 + pad * 2, h = y2 - y1 + pad * 2;
-    const minW = Math.min(full[2], stage.width / 1.25);   // never zoom past 1.25:1; labels stay readable, never billboard-sized if (w < minW) { w = minW; } if (h < w / aspect) h = w / aspect; else w = h * aspect;
+    // Never zoom past 1.1:1, so labels stay readable instead of billboard-sized.
+    const minW = Math.min(full[2], stage.width / 1.1);
+    if (w < minW) w = minW;
+    if (h < w / aspect) h = w / aspect; else w = h * aspect;
     const cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
-    return [cx - w / 2, cy - h / 2, w, h];
+    // Keep the frame inside the map: a node at the edge shows its neighbours, not empty stage.
+    const clamp = (v, size, total) => size >= total ? (total - size) / 2 : Math.min(Math.max(v, 0), total - size);
+    return [clamp(cx - w / 2, w, full[2]), clamp(cy - h / 2, h, full[3]), w, h];
   }
   // The stage takes its height from the diagram's proportions, with headroom for the camera, so a wide map is not letterboxed.
   function fitStage() {
@@ -314,7 +323,22 @@
     if (!animated || !D) { Object.assign(view, { x, y, w, h }); writeView(); return; }
     camera = anime.animate(view, { x, y, w, h, duration: 480, ease: 'inOutQuart', onUpdate: writeView });
   }
-  $('fit').onclick = () => { fitAll = !fitAll; $('fit').setAttribute('aria-pressed', String(fitAll)); applyStep(stepIndex, true); };
+  $('fit').onclick = () => { fitAll = !fitAll; $('fit').setAttribute('aria-pressed', String(fitAll)); applyStep(stepIndex, true); updateReset(); };
+
+  // Reset the view, not the record: step 1, first option, the step's own frame. A recorded decision is an event and stays.
+  function reset() {
+    fitAll = false; $('fit').setAttribute('aria-pressed', 'false');
+    const first = spec.options?.[0]?.id ?? null;
+    if (first && optionId !== first) {
+      optionId = first; stepIndex = 0;
+      [...$('tabs').children].forEach(t => t.setAttribute('aria-selected', String(t.dataset.id === first)));
+      mount();
+    } else go(0);
+    history.replaceState(null, '', location.pathname + location.search);
+    updateReset();
+  }
+  function updateReset() { $('reset').disabled = stepIndex === 0 && !fitAll && (!spec.options || optionId === spec.options[0].id); }
+  $('reset').onclick = reset;
 
   function applyStep(i, animated) {
     const list = steps();
@@ -355,17 +379,24 @@
     post({ type: 'greenhouse:step', index: i, id: step.id });
   }
 
-  function go(i) { const n = steps().length; stepIndex = Math.max(0, Math.min(n - 1, i)); applyStep(stepIndex, true); }
+  function go(i) {
+    const n = steps().length; stepIndex = Math.max(0, Math.min(n - 1, i)); applyStep(stepIndex, true); updateReset();
+    const id = steps()[stepIndex]?.id; if (id) history.replaceState(null, '', `#${id}`);
+  }
+  // Deep link: index.html#share opens on the step with that id.
+  const fromHash = () => { const i = steps().findIndex(s => s.id === decodeURIComponent(location.hash.slice(1))); return i < 0 ? 0 : i; };
+  stepIndex = fromHash();
+  addEventListener('hashchange', () => go(fromHash()));
   $('prev').onclick = () => go(stepIndex - 1);
   $('next').onclick = () => go(stepIndex + 1);
-  addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') return; if (e.key === 'ArrowRight') go(stepIndex + 1); if (e.key === 'ArrowLeft') go(stepIndex - 1); if (e.key === 'f') $('fit').click(); });
+  addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') return; if (e.key === 'ArrowRight') go(stepIndex + 1); if (e.key === 'ArrowLeft') go(stepIndex - 1); if (e.key === 'f') $('fit').click(); if (e.key === 'r' || e.key === 'Home') reset(); });
   addEventListener('resize', () => { fitStage(); applyStep(stepIndex, false); });
 
   // Options: tabs, comparison, decision
   if (spec.options?.length) {
     const tabs = $('tabs'); tabs.hidden = false;
     tabs.innerHTML = spec.options.map(o => `<button role="tab" data-id="${esc(o.id)}" aria-selected="${o.id === optionId}">${esc(o.label)}</button>`).join('');
-    tabs.onclick = e => { const b = e.target.closest('button'); if (!b) return; optionId = b.dataset.id; stepIndex = 0; [...tabs.children].forEach(t => t.setAttribute('aria-selected', t === b)); mount(); };
+    tabs.onclick = e => { const b = e.target.closest('button'); if (!b) return; optionId = b.dataset.id; stepIndex = 0; [...tabs.children].forEach(t => t.setAttribute('aria-selected', t === b)); mount(); updateReset(); };
 
     const axes = [['Call sites touched', o => o.axes?.callSites ? `${o.axes.callSites.count}${o.axes.callSites.list?.length ? ' · ' + o.axes.callSites.list.map(esc).join(', ') : ''}` : ''], ['Mechanical vs judgement', o => esc(o.axes?.mechanical || '')], ['Silent behaviour changes', o => esc(o.axes?.silent || '')], ['Invariant at risk', o => esc(o.axes?.invariant || '')]];
     if (spec.options.some(o => o.axes)) {

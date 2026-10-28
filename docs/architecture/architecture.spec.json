@@ -1,0 +1,103 @@
+{
+  "kind": "architecture-map",
+  "question": "What happens when someone uses Greenhouse?",
+  "meta": {
+    "builtBy": "just arch",
+    "builtAt": "2026-10-28",
+    "source": "docs/ARCHITECTURE.md"
+  },
+  "diagram": "flowchart LR\n  P[\"You · in a plan\"]\n  P2[\"Teammate · watching the same plan\"]\n  REL[\"You · releasing a feature\"]\n  subgraph cf[\"Runs on Cloudflare\"]\n    W[\"Web app\"]\n    A[\"API\"]\n    RW[\"Rules and shared words\"]\n    R[(\"Plan room · one per plan · what happened, in order\")]\n    D[(\"Settings and summaries · feature switches\")]\n  end\n  subgraph ag[\"Agent\"]\n    AG[\"Agent · a participant like you\"]\n    CP[(\"Agent memory · every step saved\")]\n  end\n  CK[\"Workshop check-in · a separate small app\"]\n  P -- \"opens a plan, writes, decides\" --> W\n  W -- \"asks on your behalf\" --> A\n  A -- \"is this on for you?\" --> D\n  A -- \"follows\" --> RW\n  A -- \"records it\" --> R\n  R -- \"shows it at once\" --> P2\n  AG -- \"works through the same steps\" --> A\n  AG -- \"saves each step\" --> CP\n  REL -- \"on for a few, then everyone\" --> D",
+  "steps": [
+    {
+      "id": "open",
+      "caption": "You open a plan in the web app and write, reply or decide.",
+      "focus": [
+        "P",
+        "W"
+      ],
+      "edges": [
+        "L_P_W_0"
+      ]
+    },
+    {
+      "id": "ask",
+      "caption": "The web app asks the API on your behalf and never touches data itself.",
+      "focus": [
+        "W",
+        "A"
+      ],
+      "edges": [
+        "L_W_A_0"
+      ]
+    },
+    {
+      "id": "check",
+      "caption": "The API checks whether this feature is switched on for you.",
+      "focus": [
+        "A",
+        "D"
+      ],
+      "edges": [
+        "L_A_D_0"
+      ]
+    },
+    {
+      "id": "record",
+      "caption": "If it is, the API follows the rules and the plan room records what happened.",
+      "focus": [
+        "A",
+        "RW",
+        "R"
+      ],
+      "edges": [
+        "L_A_RW_0",
+        "L_A_R_0"
+      ]
+    },
+    {
+      "id": "share",
+      "caption": "Everyone watching the plan sees the change at once, without refreshing.",
+      "focus": [
+        "R",
+        "P2"
+      ],
+      "edges": [
+        "L_R_P2_0"
+      ]
+    },
+    {
+      "id": "agent",
+      "caption": "The agent joins the same plan and goes through the same steps as a person.",
+      "focus": [
+        "ag",
+        "AG",
+        "A"
+      ],
+      "edges": [
+        "L_AG_A_0"
+      ]
+    },
+    {
+      "id": "resume",
+      "caption": "The agent saves every step, so a crash picks up exactly where it stopped.",
+      "focus": [
+        "AG",
+        "CP"
+      ],
+      "edges": [
+        "L_AG_CP_0"
+      ]
+    },
+    {
+      "id": "release",
+      "caption": "A new feature starts switched off, then goes on for you, a few people, and everyone.",
+      "focus": [
+        "REL",
+        "D"
+      ],
+      "edges": [
+        "L_REL_D_0"
+      ]
+    }
+  ]
+}

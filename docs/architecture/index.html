@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>How does cp-07 release, flag and roll back the two Workers?</title>
+<title>What happens when someone uses Greenhouse?</title>
 <script src="https://cdn.jsdelivr.net/npm/pele@1.12.0/dist/pele.global.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/4.5.0/anime.umd.min.js"></script>
 <style>
@@ -41,8 +41,11 @@
   .tabs button[aria-selected="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
   main { display: grid; grid-template-columns: 1fr; gap: 18px; padding-top: 20px; padding-bottom: 28px; flex: 1; align-content: start; }
   .stage { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 0; height: min(62vh, 760px); min-height: 340px; overflow: hidden; transition: height .24s var(--ease-out); }
-  .stage .fit { position: absolute; right: 10px; top: 10px; font: inherit; font-size: 12.5px; padding: 5px 10px; border: 1px solid var(--line); background: var(--bg); color: var(--muted); border-radius: 999px; cursor: pointer; }
-  .stage .fit[aria-pressed="true"] { color: var(--fg); border-color: var(--fg); }
+  .stage-controls { position: absolute; right: 10px; top: 10px; display: flex; gap: 6px; }
+  .stage-controls button { font: inherit; font-size: 12.5px; padding: 5px 10px; border: 1px solid var(--line); background: var(--bg); color: var(--muted); border-radius: 999px; cursor: pointer; transition: color .15s ease, border-color .15s ease; }
+  @media (hover: hover) and (pointer: fine) { .stage-controls button:hover { color: var(--fg); } }
+  .stage-controls button[aria-pressed="true"] { color: var(--fg); border-color: var(--fg); }
+  .stage-controls button:disabled { opacity: .4; cursor: default; }
   #diagram { width: 100%; height: 100%; }
   #diagram svg { width: 100%; height: 100%; display: block; }
   .rail { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px 40px; align-items: start; }
@@ -101,7 +104,7 @@
   <nav class="tabs" id="tabs" role="tablist" hidden></nav>
 </header>
 <main>
-  <section class="stage"><div id="diagram"></div><button class="fit" id="fit" aria-pressed="false" title="f">fit all</button></section>
+  <section class="stage"><div id="diagram"></div><div class="stage-controls"><button id="reset" title="r" aria-label="Reset to the first step">reset</button><button id="fit" aria-pressed="false" title="f">fit all</button></div></section>
   <section class="rail">
     <div class="rail-text">
       <p class="step-label" id="stepLabel"></p>
@@ -127,73 +130,109 @@
     <button id="pSend">Propose</button>
   </section>
 </main>
-<footer><span id="hint">← → to step · f to fit all · one question, one artifact</span><span id="status">standalone</span></footer>
+<footer><span id="hint">← → to step · f to fit all · r to reset · one question, one artifact</span><span id="status">standalone</span></footer>
 
 <script type="application/json" id="spec">
 {
   "kind": "architecture-map",
-  "question": "How does cp-07 release, flag and roll back the two Workers?",
+  "question": "What happens when someone uses Greenhouse?",
   "meta": {
-    "builtBy": "agent · docs/architecture",
+    "builtBy": "just arch",
     "builtAt": "2026-10-28",
-    "source": "git tag cp-07"
+    "source": "docs/ARCHITECTURE.md"
   },
-  "diagram": "flowchart LR\n  subgraph ci[\"GitHub Actions · deploy.yml\"]\n    CK[\"check · lint · test · types · migration guard\"]\n    PV[\"preview · versions upload on PRs\"]\n    DP[\"deploy · on main\"]\n    MG[\"migrate · workflow_dispatch only\"]\n  end\n  subgraph dep[\"scripts/deploy.sh · just deploy\"]\n    PM[\"pending D1 migration? stop\"]\n    WA[\"wrangler deploy · apps/api\"]\n    WW[\"wrangler deploy · apps/web\"]\n  end\n  subgraph live[\"Cloudflare\"]\n    HZ[\"/healthz · version id\"]\n    FT[(\"D1 · flags table\")]\n  end\n  subgraph back[\"Rollback\"]\n    FO[\"just flag off NAME\"]\n    RB[\"just rollback api or web · wrangler rollback\"]\n  end\n  CK --> PV\n  CK --> DP\n  DP -- \"runs\" --> PM\n  PM -- \"none pending\" --> WA\n  WA -- \"then\" --> WW\n  WA -- \"version_metadata\" --> HZ\n  DP -- \"smoke · curl\" --> HZ\n  FO -- \"GH_REMOTE=1 · SQL\" --> FT\n  RB -- \"previous version id\" --> HZ\n  MG -. \"by hand\" .-> FT",
+  "diagram": "flowchart LR\n  P[\"You · in a plan\"]\n  P2[\"Teammate · watching the same plan\"]\n  REL[\"You · releasing a feature\"]\n  subgraph cf[\"Runs on Cloudflare\"]\n    W[\"Web app\"]\n    A[\"API\"]\n    RW[\"Rules and shared words\"]\n    R[(\"Plan room · one per plan · what happened, in order\")]\n    D[(\"Settings and summaries · feature switches\")]\n  end\n  subgraph ag[\"Agent\"]\n    AG[\"Agent · a participant like you\"]\n    CP[(\"Agent memory · every step saved\")]\n  end\n  CK[\"Workshop check-in · a separate small app\"]\n  P -- \"opens a plan, writes, decides\" --> W\n  W -- \"asks on your behalf\" --> A\n  A -- \"is this on for you?\" --> D\n  A -- \"follows\" --> RW\n  A -- \"records it\" --> R\n  R -- \"shows it at once\" --> P2\n  AG -- \"works through the same steps\" --> A\n  AG -- \"saves each step\" --> CP\n  REL -- \"on for a few, then everyone\" --> D",
   "steps": [
     {
+      "id": "open",
+      "caption": "You open a plan in the web app and write, reply or decide.",
+      "focus": [
+        "P",
+        "W"
+      ],
+      "edges": [
+        "L_P_W_0"
+      ]
+    },
+    {
+      "id": "ask",
+      "caption": "The web app asks the API on your behalf and never touches data itself.",
+      "focus": [
+        "W",
+        "A"
+      ],
+      "edges": [
+        "L_W_A_0"
+      ]
+    },
+    {
       "id": "check",
-      "caption": "CI runs lint, tests, type freshness and a destructive migration guard first.",
-      "focus": ["ci", "CK"],
-      "evidence": [".github/workflows/deploy.yml"]
+      "caption": "The API checks whether this feature is switched on for you.",
+      "focus": [
+        "A",
+        "D"
+      ],
+      "edges": [
+        "L_A_D_0"
+      ]
     },
     {
-      "id": "jobs",
-      "caption": "Pull requests upload a version with no traffic, and main deploys.",
-      "focus": ["PV", "DP"],
-      "edges": ["L_CK_PV_0", "L_CK_DP_0"],
-      "evidence": [".github/workflows/deploy.yml"]
+      "id": "record",
+      "caption": "If it is, the API follows the rules and the plan room records what happened.",
+      "focus": [
+        "A",
+        "RW",
+        "R"
+      ],
+      "edges": [
+        "L_A_RW_0",
+        "L_A_R_0"
+      ]
     },
     {
-      "id": "pending",
-      "caption": "deploy.sh stops cold if any D1 migration is pending on remote.",
-      "focus": ["PM"],
-      "edges": ["L_DP_PM_0"],
-      "evidence": ["scripts/deploy.sh", "docs/ARCHITECTURE.md"]
+      "id": "share",
+      "caption": "Everyone watching the plan sees the change at once, without refreshing.",
+      "focus": [
+        "R",
+        "P2"
+      ],
+      "edges": [
+        "L_R_P2_0"
+      ]
     },
     {
-      "id": "wrangler",
-      "caption": "wrangler deploys the api first, then the web Worker that binds to it.",
-      "focus": ["WA", "WW"],
-      "edges": ["L_PM_WA_0", "L_WA_WW_0"],
-      "evidence": ["scripts/deploy.sh", "justfile"]
+      "id": "agent",
+      "caption": "The agent joins the same plan and goes through the same steps as a person.",
+      "focus": [
+        "ag",
+        "AG",
+        "A"
+      ],
+      "edges": [
+        "L_AG_A_0"
+      ]
     },
     {
-      "id": "healthz",
-      "caption": "/healthz returns the Workers version id, which is the rollback handle.",
-      "focus": ["HZ"],
-      "edges": ["L_WA_HZ_0", "L_DP_HZ_0"],
-      "evidence": ["apps/api/src/index.ts", "apps/api/wrangler.jsonc", "scripts/demo.sh"]
+      "id": "resume",
+      "caption": "The agent saves every step, so a crash picks up exactly where it stopped.",
+      "focus": [
+        "AG",
+        "CP"
+      ],
+      "edges": [
+        "L_AG_CP_0"
+      ]
     },
     {
-      "id": "flags",
-      "caption": "Flags live in one D1 table and flip with SQL, with no deploy needed.",
-      "focus": ["FT", "FO"],
-      "edges": ["L_FO_FT_0"],
-      "evidence": ["scripts/flag.sh", "apps/api/migrations/0001_flags_and_projections.sql"]
-    },
-    {
-      "id": "rollback",
-      "caption": "Rollback is flag off first, then wrangler rollback to the previous id.",
-      "focus": ["back", "RB"],
-      "edges": ["L_RB_HZ_0"],
-      "evidence": ["justfile", "docs/RELEASE.md", "docs/RUNBOOK.md"]
-    },
-    {
-      "id": "migrate",
-      "caption": "Migrations never run on deploy, and a manual workflow applies them by hand.",
-      "focus": ["MG", "FT"],
-      "edges": ["L_MG_FT_0"],
-      "evidence": [".github/workflows/deploy.yml", "docs/RELEASE.md"]
+      "id": "release",
+      "caption": "A new feature starts switched off, then goes on for you, a few people, and everyone.",
+      "focus": [
+        "REL",
+        "D"
+      ],
+      "edges": [
+        "L_REL_D_0"
+      ]
     }
   ]
 }
@@ -243,6 +282,7 @@
         fitStage();
         $('fit').hidden = fitsWhole();
         applyStep(stepIndex, false);
+        updateReset();
       },
       onError: e => console.error('[viz-explainer] diagram error', e),
     });
@@ -261,9 +301,14 @@
     }
     const stage = $('diagram').getBoundingClientRect(); const aspect = stage.width / Math.max(1, stage.height);
     const pad = 64; let w = x2 - x1 + pad * 2, h = y2 - y1 + pad * 2;
-    const minW = Math.min(full[2], stage.width / 1.25);   // never zoom past 1.25:1; labels stay readable, never billboard-sized if (w < minW) { w = minW; } if (h < w / aspect) h = w / aspect; else w = h * aspect;
+    // Never zoom past 1.1:1, so labels stay readable instead of billboard-sized.
+    const minW = Math.min(full[2], stage.width / 1.1);
+    if (w < minW) w = minW;
+    if (h < w / aspect) h = w / aspect; else w = h * aspect;
     const cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
-    return [cx - w / 2, cy - h / 2, w, h];
+    // Keep the frame inside the map: a node at the edge shows its neighbours, not empty stage.
+    const clamp = (v, size, total) => size >= total ? (total - size) / 2 : Math.min(Math.max(v, 0), total - size);
+    return [clamp(cx - w / 2, w, full[2]), clamp(cy - h / 2, h, full[3]), w, h];
   }
   // The stage takes its height from the diagram's proportions, with headroom for the camera, so a wide map is not letterboxed.
   function fitStage() {
@@ -286,7 +331,22 @@
     if (!animated || !D) { Object.assign(view, { x, y, w, h }); writeView(); return; }
     camera = anime.animate(view, { x, y, w, h, duration: 480, ease: 'inOutQuart', onUpdate: writeView });
   }
-  $('fit').onclick = () => { fitAll = !fitAll; $('fit').setAttribute('aria-pressed', String(fitAll)); applyStep(stepIndex, true); };
+  $('fit').onclick = () => { fitAll = !fitAll; $('fit').setAttribute('aria-pressed', String(fitAll)); applyStep(stepIndex, true); updateReset(); };
+
+  // Reset the view, not the record: step 1, first option, the step's own frame. A recorded decision is an event and stays.
+  function reset() {
+    fitAll = false; $('fit').setAttribute('aria-pressed', 'false');
+    const first = spec.options?.[0]?.id ?? null;
+    if (first && optionId !== first) {
+      optionId = first; stepIndex = 0;
+      [...$('tabs').children].forEach(t => t.setAttribute('aria-selected', String(t.dataset.id === first)));
+      mount();
+    } else go(0);
+    history.replaceState(null, '', location.pathname + location.search);
+    updateReset();
+  }
+  function updateReset() { $('reset').disabled = stepIndex === 0 && !fitAll && (!spec.options || optionId === spec.options[0].id); }
+  $('reset').onclick = reset;
 
   function applyStep(i, animated) {
     const list = steps();
@@ -327,17 +387,24 @@
     post({ type: 'greenhouse:step', index: i, id: step.id });
   }
 
-  function go(i) { const n = steps().length; stepIndex = Math.max(0, Math.min(n - 1, i)); applyStep(stepIndex, true); }
+  function go(i) {
+    const n = steps().length; stepIndex = Math.max(0, Math.min(n - 1, i)); applyStep(stepIndex, true); updateReset();
+    const id = steps()[stepIndex]?.id; if (id) history.replaceState(null, '', `#${id}`);
+  }
+  // Deep link: index.html#share opens on the step with that id.
+  const fromHash = () => { const i = steps().findIndex(s => s.id === decodeURIComponent(location.hash.slice(1))); return i < 0 ? 0 : i; };
+  stepIndex = fromHash();
+  addEventListener('hashchange', () => go(fromHash()));
   $('prev').onclick = () => go(stepIndex - 1);
   $('next').onclick = () => go(stepIndex + 1);
-  addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') return; if (e.key === 'ArrowRight') go(stepIndex + 1); if (e.key === 'ArrowLeft') go(stepIndex - 1); if (e.key === 'f') $('fit').click(); });
+  addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') return; if (e.key === 'ArrowRight') go(stepIndex + 1); if (e.key === 'ArrowLeft') go(stepIndex - 1); if (e.key === 'f') $('fit').click(); if (e.key === 'r' || e.key === 'Home') reset(); });
   addEventListener('resize', () => { fitStage(); applyStep(stepIndex, false); });
 
   // Options: tabs, comparison, decision
   if (spec.options?.length) {
     const tabs = $('tabs'); tabs.hidden = false;
     tabs.innerHTML = spec.options.map(o => `<button role="tab" data-id="${esc(o.id)}" aria-selected="${o.id === optionId}">${esc(o.label)}</button>`).join('');
-    tabs.onclick = e => { const b = e.target.closest('button'); if (!b) return; optionId = b.dataset.id; stepIndex = 0; [...tabs.children].forEach(t => t.setAttribute('aria-selected', t === b)); mount(); };
+    tabs.onclick = e => { const b = e.target.closest('button'); if (!b) return; optionId = b.dataset.id; stepIndex = 0; [...tabs.children].forEach(t => t.setAttribute('aria-selected', t === b)); mount(); updateReset(); };
 
     const axes = [['Call sites touched', o => o.axes?.callSites ? `${o.axes.callSites.count}${o.axes.callSites.list?.length ? ' · ' + o.axes.callSites.list.map(esc).join(', ') : ''}` : ''], ['Mechanical vs judgement', o => esc(o.axes?.mechanical || '')], ['Silent behaviour changes', o => esc(o.axes?.silent || '')], ['Invariant at risk', o => esc(o.axes?.invariant || '')]];
     if (spec.options.some(o => o.axes)) {

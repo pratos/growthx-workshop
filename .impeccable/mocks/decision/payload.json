@@ -1,0 +1,247 @@
+{
+ "title": "Pick the deck's visual world",
+ "question": "Four formats for the minimal deck, each drawn on a real slide. The roll assigned Kitchen Order Ticket. Keep it, take another, or re-roll.",
+ "options": [
+  {
+   "id": "assigned",
+   "kind": "assigned",
+   "label": "Kitchen Order Ticket",
+   "kicker": "THE ROLL",
+   "lineage": "thermal KOT slips on a restaurant pass",
+   "thesis": "Every slide is one order slip: the intent you hand the kitchen, because an agent will cook.",
+   "palette": [
+    "#fbfaf6",
+    "#1f1e24",
+    "#d23a2c",
+    "#8b8a90"
+   ],
+   "materials": [
+    "thermal paper",
+    "1-bit dithered print",
+    "dashed tear rules"
+   ],
+   "viewport": "Paper slide, a small mono ticket header (order no., time, section), one dashed rule, the headline huge in a condensed grotesk, nothing else.",
+   "risk": "If the ticket chrome creeps beyond the header line it turns into a costume.",
+   "raised": [
+    {
+     "from": "challenger-cutting-bench",
+     "raise": "Two type sizes in the whole deck; rank comes from empty space, not from size steps."
+    },
+    {
+     "from": "challenger-exposure-record",
+     "raise": "A strict five-step ink ramp is the only greys allowed; no tints, no shadows."
+    },
+    {
+     "from": "challenger-sticker-accretion",
+     "raise": "/btw slides sit as a second ticket clipped beneath the first, depth as aside."
+    },
+    {
+     "from": "challenger-curved-crease",
+     "raise": "Memes become numbered plates, FIG. 01 to 06, printed 1-bit by Codex."
+    },
+    {
+     "from": "challenger-cloud-quarry",
+     "raise": "Section openers are mostly blank ticket stock, a deep gap before each part."
+    }
+   ],
+   "html": ".impeccable/mocks/decision/assigned.html",
+   "comp": ".impeccable/mocks/decision/assigned.png",
+   "htmlFrame": "1280x720"
+  },
+  {
+   "id": "model-pick",
+   "kind": "pick",
+   "label": "Request for Comments",
+   "kicker": "IMPECCABLE\u2019S PICK",
+   "lineage": "IETF RFC plain-text documents",
+   "thesis": "The talk as a spec: intent is an engineering artefact, so the deck reads like one.",
+   "palette": [
+    "#ffffff",
+    "#111111",
+    "#0b57d0"
+   ],
+   "materials": [
+    "plain text",
+    "fixed running head",
+    "page footer"
+   ],
+   "viewport": "Running head 'GrowthX Working Group \u00b7 Oct 2026', headline in a grotesk, MUST/SHOULD in caps, footer '[Slide 4]'.",
+   "risk": "The most familiar engineer aesthetic; many dev talks already look like this.",
+   "html": ".impeccable/mocks/decision/model-pick.html",
+   "comp": ".impeccable/mocks/decision/model-pick.png",
+   "htmlFrame": "1280x720"
+  },
+  {
+   "id": "challenger-plakatstil",
+   "kind": "challenger",
+   "catalogId": "posters-covers-sleeves-plakatstil-object-poster",
+   "label": "Object Poster",
+   "verdict": "competitive",
+   "lineage": "Berlin Plakatstil object posters",
+   "thesis": "Section openers are saturated sheets with one flat object, content slides stay plain paper.",
+   "palette": [
+    "#7d2a22",
+    "#d9a521",
+    "#4d5e3a",
+    "#3f4a57",
+    "#f3efe6"
+   ],
+   "materials": [
+    "flat solid ground",
+    "one huge emblem",
+    "hard cut"
+   ],
+   "viewport": "Ox-blood sheet, one flat terminal-window emblem drawn huge, section title cut beneath in a slab alphabet.",
+   "case": "Strongest on clarity, one idea per slide at room scale; the room does not know the tradition.",
+   "risk": "Color-heavy openers fight the 'minimal' ask if used on more than the ten section slides.",
+   "html": ".impeccable/mocks/decision/challenger-plakatstil.html",
+   "comp": ".impeccable/mocks/decision/challenger-plakatstil.png",
+   "hero": "https://impeccable.style/worlds/cards/posters-covers-sleeves-plakatstil-object-poster-hero.webp",
+   "htmlFrame": "1280x720"
+  },
+  {
+   "id": "challenger-cutting-bench",
+   "kind": "challenger",
+   "catalogId": "operate-a-cutting-bench-select-rail",
+   "label": "Cutting Bench",
+   "verdict": "declined",
+   "lineage": "film work-print bench",
+   "palette": [
+    "#0b0b0b",
+    "#e8641c",
+    "#f4f1ea"
+   ],
+   "materials": [
+    "film grain",
+    "perforated rail"
+   ],
+   "thesis": "Slides as frames strung on a perforated rail.",
+   "viewport": "Orange grain field, slide content in a punched white window.",
+   "case": "Film editing is not this room's world, and orange on black fights minimal.",
+   "risk": "Reads as a film-festival costume.",
+   "kept": "One type size, rank by space."
+  },
+  {
+   "id": "challenger-exposure-record",
+   "kind": "challenger",
+   "catalogId": "operate-b-exposure-record-zone-sheets",
+   "label": "Exposure Record",
+   "verdict": "declined",
+   "lineage": "darkroom printing records",
+   "palette": [
+    "#1a1a1a",
+    "#7a7a7a",
+    "#e6e6e6",
+    "#c2187a"
+   ],
+   "materials": [
+    "tracing overlays",
+    "hatching"
+   ],
+   "thesis": "Stacked translucent sheets over a zone ramp.",
+   "viewport": "Hatched overlays across a tonal wedge.",
+   "case": "Hatching and overlays add exactly the noise the brief removes.",
+   "risk": "Unreadable at projector distance.",
+   "kept": "A strict tonal ramp as the only greys."
+  },
+  {
+   "id": "challenger-sticker-accretion",
+   "kind": "challenger",
+   "catalogId": "vernacular-ephemera-layered-sticker-accretion",
+   "label": "Sticker Accretion",
+   "verdict": "declined",
+   "lineage": "tour road-case stickers",
+   "palette": [
+    "#141414",
+    "#f2c230",
+    "#e0382f",
+    "#2a8fd6"
+   ],
+   "materials": [
+    "die-cut vinyl",
+    "adhesive scars"
+   ],
+   "thesis": "Layers of half-covered stickers as chronology.",
+   "viewport": "Overlapping logos on black laminate.",
+   "case": "The opposite of minimal and of legible.",
+   "risk": "Nothing reads.",
+   "kept": "Depth as chronology, for /btw asides."
+  },
+  {
+   "id": "challenger-curved-crease",
+   "kind": "challenger",
+   "catalogId": "paper-folds-pleats-deployable-curved-crease-shell",
+   "label": "Curved Crease",
+   "verdict": "declined",
+   "lineage": "curved-crease paper folding",
+   "palette": [
+    "#efe7d6",
+    "#2b2b2b",
+    "#8f8a80"
+   ],
+   "materials": [
+    "cotton paper",
+    "compass arc"
+   ],
+   "thesis": "A layout ruled by one sweeping arc.",
+   "viewport": "Cream disc lifted along a charcoal arc.",
+   "case": "No tie to the audience or to the talk's argument.",
+   "risk": "Decorative geometry with nothing to say.",
+   "kept": "Images numbered as plates."
+  },
+  {
+   "id": "challenger-cloud-quarry",
+   "kind": "challenger",
+   "catalogId": "dream-surreal-impossible-worlds-cloud-quarry",
+   "label": "Cloud Quarry",
+   "verdict": "declined",
+   "lineage": "surreal weather architecture",
+   "palette": [
+    "#f6f7f9",
+    "#6fa8dc",
+    "#5b5f66",
+    "#c0c4c9"
+   ],
+   "materials": [
+    "cloud mass",
+    "stencil caps"
+   ],
+   "thesis": "Content cut from blocks of cloud.",
+   "viewport": "Cumulus cliff with blue voids between sections.",
+   "case": "Surreal imagery steals the room from the speaker.",
+   "risk": "Pure spectacle.",
+   "kept": "Deep empty gaps between sections."
+  }
+ ],
+ "reroll": {
+  "registers": [
+   "safer",
+   "bolder"
+  ]
+ },
+ "buildPath": {
+  "value": "code",
+  "toggle": true
+ },
+ "canon": true,
+ "canonCard": {
+  "kind": "canon",
+  "label": "Keynote minimal",
+  "thesis": "White slide, one huge black sans line, one accent, centered. What every minimal talk ships.",
+  "palette": [
+   "#ffffff",
+   "#111111",
+   "#ff4f00"
+  ],
+  "materials": [
+   "clean white",
+   "big sans"
+  ],
+  "viewport": "One centered sentence at 96px, nothing else on screen.",
+  "risk": "Indistinguishable from every other conference deck by design.",
+  "html": ".impeccable/mocks/decision/canon.html",
+  "comp": ".impeccable/mocks/decision/canon.png",
+  "htmlFrame": "1280x720"
+ },
+ "steer": true
+}

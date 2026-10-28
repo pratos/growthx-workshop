@@ -887,7 +887,7 @@ skills/           ours in place; third-party vendored at pinned commits
 justfile          every runnable thing is a recipe
 ```
 
-<p class="kicker mono"><a href="../docs/architecture/cp-00.html">diagram: docs/architecture/cp-00.html</a></p>
+<p class="kicker mono"><a href="../docs/architecture/index.html#open">map: docs/architecture/index.html#open</a></p>
 
 Note:
 Minute 0 to 3. Type `ls` then `ls apps packages`; point at the two Workers and the two packages. Then `cat justfile | head -40`: if it is not a recipe here, the agent invents its own way.
@@ -988,7 +988,7 @@ Minute 16 to 20. Run `just glossary-check` on main, then `git checkout wrong/cp-
 <p>A rejection is a typed error, not a thrown string.</p>
 <p>Test layers swap D1 and the Durable Object for memory. The tests do not know.</p>
 
-<p class="kicker mono"><a href="../docs/architecture/cp-02.html">diagram: docs/architecture/cp-02.html</a></p>
+<p class="kicker mono"><a href="../docs/architecture/index.html#record">map: docs/architecture/index.html#record</a></p>
 
 Note:
 Minute 20 to 25. Open apps/api/src/services.ts and scroll: Flags.layer against D1, Flags.layerTest against a list; PlanRooms.layer against the namespace, PlanRooms.layerTest against a Map. Then packages/domain/src/thread/decider.ts, the ResolveThread case: the flag gate, the state check, two events.
@@ -1066,7 +1066,7 @@ Minute 32 to 37. Open http://localhost:3000/plans/gh-12 with the Agentation tool
 bun scripts/ws-check.ts <api url>
 ```
 
-<p class="kicker mono"><a href="../docs/architecture/cp-08.html">diagram: docs/architecture/cp-08.html</a></p>
+<p class="kicker mono"><a href="../docs/architecture/index.html#share">map: docs/architecture/index.html#share</a></p>
 
 Note:
 Minute 37 to 41. Two tabs on /plans/gh-12 side by side; open a Thread in one, watch it land in the other. Then apps/api/src/plan-room.ts: acceptWebSocket, getWebSockets, broadcast after the insert. If the socket misbehaves, `just demo cp-08`.
@@ -1134,7 +1134,7 @@ just rollback api <version-id>
 <p>Flag off is step one: seconds, no deploy.</p>
 <p>Rollback is step two: the previous id, pinned.</p>
 
-<p class="kicker mono"><a href="../docs/architecture/cp-07.html">diagram: docs/architecture/cp-07.html</a></p>
+<p class="kicker mono"><a href="../docs/architecture/index.html#release">map: docs/architecture/index.html#release</a></p>
 
 Note:
 Minute 53 to 58. `curl https://greenhouse-api.prthamesh-sarang.workers.dev/healthz` and point at version.label and version.id. Flip the flag off and show the resolve action gone without a deploy; then `just rollback api <id>` with the id from `bunx wrangler deployments list`. Minute 58 to 60 hands back to the close.

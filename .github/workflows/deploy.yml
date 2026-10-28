@@ -19,6 +19,8 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun run lint
       - run: bun test packages/domain packages/schema apps/api/test
+      - name: architecture map covers every app and package and is current
+        run: bun scripts/arch.ts --coverage && bun scripts/arch.ts --check
       - name: generated types are current
         run: cd apps/api && bunx wrangler types && git diff --exit-code worker-configuration.d.ts
       - name: no destructive migration without a flag

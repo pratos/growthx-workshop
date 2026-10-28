@@ -9,10 +9,11 @@ default:
 skills:
     @scripts/skills-sync.sh
 
-# Install everything (bun workspaces + skill builder)
+# Install everything (bun workspaces + skill builder + git hooks)
 install: skills
     bun install
     @cd skills/viz-explainer && bun install >/dev/null
+    @git config core.hooksPath scripts/git-hooks
 
 # Run api and web locally; D1 and the Durable Object run in miniflare. http://localhost:3000, api on the API binding
 up: install migrate-local seed
@@ -69,6 +70,15 @@ agent-watch:
 # Delete the agent demo's SQLite file so the next agent-demo starts from nothing
 agent-reset:
     cd packages/agent && bun run reset
+
+# Rebuild the architecture map from docs/ARCHITECTURE.md (a hook does this on every edit)
+arch:
+    bun scripts/arch.ts
+
+# Fail if the map is stale or a folder under apps/ or packages/ is not on it
+arch-check:
+    bun scripts/arch.ts --coverage
+    bun scripts/arch.ts --check
 
 # Build a viz-explainer artifact: just artifact spec.json docs/decisions/x.html
 artifact spec out:

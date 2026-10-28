@@ -30,6 +30,10 @@ cmux panes: `just up` · a shell on main · `tail -f /tmp/gh-*.log` · the brows
 | Flags, as a panel | https://greenhouse-web.prthamesh-sarang.workers.dev/admin/flags: toggle, allowlist, percent; the same table `decide()` reads | `curl …/flags` on the api | `GH_REMOTE=1 just flag list` |
 | Released, then changed | `just deploy`, `GH_REMOTE=1 just flag user resolve-thread <you>`, use it live, `just rollback api <id>` | `curl …/healthz` shows label and id; `GH_REMOTE=1 just flag list` | `just demo cp-07` |
 
+## The map
+
+`docs/architecture/index.html` (serve with `just deck`, open `/docs/architecture/`). Step ids: open, ask, check, record, share, agent, resume, release; `#share` opens on that step.
+
 ## Live
 
 - api: https://greenhouse-api.prthamesh-sarang.workers.dev · `/healthz` returns `version.label` (git describe, for people) and `version.id` (for rollback)

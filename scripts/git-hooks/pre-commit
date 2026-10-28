@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Rebuild the architecture map when its source changes, and refuse a new app or package that is not on it.
+# Covers commits made by people and by pi; Claude Code also runs scripts/hooks/arch-hook.sh on every edit.
+set -euo pipefail
+root="$(git rev-parse --show-toplevel)"; cd "$root"
+staged="$(git diff --cached --name-only --diff-filter=ACMR)"
+if grep -qE '^(apps|packages)/[^/]+/package\.json$' <<<"$staged"; then bun scripts/arch.ts --coverage; fi
+if grep -qx 'docs/ARCHITECTURE.md' <<<"$staged"; then
+  bun scripts/arch.ts >/dev/null
+  git add docs/architecture/index.html docs/architecture/architecture.spec.json
+  echo "pre-commit: architecture map rebuilt and staged"
+fi

@@ -53,7 +53,7 @@ Steps are interruptible: pressing next while a timeline runs calls `tl.complete(
 
 ## The camera
 
-Pele lays out at natural size (`responsive: false`); the page owns the viewBox. Each step computes the union of its focused nodes, focused edges and both endpoint nodes of those edges, in SVG units, pads it, matches the stage's aspect, and refuses to zoom past 1.25:1. Anime does not interpolate a four-number attribute string, so tween a plain object and write the attribute on each frame:
+Pele lays out at natural size (`responsive: false`); the page owns the viewBox. Each step computes the union of its focused nodes, focused edges and both endpoint nodes of those edges, in SVG units, pads it, matches the stage's aspect, refuses to zoom past 1.1:1, and clamps the frame inside the map so an edge node shows its neighbours rather than empty stage. Anime does not interpolate a four-number attribute string, so tween a plain object and write the attribute on each frame:
 
 ```js
 const view = { x: 0, y: 0, w: W, h: H };
@@ -70,6 +70,6 @@ Skip the camera entirely when the diagram fits the stage at natural size: moving
 
 - No entrance animation for the diagram itself. It is there when the page opens.
 - No looping or pulsing. A focused node is a stroke, not a heartbeat.
-- No zoom past 1.25:1, and no camera on a diagram that already fits.
+- No zoom past 1.1:1, and no camera on a diagram that already fits.
 - No animating `stroke-width`, `fill` or layout properties; opacity and `draw` only.
 - No scale from 0, no bounce, no spring on a diagram. Those are for things people touch.
