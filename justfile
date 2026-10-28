@@ -28,7 +28,7 @@ test:
 
 # Lint and typecheck: oxlint type-aware, oxfmt, tsc
 lint:
-    bunx oxlint --type-aware . 
+    bunx oxlint --type-aware .
     bunx oxfmt --check .
     bunx tsc -p apps/api/tsconfig.json --noEmit
 
