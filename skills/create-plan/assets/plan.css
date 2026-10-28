@@ -158,5 +158,5 @@ body.has-expanded { overflow: hidden; }
 .v-changes li { margin: 1px 0; }
 .v-origin { margin-top: 6px; font-size: 14px; }
 .v-origin > summary { color: var(--accent); cursor: pointer; width: fit-content; }
-.v-origin blockquote { margin: 8px 0 4px; padding: 8px 12px; border-left: 3px solid var(--line); background: var(--surface); border-radius: 0 8px 8px 0; white-space: pre-wrap; max-width: var(--measure); }
+.v-origin blockquote { margin: 8px 0 4px; padding: 8px 12px; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; white-space: pre-wrap; max-width: var(--measure); }
 .v-session { margin: 4px 0 0; color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
