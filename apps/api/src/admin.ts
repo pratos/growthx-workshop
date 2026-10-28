@@ -1,6 +1,8 @@
 import { Hono } from 'hono';
+import { Effect, Schema } from 'effect';
 import type { Account } from '@greenhouse/schema';
-import { requireAdmin } from './auth';
+import { Accounts } from '@greenhouse/domain';
+import { requireAdmin, run } from './auth';
 import type { Env } from './services';
 
 // The admin dashboard's API: counts, accounts, and the event log itself. Admins only, like the flags.
@@ -38,6 +40,24 @@ admin.get('/accounts', async (c) => {
      FROM accounts a ORDER BY a.opened_at, a.account_id`).bind(new Date().toISOString())
     .all<{ account_id: string; email: string; name: string; admin: number; opened_at: string; live: number }>();
   return c.json({ accounts: results.map((r) => ({ accountId: r.account_id, email: r.email, name: r.name, admin: r.admin === 1, openedAt: r.opened_at, liveSignIns: r.live })) });
+});
+
+// An admin opens an account for someone: recorded as AccountOpened by the engine, exactly like `just user-add`.
+// The password is a starting one the admin passes on; it is hashed here and never stored or returned.
+const NewAccount = Schema.Struct({
+  email: Schema.String.check(Schema.isMinLength(3), Schema.isMaxLength(254), Schema.isPattern(/^[^@\s]+@[^@\s]+$/)),
+  name: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(80)),
+  password: Schema.String.check(Schema.isMinLength(12), Schema.isMaxLength(200)),
+  admin: Schema.Boolean,
+});
+admin.post('/accounts', async (c) => {
+  const decoded = Schema.decodeUnknownOption(NewAccount)(await c.req.json().catch(() => null));
+  if (decoded._tag === 'None') return c.json({ rejected: 'an email, a name, a password of at least 12 characters, and a role' }, 400);
+  const outcome = await run(c.env, Accounts.use((a) => a.open(decoded.value)).pipe(
+    Effect.map((account) => ({ ok: true as const, account })),
+    Effect.catchTag('SignUpRefused', (e) => Effect.succeed({ ok: false as const, message: e.message })),
+  ));
+  return outcome.ok ? c.json({ account: outcome.account }, 201) : c.json({ rejected: outcome.message }, 409);
 });
 
 // The newest events first, optionally one stream. Data is shown as recorded, with secrets masked.

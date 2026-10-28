@@ -14,7 +14,7 @@ export const COOKIE = 'gh_session';
 const DAYS = 30;
 
 const accountsLayer = (env: Env) => Accounts.layer().pipe(Layer.provideMerge(EventStore.layer([accountsView]).pipe(Layer.provideMerge(d1(env.DB)))));
-const run = <A, E>(env: Env, program: Effect.Effect<A, E, Accounts>) => Effect.runPromise(program.pipe(Effect.provide(accountsLayer(env))));
+export const run = <A, E>(env: Env, program: Effect.Effect<A, E, Accounts>) => Effect.runPromise(program.pipe(Effect.provide(accountsLayer(env))));
 
 // The token comes from `Authorization: Bearer …` (curl, the web Worker over the binding, the agent) or the cookie (a browser on the api).
 export const tokenOf = (header: string | undefined, cookie: string | undefined) => (header?.startsWith('Bearer ') ? header.slice(7).trim() : cookie);

@@ -1,78 +1,85 @@
 
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&family=Lora:wght@400;500&display=swap");
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
 @theme {
-  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-document-heading: "Lora", Georgia, serif;
 }
 
 :root {
-  --sea-ink: #173a40;
-  --sea-ink-soft: #416166;
-  --lagoon: #4fb8b2;
-  --lagoon-deep: #328f97;
-  --palm: #2f6a4a;
-  --sand: #e7f0e8;
-  --foam: #f3faf5;
-  --surface: rgba(255, 255, 255, 0.74);
-  --surface-strong: rgba(255, 255, 255, 0.9);
-  --line: rgba(23, 58, 64, 0.14);
-  --inset-glint: rgba(255, 255, 255, 0.82);
-  --kicker: rgba(47, 106, 74, 0.9);
-  --bg-base: #e7f3ec;
-  --header-bg: rgba(251, 255, 248, 0.84);
-  --chip-bg: rgba(255, 255, 255, 0.8);
-  --chip-line: rgba(47, 106, 74, 0.18);
-  --link-bg-hover: rgba(255, 255, 255, 0.9);
-  --hero-a: rgba(79, 184, 178, 0.36);
-  --hero-b: rgba(47, 106, 74, 0.2);
-}
+  /* The design language is GitHub Next's Chopin (github.com/githubnext/chopin, MIT; CHOPIN-LICENSE.md): a white document
+     page on a warm olive ground, petrol as the one accent, Inter for the interface and Lora for document headings.
+     Values copied from its packages/visuals/theme.css. Chopin is light only, so Greenhouse is too. */
+  color-scheme: light;
+  --ch-gray-50: oklch(0.99051 0.00263 95);
+  --ch-gray-100: oklch(0.97857 0.00264 95);
+  --ch-gray-150: oklch(0.96623 0.0039 95);
+  --ch-gray-200: oklch(0.94216 0.00393 95);
+  --ch-gray-300: oklch(0.89108 0.00552 95);
+  --ch-gray-500: oklch(0.56514 0.0123 95);
+  --ch-gray-600: oklch(0.48124 0.01278 95);
+  --ch-gray-700: oklch(0.39036 0.01026 95);
+  --ch-gray-900: oklch(0.15908 0.00637 95);
+  --ch-page: oklch(1 0 0);
+  --ch-ground: var(--ch-gray-150);
+  --ch-inset: var(--ch-gray-100);
+  --ch-selected: var(--ch-gray-200);
+  --ch-ink: var(--ch-gray-900);
+  --ch-ink-2: var(--ch-gray-700);
+  --ch-ink-3: var(--ch-gray-600);
+  --ch-ink-4: var(--ch-gray-500);
+  --ch-brand: oklch(0.50006 0.08514 210.06);
+  --ch-brand-hover: oklch(0.42914 0.07315 210.634);
+  --ch-brand-active: oklch(0.37546 0.06382 210.435);
+  --ch-brand-wash: oklch(0.925 0.02 210);
+  --ch-brand-ink: oklch(0.43882 0.07476 210.193);
+  --ch-success: oklch(0.51958 0.10966 145.072);
+  --ch-success-wash: oklch(0.93 0.026 145);
+  --ch-success-ink: oklch(0.44098 0.11068 144.754);
+  --ch-warning-wash: oklch(0.95 0.032 75);
+  --ch-warning-ink: oklch(0.4409 0.0921 74.93);
+  --ch-edge: oklch(0 0 0 / 7%);
+  --ch-control-edge: oklch(0 0 0 / 15%);
+  --ch-divider: rgb(0 0 0 / 9%);
+  --ch-radius-sm: 0.25rem;
+  --ch-radius-md: 0.375rem;
+  --ch-radius-lg: 0.5rem;
+  --ch-radius-xl: 0.625rem;
+  --ch-shadow-color: 0.15908 0.00637 95;
+  --ch-shadow-resting: 0 0 1px oklch(var(--ch-shadow-color) / 3%), 0 1px 1px oklch(var(--ch-shadow-color) / 3%), 0 3px 2px oklch(var(--ch-shadow-color) / 2%);
+  --ch-shadow-raised: 0 1px 2px oklch(var(--ch-shadow-color) / 6%), 0 3px 3px oklch(var(--ch-shadow-color) / 5%), 0 8px 5px oklch(var(--ch-shadow-color) / 3%), 0 14px 5px oklch(var(--ch-shadow-color) / 1%);
+  --ch-shadow-overlay: 0 2px 3px oklch(var(--ch-shadow-color) / 10%), 0 7px 6px oklch(var(--ch-shadow-color) / 9%), 0 15px 8px oklch(var(--ch-shadow-color) / 5%), 0 26px 10px oklch(var(--ch-shadow-color) / 1%);
+  --ch-ease-out: cubic-bezier(0.2, 0, 0, 1);
+  --ch-text-2xs: clamp(0.706198rem, 0.701373rem + 0.021444vw, 0.720672rem);
+  --ch-text-xs: clamp(0.747369rem, 0.740003rem + 0.032738vw, 0.769468rem);
+  --ch-text-sm: clamp(0.837054rem, 0.823674rem + 0.059466vw, 0.877193rem);
+  --ch-text-base: clamp(0.9375rem, 0.916667rem + 0.092593vw, 1rem);
+  --ch-text-lg: clamp(1.176rem, 1.1348rem + 0.183111vw, 1.2996rem);
+  --ch-text-xl: clamp(1.31712rem, 1.262312rem + 0.243591vw, 1.481544rem);
+  --ch-text-2xl: clamp(1.652195rem, 1.561122rem + 0.404769vw, 1.925415rem);
 
-:root[data-theme="dark"] {
-  --sea-ink: #d7ece8;
-  --sea-ink-soft: #afcdc8;
-  --lagoon: #60d7cf;
-  --lagoon-deep: #8de5db;
-  --palm: #6ec89a;
-  --sand: #0f1a1e;
-  --foam: #101d22;
-  --surface: rgba(16, 30, 34, 0.8);
-  --surface-strong: rgba(15, 27, 31, 0.92);
-  --line: rgba(141, 229, 219, 0.18);
-  --inset-glint: rgba(194, 247, 238, 0.14);
-  --kicker: #b8efe5;
-  --bg-base: #0a1418;
-  --header-bg: rgba(10, 20, 24, 0.8);
-  --chip-bg: rgba(13, 28, 32, 0.9);
-  --chip-line: rgba(141, 229, 219, 0.24);
-  --link-bg-hover: rgba(24, 44, 49, 0.8);
-  --hero-a: rgba(96, 215, 207, 0.18);
-  --hero-b: rgba(110, 200, 154, 0.12);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --sea-ink: #d7ece8;
-    --sea-ink-soft: #afcdc8;
-    --lagoon: #60d7cf;
-    --lagoon-deep: #8de5db;
-    --palm: #6ec89a;
-    --sand: #0f1a1e;
-    --foam: #101d22;
-    --surface: rgba(16, 30, 34, 0.8);
-    --surface-strong: rgba(15, 27, 31, 0.92);
-    --line: rgba(141, 229, 219, 0.18);
-    --inset-glint: rgba(194, 247, 238, 0.14);
-    --kicker: #b8efe5;
-    --bg-base: #0a1418;
-    --header-bg: rgba(10, 20, 24, 0.8);
-    --chip-bg: rgba(13, 28, 32, 0.9);
-    --chip-line: rgba(141, 229, 219, 0.24);
-    --link-bg-hover: rgba(24, 44, 49, 0.8);
-    --hero-a: rgba(96, 215, 207, 0.18);
-    --hero-b: rgba(110, 200, 154, 0.12);
-  }
+  /* Greenhouse's own names, pointed at Chopin's roles, so every page follows. */
+  --sea-ink: var(--ch-ink);
+  --sea-ink-soft: var(--ch-ink-2);
+  --lagoon: var(--ch-brand);
+  --lagoon-deep: var(--ch-brand-hover);
+  --palm: var(--ch-success-ink);
+  --sand: var(--ch-ground);
+  --foam: var(--ch-inset);
+  --surface: var(--ch-page);
+  --surface-strong: var(--ch-page);
+  --line: var(--ch-edge);
+  --inset-glint: transparent;
+  --kicker: var(--ch-ink-3);
+  --bg-base: var(--ch-ground);
+  --header-bg: var(--ch-ground);
+  --chip-bg: var(--ch-inset);
+  --chip-line: var(--ch-edge);
+  --link-bg-hover: var(--ch-selected);
+  --hero-a: transparent;
+  --hero-b: transparent;
 }
 
 * {
@@ -89,43 +96,18 @@ body {
   margin: 0;
   color: var(--sea-ink);
   font-family: var(--font-sans);
-  background-color: var(--bg-base);
-  background:
-    radial-gradient(1100px 620px at -8% -10%, var(--hero-a), transparent 58%),
-    radial-gradient(1050px 620px at 112% -12%, var(--hero-b), transparent 62%),
-    radial-gradient(720px 380px at 50% 115%, rgba(79, 184, 178, 0.1), transparent 68%),
-    linear-gradient(180deg, color-mix(in oklab, var(--sand) 68%, white) 0%, var(--foam) 44%, var(--bg-base) 100%);
+  font-size: var(--ch-text-base);
+  line-height: 1.5;
+  background: var(--bg-base);
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: -1;
-  opacity: 0.28;
-  background:
-    radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.8), transparent 34%),
-    radial-gradient(circle at 78% 26%, rgba(79, 184, 178, 0.2), transparent 42%),
-    radial-gradient(circle at 42% 82%, rgba(47, 106, 74, 0.14), transparent 36%);
-}
-
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: -1;
-  opacity: 0.14;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
-  background-size: 28px 28px;
-  mask-image: radial-gradient(circle at 50% 30%, black, transparent 78%);
-}
+/* Document headings are Lora at 400; the interface stays Inter. */
+h1 { font-family: var(--font-document-heading); font-weight: 400; letter-spacing: 0; }
+::selection { background: var(--ch-brand-wash); color: var(--ch-ink); }
+:focus-visible { outline: 2px solid var(--ch-brand); outline-offset: 2px; }
 
 a {
   color: var(--lagoon-deep);
@@ -464,34 +446,54 @@ a {
 
 
 /* <cp-07> */
-/* ---- Greenhouse components: the plan page, the sessions panel, admin. Colours come from the theme tokens above,
-   so light and dark both hold; one accent (lagoon) marks the action you can take. */
+/* ---- Greenhouse components in Chopin's language: the workspace (Chat on the ground, the plan as a raised white sheet),
+   quiet controls, petrol for the action you can take, semantic colour for outcomes. Tokens: the --ch-* roles above. */
 @layer components {
-  .gh-card { border: 1px solid var(--line); background: var(--surface); border-radius: 14px; }
-  .gh-muted { color: var(--sea-ink-soft); }
-  .gh-kicker { color: var(--sea-ink-soft); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }
-  .gh-input { width: 100%; border: 1px solid var(--line); background: var(--surface-strong); color: var(--sea-ink); border-radius: 10px; padding: 0.5rem 0.75rem; font-size: 0.875rem; }
-  .gh-input::placeholder { color: var(--sea-ink-soft); opacity: 0.8; }
-  .gh-input:focus-visible, .gh-btn:focus-visible { outline: 2px solid var(--lagoon); outline-offset: 2px; }
-  .gh-btn { border: 1px solid var(--line); border-radius: 10px; padding: 0.5rem 0.85rem; font-size: 0.875rem; font-weight: 600; color: var(--sea-ink); background: var(--chip-bg); white-space: nowrap; transition: background-color 150ms ease, border-color 150ms ease, transform 120ms ease; }
-  .gh-btn-primary { background: var(--lagoon-deep); border-color: transparent; color: #f3faf5; }
-  :root[data-theme="dark"] .gh-btn-primary { color: #0a1418; }
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .gh-btn-primary { color: #0a1418; } }
-  @media (hover: hover) and (pointer: fine) { .gh-btn:hover { border-color: var(--lagoon); } .gh-btn-primary:hover { filter: brightness(1.06); } }
+  .gh-workspace { display: grid; gap: 1rem; max-width: 84rem; margin: 0 auto; padding: 1rem; }
+  @media (min-width: 1024px) { .gh-workspace { grid-template-columns: 360px minmax(0, 1fr); align-items: start; } }
+  .gh-chat { display: flex; flex-direction: column; gap: 1rem; padding: 0.5rem 0.25rem; }
+  @media (min-width: 1024px) { .gh-chat { position: sticky; top: 1rem; max-height: calc(100vh - 2rem); overflow-y: auto; } }
+  .gh-sheet { background: var(--ch-page); border-radius: var(--ch-radius-xl); box-shadow: var(--ch-shadow-raised); min-width: 0; }
+  @media (max-width: 1023px) { .gh-sheet { order: -1; } }
+  .gh-titlebar { display: flex; align-items: center; gap: 0.75rem; min-height: 40px; padding: 0 0.75rem 0 1rem; border-bottom: 1px solid var(--ch-divider); font-size: var(--ch-text-sm); }
+  .gh-titlebar-title { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .gh-titlebar-sep { align-self: stretch; width: 1px; background: var(--ch-divider); }
+  .gh-views { display: flex; gap: 2px; padding: 7px 7px 0; }
+  .gh-view { border-radius: var(--ch-radius-md); padding: 3px 8px; font-size: 14px; color: var(--ch-ink-3); }
+  .gh-view[aria-selected="true"] { background: var(--ch-selected); color: var(--ch-ink); }
+  @media (hover: hover) and (pointer: fine) { .gh-view:hover { color: var(--ch-ink); } }
+  .gh-doc { max-width: calc(40.625rem + 7rem); padding: 3.75rem 3.5rem 4rem; margin: 0 auto; }
+  @media (max-width: 600px) { .gh-doc { padding: 2rem 1.5rem 3rem; } }
+  .gh-doc h1 { font-size: var(--ch-text-2xl); line-height: 1.15; }
+  .gh-doc h2 { font-family: var(--font-document-heading); font-weight: 400; font-size: var(--ch-text-xl); line-height: 1.25; }
+
+  .gh-card { border: 1px solid var(--ch-edge); background: var(--ch-page); border-radius: var(--ch-radius-md); box-shadow: var(--ch-shadow-resting); }
+  .gh-muted { color: var(--ch-ink-2); }
+  .gh-meta { color: var(--ch-ink-3); font-size: var(--ch-text-xs); display: flex; flex-wrap: wrap; gap: 0 0.75rem; }
+  .gh-input { width: 100%; border: 1px solid var(--ch-control-edge); background: var(--ch-page); color: var(--ch-ink); border-radius: var(--ch-radius-md); padding: 0 0.625rem; height: 2rem; font-size: var(--ch-text-sm); box-shadow: var(--ch-shadow-resting); }
+  .gh-input::placeholder { color: var(--ch-ink-4); }
+  .gh-input:focus-visible { outline: 2px solid var(--ch-brand); outline-offset: 1px; }
+  .gh-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 2rem; padding: 0 0.75rem; border: 1px solid var(--ch-edge); border-radius: var(--ch-radius-lg); font-size: var(--ch-text-sm); font-weight: 500; color: var(--ch-ink); background: var(--ch-selected); white-space: nowrap; transition: background-color 120ms var(--ch-ease-out), transform 120ms var(--ch-ease-out); }
+  .gh-btn:focus-visible { outline: 2px solid var(--ch-brand); outline-offset: 2px; }
+  .gh-btn-primary { background: var(--ch-brand); border-color: oklch(0 0 0 / 15%); color: var(--ch-page); }
+  .gh-btn-ghost { background: transparent; border-color: transparent; color: var(--ch-ink-2); }
+  @media (hover: hover) and (pointer: fine) { .gh-btn:hover { background: var(--ch-gray-300); } .gh-btn-primary:hover { background: var(--ch-brand-hover); } .gh-btn-ghost:hover { background: var(--ch-selected); color: var(--ch-ink); } }
+  .gh-btn-primary:active { background: var(--ch-brand-active); }
   .gh-btn:active { transform: scale(0.97); }
-  .gh-pill { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--chip-line); background: var(--chip-bg); border-radius: 999px; padding: 1px 9px; font-size: 11.5px; color: var(--sea-ink-soft); }
-  .gh-pill[data-tone="live"] { color: var(--palm); border-color: color-mix(in oklab, var(--palm) 45%, transparent); }
-  .gh-pill[data-tone="warn"] { color: var(--gh-warn); border-color: color-mix(in oklab, var(--gh-warn) 40%, transparent); }
-  .gh-bubble { border-radius: 14px; padding: 0.55rem 0.8rem; font-size: 0.875rem; line-height: 1.45; max-width: 92%; }
-  .gh-bubble-asked { align-self: flex-end; background: color-mix(in oklab, var(--lagoon) 16%, var(--surface-strong)); color: var(--sea-ink); border-bottom-right-radius: 4px; }
-  .gh-bubble-answer { align-self: flex-start; border: 1px solid var(--line); background: var(--surface-strong); color: var(--sea-ink); border-bottom-left-radius: 4px; }
-  .gh-bubble-failed { align-self: flex-start; border: 1px solid color-mix(in oklab, var(--gh-warn) 40%, transparent); color: var(--gh-warn); background: transparent; }
-  /* Warning text clears 4.5:1 on both themes: a darker amber on light, a lighter one on dark. */
-  :root { --gh-warn: #9a4a07; }
-  :root[data-theme="dark"] { --gh-warn: #f2a65a; }
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --gh-warn: #f2a65a; } }
-  /* A message that just arrived settles in: opacity and a 4px lift, 180ms, strong ease-out. Not on reduced motion. */
-  .gh-arrive { animation: gh-arrive 180ms cubic-bezier(0.23, 1, 0.32, 1); }
+  .gh-btn:disabled { opacity: 0.55; transform: none; }
+  .gh-pill { display: inline-flex; align-items: center; gap: 6px; height: 23px; padding: 0 8px; border: 1px solid var(--ch-edge); background: var(--ch-inset); border-radius: 9999px; font-size: var(--ch-text-2xs); color: var(--ch-ink-2); white-space: nowrap; }
+  .gh-pill[data-tone="live"] { background: var(--ch-success-wash); color: var(--ch-success-ink); border-color: color-mix(in oklch, var(--ch-success) 30%, transparent); }
+  .gh-pill[data-tone="warn"] { background: var(--ch-warning-wash); color: var(--ch-warning-ink); border-color: color-mix(in oklch, var(--ch-warning-ink) 25%, transparent); }
+  .gh-session-tab { height: 1.75rem; padding: 0 0.625rem; font-size: var(--ch-text-xs); }
+  .gh-session-tab[aria-pressed="true"] { background: var(--ch-page); box-shadow: var(--ch-shadow-resting); }
+  .gh-dot { width: 7px; height: 7px; border-radius: 9999px; background: currentColor; }
+  .gh-bubble { border-radius: var(--ch-radius-lg); padding: 0.5rem 0.75rem; font-size: var(--ch-text-sm); line-height: 1.5; max-width: 92%; }
+  .gh-bubble-asked { align-self: flex-end; background: var(--ch-brand-wash); color: var(--ch-ink); }
+  .gh-bubble-answer { align-self: flex-start; border: 1px solid var(--ch-edge); background: var(--ch-page); color: var(--ch-ink); box-shadow: var(--ch-shadow-resting); }
+  .gh-bubble-failed { align-self: flex-start; border: 1px solid color-mix(in oklch, var(--ch-warning-ink) 25%, transparent); background: var(--ch-warning-wash); color: var(--ch-warning-ink); }
+  :root { --gh-warn: var(--ch-warning-ink); }
+  /* A message that just arrived settles in: opacity and a 4px lift, 200ms, Chopin's ease-out. Not on reduced motion. */
+  .gh-arrive { animation: gh-arrive 200ms var(--ch-ease-out); }
   @keyframes gh-arrive { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
   .gh-working::after { content: "…"; display: inline-block; animation: gh-blink 1.2s steps(4, end) infinite; width: 1ch; overflow: hidden; vertical-align: bottom; }
   @keyframes gh-blink { from { width: 0; } to { width: 1.1ch; } }

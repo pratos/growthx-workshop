@@ -32,6 +32,7 @@ A fresh clone has to work with three commands: `just up`, `just test`, `just dep
 12. **Edges are documented.** `docs/ARCHITECTURE.md` lists the allowed import edges. A change that adds one updates that table in the same commit. No edge in the table, no import.
 13. **Twelve factors.** When anything under `apps/*`, a `wrangler.jsonc`, `scripts/deploy.sh`, the workflow or `flake.nix` changes, run the checker in `tools/twelve-factor-baml` against the Worker. When `packages/agent` changes, read HumanLayer's 12-factor agents list (github.com/humanlayer/12-factor-agents) before writing code.
 14. **Names come from the domain vocabulary.** A noun in a route, table, command or UI label goes through `ddd-vocabulary` first. `just domain-vocabulary-check` passes.
+15. **Check it locally, never on a live site.** Look at a change on the local app (`just up`, or `just up 3100` beside another one; `just reset` for fresh seeded data) and drive it in the browser there. greenhouse.tarp.sh and greenhouse-demo.tarp.sh are for after a deploy: `/healthz` and a smoke check, no test accounts, no test data, no clicking through.
 
 ## Build sequence
 

@@ -3,6 +3,7 @@ import { createServerFn } from '@tanstack/react-start';
 import { useEffect, useState } from 'react';
 import type { PlanView } from '@greenhouse/schema';
 import { apiGet, apiGetOrStatus, apiCommand } from '#/lib/api';
+import { rememberPlan } from '#/lib/recent-plans';
 import { currentAccount } from '#/lib/session';
 import { SessionsPanel } from '#/components/SessionsPanel';
 
@@ -48,6 +49,10 @@ function PlanGate() {
 }
 
 function PlanPage() {
+  // Home lists the plans opened on this device; there is no plan index yet.
+  const { planId: opened } = Route.useParams();
+  useEffect(() => rememberPlan(opened), [opened]);
+  const [view, setView] = useState<'document' | 'decisions'>('document');
   const { plan: loaded, account } = Route.useLoaderData();
   const plan = loaded!;
   const [sessionTick, setSessionTick] = useState(0);
@@ -97,61 +102,89 @@ function PlanPage() {
   }
 
   return (
-    <main className="mx-auto grid max-w-6xl gap-8 px-4 py-10 lg:grid-cols-[minmax(0,1fr)_380px]">
-      <div>
-      <header className="flex items-baseline justify-between gap-4">
-        <div>
-          <p className="gh-kicker">Plan</p>
-          <h1 className="text-3xl font-semibold tracking-tight">{planId}</h1>
-        </div>
-        <p className="gh-muted text-sm">as {by}</p>
-      </header>
-      <p className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-        <span className="gh-pill">{plan.threads.length} thread{plan.threads.length === 1 ? '' : 's'}</span>
-        <span className="gh-pill">{plan.decisions.length} decision{plan.decisions.length === 1 ? '' : 's'}</span>
-        <span className="gh-pill">version {plan.version}</span>
-        <span className="gh-pill" data-live={live} data-tone={live === 'live' ? 'live' : undefined}>{live === 'live' ? '● live' : live === 'off' ? '○ offline' : '○ connecting'}</span>
-      </p>
-      {error && <p role="alert" className="gh-pill mt-4" data-tone="warn">{error}</p>}
-
-      <section className="mt-8 space-y-4" aria-label="Comment threads">
-        {plan.threads.length === 0 && <p className="gh-muted text-sm">No threads on this plan yet. Open the first one below: a question about one block that should end in a decision.</p>}
-        {plan.threads.map((t) => {
-          const decision = plan.decisions.find((d) => d.threadId === t.threadId);
-          return (
-            <article key={t.threadId} data-thread={t.threadId} className="gh-card gh-arrive p-5">
-              <p className="gh-kicker">block {t.blockId} · {t.replies} {t.replies === 1 ? 'reply' : 'replies'}</p>
-              <p className="mt-1.5 text-base font-medium">{t.body}</p>
-              {decision ? (
-                <p className="mt-3 text-sm" data-decision><span className="gh-pill" data-tone="live">decided</span> <strong>“{decision.decision}”</strong> <span className="gh-muted">· {decision.by} · {decision.at.slice(0, 16).replace('T', ' ')} UTC</span></p>
-              ) :
-              /* <cp-10> */
-              !canResolve ? (
-                <p className="gh-muted mt-3 text-sm" data-flag-off="resolve-thread">{flags === null ? 'Checking what you can do here…' : `Resolving threads is not switched on for ${by} yet.`}</p>
-              ) :
-              /* </cp-10> */
-              (
-                <form className="mt-3 flex gap-2" onSubmit={(e) => { e.preventDefault(); const f = new FormData(e.currentTarget); void run(resolveThread({ data: { planId, threadId: t.threadId, decision: field(f, 'decision'), by } })); }}>
-                  <input name="decision" required aria-label="What was decided" placeholder="What was decided?" className="gh-input" />
-                  <button type="submit" className="gh-btn gh-btn-primary">Resolve</button>
-                </form>
-              )}
-            </article>
-          );
-        })}
-      </section>
-
-      <form className="gh-card mt-10 flex flex-col gap-2 border-dashed p-5" onSubmit={(e) => { e.preventDefault(); const f = new FormData(e.currentTarget); void run(openThread({ data: { planId, blockId: field(f, 'blockId'), body: field(f, 'body'), by } })); e.currentTarget.reset(); }}>
-        <p className="text-sm font-semibold">Open a thread</p>
-        <p className="gh-muted text-xs">A question about one block of the plan. It collects replies and ends in a decision.</p>
-        <div className="flex gap-2">
-          <input name="blockId" required aria-label="Block id" placeholder="block id" className="gh-input !w-32" />
-          <input name="body" required aria-label="What should we decide" placeholder="What should we decide?" className="gh-input" />
-          <button type="submit" className="gh-btn">Open</button>
-        </div>
-      </form>
-      </div>
+    <main className="gh-workspace">
       <SessionsPanel planId={planId} me={account?.accountId ?? null} tick={sessionTick} />
+      <article className="gh-sheet" aria-label={`Plan ${planId}`}>
+        <div className="gh-titlebar">
+          <span className="gh-titlebar-title">{planId}</span>
+          <span className="gh-titlebar-sep" aria-hidden="true" />
+          <span className="flex min-w-0 flex-wrap items-center gap-1.5">
+            <span className="gh-pill">{plan.threads.length} thread{plan.threads.length === 1 ? '' : 's'}</span>
+            <span className="gh-pill">version {plan.version}</span>
+          </span>
+          <span className="ml-auto flex items-center gap-3">
+            <span className="gh-pill" data-live={live} data-tone={live === 'live' ? 'live' : undefined}><span className="gh-dot" aria-hidden="true" />{live === 'live' ? 'Live' : live === 'off' ? 'Offline' : 'Connecting'}</span>
+            <span className="gh-muted">as {by}</span>
+          </span>
+        </div>
+        <div className="gh-views" role="tablist" aria-label="Plan views">
+          <button type="button" role="tab" aria-selected={view === 'document'} className="gh-view" onClick={() => setView('document')}>Document</button>
+          <button type="button" role="tab" aria-selected={view === 'decisions'} className="gh-view" onClick={() => setView('decisions')}>Decisions <span className="tabular-nums">{plan.decisions.length}</span></button>
+        </div>
+        <div className="gh-doc">
+          <h1>{planId}</h1>
+          {error && <p role="alert" className="gh-pill mt-4" data-tone="warn">{error}</p>}
+          {view === 'decisions' ? (
+            <section className="mt-8" aria-label="Decisions">
+              {plan.decisions.length === 0 ? <p className="gh-muted text-sm">No decisions yet. A thread ends in one when someone resolves it.</p> : (
+                <ol className="flex flex-col divide-y divide-[var(--ch-divider)]">
+                  {plan.decisions.map((d) => {
+                    const thread = plan.threads.find((t) => t.threadId === d.threadId);
+                    return (
+                      <li key={d.threadId} className="py-4" data-decision>
+                        <p className="text-base">{d.decision}</p>
+                        <p className="gh-meta mt-1"><span>{thread ? `On “${thread.body}”` : d.threadId}</span><span>{d.by}</span><span>{d.at.slice(0, 16).replace('T', ' ')} UTC</span></p>
+                      </li>
+                    );
+                  })}
+                </ol>
+              )}
+            </section>
+          ) : (
+            <>
+              <section className="mt-8 space-y-4" aria-label="Comment threads">
+                {plan.threads.length === 0 && <p className="gh-muted text-sm">No threads on this plan yet. Open the first one below: a question about one block that should end in a decision.</p>}
+                {plan.threads.map((t) => {
+                  const decision = plan.decisions.find((d) => d.threadId === t.threadId);
+                  return (
+                    <article key={t.threadId} data-thread={t.threadId} className="gh-card gh-arrive p-4">
+                      <p className="gh-meta"><span>Block {t.blockId}</span><span>{t.replies} {t.replies === 1 ? 'reply' : 'replies'}</span></p>
+                      <p className="mt-1.5 text-base font-medium">{t.body}</p>
+                      {decision ? (
+                        <div className="mt-3 text-sm" data-decision>
+                          <p><span className="gh-pill" data-tone="live">Decided</span> <strong className="font-medium">“{decision.decision}”</strong></p>
+                          <p className="gh-meta mt-1"><span>{decision.by}</span><span>{decision.at.slice(0, 16).replace('T', ' ')} UTC</span></p>
+                        </div>
+                      ) :
+                      /* <cp-10> */
+                      !canResolve ? (
+                        <p className="gh-muted mt-3 text-sm" data-flag-off="resolve-thread">{flags === null ? 'Checking what you can do here…' : `Resolving threads is not switched on for ${by} yet.`}</p>
+                      ) :
+                      /* </cp-10> */
+                      (
+                        <form className="mt-3 flex gap-2" onSubmit={(e) => { e.preventDefault(); const f = new FormData(e.currentTarget); void run(resolveThread({ data: { planId, threadId: t.threadId, decision: field(f, 'decision'), by } })); }}>
+                          <input name="decision" required aria-label="What was decided" placeholder="What was decided?" className="gh-input" />
+                          <button type="submit" className="gh-btn gh-btn-primary">Resolve</button>
+                        </form>
+                      )}
+                    </article>
+                  );
+                })}
+              </section>
+
+              <form className="mt-10 flex flex-col gap-2 border-t pt-6" style={{ borderColor: 'var(--ch-divider)' }} onSubmit={(e) => { e.preventDefault(); const f = new FormData(e.currentTarget); void run(openThread({ data: { planId, blockId: field(f, 'blockId'), body: field(f, 'body'), by } })); e.currentTarget.reset(); }}>
+                <h2>Open a thread</h2>
+                <p className="gh-muted text-sm">A question about one block of the plan. It collects replies and ends in a decision.</p>
+                <div className="mt-1 flex gap-2">
+                  <input name="blockId" required aria-label="Block id" placeholder="Block id" className="gh-input !w-32" />
+                  <input name="body" required aria-label="What should we decide" placeholder="What should we decide?" className="gh-input" />
+                  <button type="submit" className="gh-btn">Open</button>
+                </div>
+              </form>
+            </>
+          )}
+        </div>
+      </article>
     </main>
   );
 }

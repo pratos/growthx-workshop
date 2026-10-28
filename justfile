@@ -15,9 +15,9 @@ install: skills
     @cd skills/viz-explainer && bun install >/dev/null
     @git config core.hooksPath scripts/git-hooks
 
-# Run api and web locally; D1 and the Durable Object run in miniflare. http://localhost:3000, api on the API binding
-up: install migrate-local seed
-    cd apps/web && bun run dev
+# Run api and web locally; D1 and the Durable Object run in miniflare. http://localhost:3000 (just up 3100 for a second one), api on the API binding
+up port="3000": install migrate-local seed
+    cd apps/web && bunx vite dev --port {{port}}
 
 # The anonymous check-in Worker (growthx-eng.tarp.sh): just checkin dev | just checkin deploy
 checkin action:
