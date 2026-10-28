@@ -1,7 +1,7 @@
-import { createFileRoute, useRouter } from '@tanstack/react-router';
+import { createFileRoute, Link, useRouter } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
 import { useState } from 'react';
-import { apiGet, apiPut } from '#/lib/api';
+import { apiGetOrStatus, apiPut } from '#/lib/api';
 
 // Form fields are strings; a File here is a bug, so it reads as empty.
 const field = (f: FormData, name: string): string => { const v = f.get(name); return typeof v === 'string' ? v : ''; };
@@ -9,7 +9,8 @@ const field = (f: FormData, name: string): string => { const v = f.get(name); re
 // The flags admin page: every flag in D1 with its three switches. All data comes over the API binding; nothing here touches storage.
 type Flag = { name: string; enabled: boolean; allowlist: ReadonlyArray<string>; percent: number };
 
-const loadFlags = createServerFn({ method: 'GET' }).handler(() => apiGet<{ flags: Flag[] }>('/flags'));
+// Admins only: the API answers 401 without a session and 403 for a member, and the page says which.
+const loadFlags = createServerFn({ method: 'GET' }).handler(() => apiGetOrStatus<{ flags: Flag[] }>('/flags'));
 
 type Patch = { name: string; enabled?: boolean; allowlist?: string[]; percent?: number };
 const setFlag = createServerFn({ method: 'POST' })
@@ -24,9 +25,21 @@ export const Route = createFileRoute('/admin/flags')({
 const splitList = (s: string) => s.split(',').map((x) => x.trim()).filter((x) => x.length > 0);
 
 function FlagsPage() {
-  const { flags } = Route.useLoaderData();
+  const loaded = Route.useLoaderData();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  if (!loaded.data) {
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-10">
+        <h1 className="text-2xl font-semibold tracking-tight">Flags</h1>
+        <p role="alert" className="mt-4 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          {loaded.status === 401 ? 'Sign in as an admin to see the flags.' : 'Only admins can see the flags, and this account is a member.'}{' '}
+          <Link to="/login" className="underline">Sign in</Link>
+        </p>
+      </main>
+    );
+  }
+  const { flags } = loaded.data;
 
   async function run(p: Promise<{ status: number; rejected?: string }>) {
     setError(null);

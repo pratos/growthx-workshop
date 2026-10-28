@@ -3,6 +3,7 @@ import { Effect, Schema } from 'effect';
 import { Commands, PlanRooms, readiness, runtimeFor, type Env } from './services';
 import { PlanRoom } from './plan-room';
 import { flagsAdmin } from './flags-admin';
+import { auth } from './auth';
 
 export { PlanRoom };
 
@@ -17,8 +18,10 @@ app.get('/healthz', (c) => c.json({ ok: true, version: { label: c.env.GIT_DESCRI
 app.get('/readyz', async (c) => {
   try {
     await c.env.DB.prepare('SELECT 1').first();
+    const accounts = await c.env.DB.prepare('SELECT count(*) AS n FROM users').first<{ n: number }>().then((r) => `ok, ${r?.n ?? 0} users`, () => 'not migrated: apply 0002_users_and_sessions');
     const r = await runtimeFor(c.env).runPromise(readiness.pipe(Effect.catchTag('NotReady', (e) => Effect.succeed({ planRoom: `not ready: ${e.message}`, version: -1 }))));
-    return c.json({ ok: r.version >= 0, d1: 'ok', ...r }, r.version >= 0 ? 200 : 503);
+    const ok = r.version >= 0 && accounts.startsWith('ok');
+    return c.json({ ok, d1: 'ok', accounts, ...r }, ok ? 200 : 503);
   } catch (e) {
     return c.json({ ok: false, error: e instanceof Error ? e.message : String(e) }, 503);
   }
@@ -52,7 +55,10 @@ app.get('/plans/:planId', async (c) => {
   return c.json(await runtimeFor(c.env).runPromise(PlanRooms.use((r) => r.read(id))));
 });
 
-// Flags admin: list and set the D1 flags that `decide()` reads. GET /flags, PUT /flags/:name.
+// Sign-in: POST /auth/sign-in, POST /auth/sign-out, GET /auth/me.
+app.route('/auth', auth);
+
+// Flags admin: list and set the D1 flags that `decide()` reads. GET /flags, PUT /flags/:name. Admins only.
 app.route('/flags', flagsAdmin);
 
 app.notFound((c) => c.json({ error: 'not found' }, 404));

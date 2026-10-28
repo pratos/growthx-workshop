@@ -92,6 +92,14 @@ plans:
 artifact spec out:
     bun skills/viz-explainer/scripts/build.mjs {{spec}} {{out}}
 
+# Add or update an account; asks for the password. Local D1 unless GH_REMOTE=1. Role: admin or member
+user-add email name role="member":
+    scripts/user-add.sh {{email}} "{{name}}" {{role}}
+
+# Apply pending D1 migrations to the remote database. By hand, after reading them; deploy never does this
+migrate-remote:
+    cd apps/api && bunx wrangler d1 migrations list greenhouse --remote && bunx wrangler d1 migrations apply greenhouse --remote
+
 # Can an agent clone, run, seed, log into, administer and browse this repo alone? ✓/✗ per item with the fix
 agent-ready:
     skills/agent-ready/scripts/check.sh

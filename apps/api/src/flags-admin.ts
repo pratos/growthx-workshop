@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { Context, Effect, Layer, Schema } from 'effect';
 import { ParticipantId } from '@greenhouse/schema';
 import { runtimeFor, type Env } from './services';
+import { requireAdmin } from './auth';
 
 // Flags admin: read and write the D1 `flags` table that `Flags.enabledFor` evaluates. Same shape as the other services:
 // a Context.Service with a D1 layer and an in-memory test layer, Schema at the boundary, one typed error.
@@ -81,6 +82,9 @@ export class FlagsAdmin extends Context.Service<FlagsAdmin, {
 // ---- The edge: a Hono sub-app mounted at /flags. Programs run through the shared runtime; the FlagsAdmin layer is provided per request from the env's D1.
 
 export const flagsAdmin = new Hono<{ Bindings: Env }>();
+
+// Every flag route needs a signed-in admin: reading who is on an allowlist is admin data too.
+flagsAdmin.use('*', requireAdmin);
 
 flagsAdmin.get('/', async (c) => {
   const flags = await runtimeFor(c.env).runPromise(FlagsAdmin.use((f) => f.list()).pipe(Effect.provide(FlagsAdmin.layer(c.env.DB))));
