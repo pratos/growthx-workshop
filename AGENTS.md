@@ -2,6 +2,8 @@
 
 A planning room: people and an agent write a plan together, every decision is owned, dated and attached to the block it changed.
 
+Hono is the HTTP edge; everything behind it is Effect. The Effect repository is vendored at `repos/effect` as read-only reference: inspect it for idiomatic patterns and read `repos/effect/LLMS.md` before writing Effect code. Never edit or import from `repos/`.
+
 Read `docs/GLOSSARY.md` before naming anything and `docs/ARCHITECTURE.md` before moving anything. Every runnable thing is a `just` recipe; if it is not in the justfile, do not invent a way to run it. Skills in `skills/` load on demand; they hold the detail this file leaves out.
 
 Rules that cannot be a lint:

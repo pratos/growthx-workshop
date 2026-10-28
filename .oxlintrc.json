@@ -1,20 +1,58 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["typescript", "import", "unicorn"],
-  "categories": { "correctness": "error", "suspicious": "warn" },
+  "plugins": [
+    "typescript",
+    "import",
+    "unicorn"
+  ],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn"
+  },
   "rules": {
     "typescript/no-explicit-any": "error",
     "no-console": "off"
   },
-  "ignorePatterns": ["**/node_modules/**", "**/dist/**", "**/.wrangler/**", "skills/**", "tools/**", "**/routeTree.gen.ts"],
+  "ignorePatterns": [
+    "**/.wrangler/**",
+    "**/dist/**",
+    "**/node_modules/**",
+    "**/routeTree.gen.ts",
+    "repos/**",
+    "skills/**",
+    "tools/**"
+  ],
   "overrides": [
     {
-      "files": ["apps/web/**"],
+      "files": [
+        "apps/web/**"
+      ],
       "rules": {
-        "no-restricted-imports": ["error", { "patterns": [
-          { "group": ["@greenhouse/domain", "@greenhouse/domain/*"], "message": "web talks to the API over its binding, never to the domain or a database (docs/ARCHITECTURE.md)" },
-          { "group": ["@greenhouse/db", "drizzle-orm", "drizzle-orm/*", "better-sqlite3", "pg", "postgres"], "message": "no data access from the web Worker (docs/ARCHITECTURE.md)" }
-        ] }]
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@greenhouse/domain",
+                  "@greenhouse/domain/*"
+                ],
+                "message": "web talks to the API over its binding, never to the domain or a database (docs/ARCHITECTURE.md)"
+              },
+              {
+                "group": [
+                  "@greenhouse/db",
+                  "drizzle-orm",
+                  "drizzle-orm/*",
+                  "better-sqlite3",
+                  "pg",
+                  "postgres"
+                ],
+                "message": "no data access from the web Worker (docs/ARCHITECTURE.md)"
+              }
+            ]
+          }
+        ]
       }
     }
   ]

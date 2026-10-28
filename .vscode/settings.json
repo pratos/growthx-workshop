@@ -1,0 +1,5 @@
+{
+  "search.exclude": { "repos/**": true, "**/node_modules/**": true, "skills/vendor/**": true },
+  "files.watcherExclude": { "repos/**": true },
+  "typescript.preferences.autoImportFileExcludePatterns": ["repos/**"]
+}
