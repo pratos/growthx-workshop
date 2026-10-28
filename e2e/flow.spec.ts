@@ -25,7 +25,8 @@ test('a newcomer signs up and lands signed in', async ({ page }) => {
   const email = `e2e-${Date.now().toString(36)}@greenhouse.test`;
   await signOut(page);
   await ready(page, '/signup');
-  await page.getByLabel('Name').fill('Newcomer');
+  await page.getByLabel('Name', { exact: true }).fill('Newcomer');
+  await page.getByRole('textbox', { name: /^Username/ }).fill(`new-${Date.now().toString(36)}`);
   await page.getByLabel('Email').fill(email);
   await page.getByLabel('Password').fill('a long enough password');
   await page.getByRole('button', { name: 'Sign up' }).click();

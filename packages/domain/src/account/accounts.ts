@@ -15,6 +15,8 @@ const Registration = Schema.Struct({
   email: Schema.String.check(Schema.isMinLength(3), Schema.isMaxLength(254), Schema.isPattern(/^[^@\s]+@[^@\s]+$/)),
   name: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(80)),
   password: Schema.String.check(Schema.isMinLength(12), Schema.isMaxLength(200)),
+  // The name people see and @mention, chosen at sign-up; without one it is the email's local part.
+  participantId: Schema.optional(Schema.String.check(Schema.isPattern(/^[a-z0-9][a-z0-9-]{1,31}$/))),
 });
 
 export class SignInFailed extends Schema.TaggedError<SignInFailed>()('SignInFailed', { message: Schema.String }) {}
@@ -43,9 +45,9 @@ export class Accounts extends Context.Service<Accounts, {
     const sql = yield* Sql;
     const ctx = ctxOf(clock);
 
-    const register = Effect.fn('Accounts.register')(function* (input: { email: string; name: string; password: string; admin: boolean | 'sign-up' }) {
+    const register = Effect.fn('Accounts.register')(function* (input: { email: string; name: string; password: string; admin: boolean | 'sign-up'; participantId?: string | undefined }) {
       const email = input.email.trim().toLowerCase();
-      const accountId = accountIdFor(email);
+      const accountId = input.participantId ?? accountIdFor(email);
       const taken = yield* sql.query<{ n: number }>('SELECT count(*) AS n FROM accounts WHERE account_id = ? AND email <> ?', [accountId, email]);
       if (Number(taken[0]?.n ?? 0) > 0) return yield* new SignUpRefused({ message: `the name ${accountId} is taken; use another email` });
       const passwordHash = yield* Effect.promise(() => hashPassword(input.password));
@@ -59,7 +61,7 @@ export class Accounts extends Context.Service<Accounts, {
 
     const signUp = Effect.fn('Accounts.signUp')(function* (body: unknown) {
       const r = yield* Schema.decodeUnknownEffect(Registration)(body).pipe(
-        Effect.mapError(() => new SignUpRefused({ message: 'an email, a name, and a password of at least 12 characters' })));
+        Effect.mapError(() => new SignUpRefused({ message: 'an email, a name, a password of at least 12 characters, and a username of 2 to 32 lowercase letters, digits or dashes' })));
       return yield* register({ ...r, admin: 'sign-up' });
     });
 

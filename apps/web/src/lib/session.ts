@@ -14,7 +14,7 @@ export const currentAccount = createServerFn({ method: 'GET' }).handler(async ()
 
 // Sign-up creates the account, then signs in with the same credentials so the person lands signed in.
 export const signUp = createServerFn({ method: 'POST' })
-  .validator((d: { email: string; name: string; password: string }) => d)
+  .validator((d: { email: string; name: string; password: string; participantId?: string }) => d)
   .handler(async ({ data }) => {
     const r = await apiPost<{ account?: Account; rejected?: string }>('/auth/sign-up', data);
     if (r.status !== 201) return { error: r.rejected ?? `sign-up failed (${r.status})` };

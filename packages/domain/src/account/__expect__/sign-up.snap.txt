@@ -3,7 +3,7 @@ then   AccountOpened      sam by sam email="sam@greenhouse.test" name="Sam" admi
 when   someone signs up again with SAM@greenhouse.test
 then   rejected           an account with this email exists
 when   Ana signs up with a short password
-then   rejected           an email, a name, and a password of at least 12 characters
+then   rejected           an email, a name, a password of at least 12 characters, and a username of 2 to 32 lowercase letters, digits or dashes
 when   sam@elsewhere.test signs up, wanting the id sam
 then   rejected           the name sam is taken; use another email
 when   an admin is opened by `just user-add`

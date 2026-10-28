@@ -22,13 +22,15 @@ function SignUpPage() {
           e.preventDefault();
           const d = new FormData(e.currentTarget);
           setBusy(true); setError(null);
-          const r = await signUp({ data: { email: field(d, 'email'), name: field(d, 'name'), password: field(d, 'password') } });
+          const r = await signUp({ data: { email: field(d, 'email'), name: field(d, 'name'), password: field(d, 'password'), participantId: field(d, 'participantId').toLowerCase() } });
           setBusy(false);
           if ('error' in r && r.error) return setError(r.error);
           window.location.assign(nextPath()); // back to the shared link, if one brought you here
         }}
       >
         <label className="text-sm">Name<input name="name" autoComplete="name" required maxLength={80} className="mt-1 w-full rounded border border-gray-300 px-3 py-2" /></label>
+        <label className="text-sm">Username<input name="participantId" autoComplete="off" required pattern="[a-zA-Z0-9][a-zA-Z0-9\-]{1,31}" title="2 to 32 letters, digits or dashes" className="mt-1 w-full rounded border border-gray-300 px-3 py-2" />
+          <span className="mt-1 block text-xs text-gray-500">How others see you and @mention you.</span></label>
         <label className="text-sm">Email<input name="email" type="email" autoComplete="username" required className="mt-1 w-full rounded border border-gray-300 px-3 py-2" /></label>
         <label className="text-sm">Password<input name="password" type="password" autoComplete="new-password" required minLength={12} className="mt-1 w-full rounded border border-gray-300 px-3 py-2" /></label>
         {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
