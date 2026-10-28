@@ -11,6 +11,6 @@ Recipe:
 5. Evidence is the snapshot line or the replay line, so the reader can match picture to log.
 6. More than eight events: collapse runs of the same type ("3 × ReplyPosted") or split by thread.
 
-Build: `bun skills/viz-explainer/scripts/build.mjs spec.json docs/decisions/<plan>-story.html`. Wire as `just explain <planId>`.
+Build: `just artifact spec.json docs/decisions/<plan>-story.html`. There is no `just explain` recipe yet.
 
 The worked example, built from the GH-12 replay, is `assets/example-replay-story.html`; its `#spec` block is the template to copy.
