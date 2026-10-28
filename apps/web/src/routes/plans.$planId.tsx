@@ -2,7 +2,10 @@ import { createFileRoute, Link, useRouter } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
 import { useEffect, useState } from 'react';
 import type { PlanView } from '@greenhouse/schema';
-import { apiGet, apiGetOrStatus, apiCommand } from '#/lib/api';
+import { apiGetOrStatus, apiCommand } from '#/lib/api';
+// <cp-10>
+import { apiGet } from '#/lib/api';
+// </cp-10>
 import { rememberPlan } from '#/lib/recent-plans';
 import { PlanEditor, WRITE_PREFIX } from '#/components/PlanEditor';
 import { savePlanText } from '#/lib/plan-text';
