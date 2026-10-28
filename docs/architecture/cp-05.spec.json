@@ -1,0 +1,61 @@
+{
+  "kind": "architecture-map",
+  "question": "What does a resolve on the plan page travel through at cp-05?",
+  "meta": {
+    "builtBy": "agent · docs/architecture",
+    "builtAt": "2026-10-28",
+    "source": "git tag cp-05"
+  },
+  "diagram": "flowchart LR\n  subgraph browser[\"Browser\"]\n    PG[\"plan page · Resolve form\"]\n    AG[\"Agentation toolbar · dev only\"]\n  end\n  subgraph web[\"apps/web · Worker\"]\n    LD[\"route loader · loadPlan\"]\n    SF[\"server fn · resolveThread\"]\n    API[\"lib/api.ts · env.API\"]\n  end\n  subgraph api[\"apps/api · Worker\"]\n    H[\"Hono · POST /plans/:planId/commands\"]\n    FL[(\"D1 · loadFlags\")]\n    DO[(\"PlanRoom DO · dispatch\")]\n  end\n  subgraph dom[\"packages/domain\"]\n    DEC[\"route · thread decider\"]\n  end\n  PG -- \"submit\" --> SF\n  LD -- \"GET /plans/:planId\" --> API\n  SF -- \"ResolveThread\" --> API\n  API -- \"service binding · fetch\" --> H\n  H -- \"SQL · SELECT flags\" --> FL\n  H -- \"RPC · dispatch(command, flags)\" --> DO\n  DO -- \"route()\" --> DEC\n  AG -. \"structured note to the agent\" .-> PG",
+  "steps": [
+    {
+      "id": "loader",
+      "caption": "The route loader fetches the PlanView before the page renders.",
+      "focus": ["LD"],
+      "edges": ["L_LD_API_0"],
+      "evidence": ["apps/web/src/routes/plans.$planId.tsx"]
+    },
+    {
+      "id": "submit",
+      "caption": "Submitting the form calls a server function with the thread id and the decision.",
+      "focus": ["PG", "SF"],
+      "edges": ["L_PG_SF_0"],
+      "evidence": ["apps/web/src/routes/plans.$planId.tsx"]
+    },
+    {
+      "id": "binding",
+      "caption": "lib/api.ts is the only door to data, and it is the service binding.",
+      "focus": ["API", "H"],
+      "edges": ["L_SF_API_0", "L_API_H_0"],
+      "evidence": ["apps/web/src/lib/api.ts", "apps/web/wrangler.jsonc"]
+    },
+    {
+      "id": "flags",
+      "caption": "Hono validates the envelope and reads this participant's flags from D1.",
+      "focus": ["H", "FL"],
+      "edges": ["L_H_FL_0"],
+      "evidence": ["apps/api/src/index.ts", "apps/api/migrations/0001_flags_and_projections.sql"]
+    },
+    {
+      "id": "do",
+      "caption": "The Durable Object dispatches the command with the flags as plain names.",
+      "focus": ["DO"],
+      "edges": ["L_H_DO_0"],
+      "evidence": ["apps/api/src/plan-room.ts", "docs/ARCHITECTURE.md"]
+    },
+    {
+      "id": "decider",
+      "caption": "The decider decides, the events append in one block, and the page reloads.",
+      "focus": ["DEC"],
+      "edges": ["L_DO_DEC_0"],
+      "evidence": ["packages/domain/src/thread/decider.ts", "apps/web/src/routes/plans.$planId.tsx"]
+    },
+    {
+      "id": "agentation",
+      "caption": "In dev the Agentation toolbar lets you point at what looks wrong.",
+      "focus": ["AG", "PG"],
+      "edges": ["L_AG_PG_0"],
+      "evidence": ["apps/web/src/components/DevTools.tsx", "apps/web/src/routes/__root.tsx"]
+    }
+  ]
+}

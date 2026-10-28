@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What runs at cp-00, and how do the two Workers talk?</title>
+<script src="https://cdn.jsdelivr.net/npm/pele@1.12.0/dist/pele.global.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/4.5.0/anime.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #fffcf0; --fg: #100f0f; --muted: #6f6e69; --line: #cecdc3; --surface: #f2f0e5;
+    --surface-alt: #e6e4d9; --accent: #205ea6; --accent-ink: #ffffff; --ok: #66800b; --warn: #ad8301;
+    --font: ui-sans-serif, system-ui, -apple-system, "Inter", sans-serif;
+    --mono: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, monospace;
+    --radius: 6px; --gutter: 16px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #100f0f; --fg: #cecdc3; --muted: #878580; --line: #403e3c; --surface: #1c1b1a;
+      --surface-alt: #282726; --accent: #4385be; --accent-ink: #100f0f; --ok: #879a39; --warn: #d0a215;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #100f0f; --fg: #cecdc3; --muted: #878580; --line: #403e3c; --surface: #1c1b1a;
+    --surface-alt: #282726; --accent: #4385be; --accent-ink: #100f0f; --ok: #879a39; --warn: #d0a215;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 var(--font); }
+  body { min-height: 100vh; display: flex; flex-direction: column; }
+  header, main, footer { padding: 0 var(--gutter); max-width: 1100px; width: 100%; margin: 0 auto; }
+  header { padding-top: 28px; padding-bottom: 8px; }
+  .kicker { margin: 0 0 6px; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); display: flex; gap: 10px; flex-wrap: wrap; }
+  .kicker b { color: var(--fg); font-weight: 600; }
+  h1 { margin: 0; font-size: clamp(22px, 3vw, 30px); line-height: 1.2; letter-spacing: -.01em; font-weight: 650; }
+  .tabs { display: flex; gap: 6px; margin: 18px 0 0; flex-wrap: wrap; }
+  .tabs button { font: inherit; font-size: 14px; padding: 6px 12px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 999px; cursor: pointer; }
+  .tabs button[aria-selected="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  main { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; padding-top: 18px; padding-bottom: 28px; flex: 1; align-content: start; }
+  @media (max-width: 760px) { main { grid-template-columns: 1fr; } }
+  .stage { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; min-height: 260px; display: grid; place-items: center; overflow: hidden; }
+  #diagram { width: 100%; }
+  .pele { --pele-bg: transparent; --pele-fg: var(--fg); --pele-muted: var(--muted); --pele-line: var(--fg);
+          --pele-surface: var(--bg); --pele-surface-alt: var(--surface-alt); --pele-border: var(--line);
+          --pele-accent: var(--accent); --pele-font: var(--font); --pele-font-mono: var(--mono); --pele-radius: 4px; }
+  .pele-node, .pele-cluster, .pele-edge, .pele-edge-label { transition: opacity .18s ease-out; }
+  .pele-node.is-focus > :is(rect, path, polygon, ellipse, circle) { stroke: var(--accent); stroke-width: 2.25px; }
+  .pele-cluster.is-focus > rect { stroke: var(--accent); stroke-width: 1.75px; }
+  .pele-edge.is-focus path { stroke: var(--accent); stroke-width: 2px; }
+  .pele-edge.is-focus .pele-marker, .pele-edge.is-focus marker path { fill: var(--accent); stroke: var(--accent); }
+  .rail { display: flex; flex-direction: column; gap: 14px; }
+  .step-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin: 0; }
+  .caption { margin: 0; font-size: 18px; line-height: 1.35; font-weight: 500; min-height: 3em; }
+  .evidence { list-style: none; margin: 0; padding: 0; font: 12.5px/1.6 var(--mono); color: var(--muted); }
+  .evidence li::before { content: "› "; }
+  .controls { display: flex; align-items: center; gap: 10px; margin-top: auto; }
+  .controls button { font: inherit; font-size: 14px; padding: 7px 12px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: var(--radius); cursor: pointer; }
+  .controls button:disabled { opacity: .4; cursor: default; }
+  .dots { display: flex; gap: 6px; flex: 1; justify-content: center; }
+  .dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--line); display: block; }
+  .dots i.on { background: var(--fg); }
+  .compare { grid-column: 1 / -1; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-top: 1px solid var(--line); }
+  th { font-weight: 600; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  td:first-child { color: var(--muted); white-space: nowrap; }
+  .decide { grid-column: 1 / -1; border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; background: var(--surface); }
+  .decide h2 { margin: 0 0 10px; font-size: 14px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 600; }
+  .options { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+  .option { border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; background: var(--bg); display: flex; flex-direction: column; gap: 8px; }
+  .option h3 { margin: 0; font-size: 16px; font-weight: 600; }
+  .option p { margin: 0; font-size: 14px; color: var(--muted); }
+  .option .tried { font: 12.5px/1.5 var(--mono); }
+  .option .tried a { color: var(--accent); }
+  .option .tried.no { color: var(--warn); }
+  .option button { align-self: flex-start; font: inherit; font-size: 14px; padding: 7px 14px; border: 0; border-radius: var(--radius); background: var(--accent); color: var(--accent-ink); cursor: pointer; margin-top: 4px; }
+  .option button:disabled { background: var(--surface-alt); color: var(--muted); cursor: not-allowed; }
+  .option.chosen { border-color: var(--ok); }
+  .who { display: none; gap: 8px; align-items: center; margin-top: 12px; font-size: 14px; }
+  .who input { font: inherit; padding: 6px 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); color: var(--fg); }
+  .lock { margin: 12px 0 0; font-size: 14px; color: var(--ok); }
+  .propose { grid-column: 1 / -1; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 14px; color: var(--muted); }
+  .propose input { font: inherit; font-size: 14px; padding: 6px 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--fg); width: 150px; }
+  .propose button { font: inherit; font-size: 14px; padding: 7px 12px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: var(--radius); cursor: pointer; }
+  footer { padding-bottom: 20px; font-size: 12.5px; color: var(--muted); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header>
+  <p class="kicker"><span id="kind"></span><span>built by <b id="by"></b></span><span id="at"></span><span id="source"></span></p>
+  <h1 id="question"></h1>
+  <nav class="tabs" id="tabs" role="tablist" hidden></nav>
+</header>
+<main>
+  <section class="stage"><div id="diagram"></div></section>
+  <aside class="rail">
+    <p class="step-label" id="stepLabel"></p>
+    <p class="caption" id="caption"></p>
+    <ul class="evidence" id="evidence"></ul>
+    <div class="controls">
+      <button id="prev" aria-label="Previous step">←</button>
+      <div class="dots" id="dots"></div>
+      <button id="next" aria-label="Next step">→</button>
+    </div>
+  </aside>
+  <section class="compare" id="compare" hidden></section>
+  <section class="decide" id="decide" hidden>
+    <h2>Decision</h2>
+    <div class="options" id="options"></div>
+    <div class="who" id="who"><span>Recorded as</span><input id="whoName" placeholder="your name"><button id="whoOk">Confirm</button></div>
+    <p class="lock" id="lock" hidden></p>
+  </section>
+  <section class="propose" id="propose" hidden>
+    <span>Missing a transition?</span>
+    <input id="pFrom" placeholder="from state"><input id="pTo" placeholder="to state"><input id="pCmd" placeholder="Command name">
+    <button id="pSend">Propose</button>
+  </section>
+</main>
+<footer><span id="hint">← → to step · one question, one artifact</span><span id="status">standalone</span></footer>
+
+<script type="application/json" id="spec">
+{
+  "kind": "architecture-map",
+  "question": "What runs at cp-00, and how do the two Workers talk?",
+  "meta": {
+    "builtBy": "agent · docs/architecture",
+    "builtAt": "2026-10-28",
+    "source": "git tag cp-00"
+  },
+  "diagram": "flowchart LR\n  subgraph web[\"apps/web · Worker · TanStack Start\"]\n    WR[\"routes · /login · /healthz\"]\n    WA[\"lib/api.ts · env.API\"]\n  end\n  subgraph api[\"apps/api · Worker · Hono\"]\n    H[\"Hono · /healthz · /readyz · /plans/:planId\"]\n    DO[(\"PlanRoom DO · SQLite event log\")]\n    D1[(\"D1 · flags\")]\n  end\n  subgraph dom[\"packages/domain\"]\n    DEC[\"thread decider · route · project\"]\n  end\n  subgraph sch[\"packages/schema\"]\n    S[\"Id · Decision · Thread · PlanView\"]\n  end\n  WR --> WA\n  WA -- \"service binding · fetch\" --> H\n  H -- \"RPC · dispatch(command, flags)\" --> DO\n  H -- \"SQL · SELECT flags\" --> D1\n  DO -- \"import · route, project\" --> DEC\n  DEC -- \"import · zod types\" --> S\n  WR -- \"workspace dependency\" --> S",
+  "steps": [
+    {
+      "id": "web",
+      "caption": "The web Worker is TanStack Start and serves /login and /healthz.",
+      "focus": ["web", "WR", "WA"],
+      "edges": ["L_WR_WA_0"],
+      "evidence": ["apps/web/wrangler.jsonc", "apps/web/src/routes/login.tsx", "apps/web/src/routes/healthz.ts"]
+    },
+    {
+      "id": "api",
+      "caption": "The api Worker is Hono and answers health, readiness and plan commands.",
+      "focus": ["api", "H"],
+      "evidence": ["apps/api/wrangler.jsonc", "apps/api/src/index.ts"]
+    },
+    {
+      "id": "do",
+      "caption": "One PlanRoom Durable Object per plan keeps the event log in its own SQLite.",
+      "focus": ["DO"],
+      "edges": ["L_H_DO_0"],
+      "evidence": ["apps/api/src/plan-room.ts", "apps/api/wrangler.jsonc"]
+    },
+    {
+      "id": "d1",
+      "caption": "D1 holds the flags table, read once per request and passed on as names.",
+      "focus": ["D1"],
+      "edges": ["L_H_D1_0"],
+      "evidence": ["apps/api/migrations/0001_flags_and_projections.sql", "packages/db/seed.sql", "apps/api/src/index.ts"]
+    },
+    {
+      "id": "domain",
+      "caption": "packages/domain holds the Thread decider, and the Durable Object routes every command through it.",
+      "focus": ["dom", "DEC"],
+      "edges": ["L_DO_DEC_0"],
+      "evidence": ["packages/domain/src/kernel.ts", "packages/domain/src/thread/decider.ts", "packages/domain/src/index.ts"]
+    },
+    {
+      "id": "schema",
+      "caption": "packages/schema is the vocabulary as zod types, and both sides depend on it.",
+      "focus": ["sch", "S"],
+      "edges": ["L_DEC_S_0", "L_WR_S_0"],
+      "evidence": ["packages/schema/src/index.ts", "apps/web/package.json"]
+    },
+    {
+      "id": "binding",
+      "caption": "The web Worker reaches data only through the service binding to the api.",
+      "focus": ["WA", "H"],
+      "edges": ["L_WA_H_0"],
+      "evidence": ["apps/web/wrangler.jsonc", "apps/web/src/lib/api.ts", "docs/ARCHITECTURE.md"]
+    }
+  ]
+}
+</script>
+
+<script>
+(() => {
+  const spec = JSON.parse(document.getElementById('spec').textContent);
+  const $ = id => document.getElementById(id);
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const D = reduced ? 0 : 1;
+  const KIND = { 'architecture-map': 'Architecture map', 'state-explorer': 'State explorer', 'event-stream': 'Event stream', 'decision-report': 'Decision report', 'trace-view': 'Trace view' };
+
+  let host = null, participant = null, decision = spec.decision || null;
+  let optionId = spec.options?.[0]?.id ?? null;
+  let stepIndex = 0, mounted = null, svg = null, running = null;
+
+  const post = msg => { const m = { ...msg, artifactId: host?.artifactId, blockId: host?.blockId, planId: host?.planId }; if (host && window.parent !== window) window.parent.postMessage(m, '*'); else console.log('[viz-explainer]', m); };
+
+  document.title = spec.question;
+  $('question').textContent = spec.question;
+  $('kind').textContent = KIND[spec.kind] || spec.kind;
+  $('by').textContent = spec.meta?.builtBy || 'agent';
+  $('at').textContent = spec.meta?.builtAt || '';
+  $('source').textContent = spec.meta?.source || '';
+
+  const steps = () => (spec.steps || []).filter(s => !s.option || s.option === optionId);
+  const diagramText = () => spec.options ? spec.options.find(o => o.id === optionId)?.diagram : spec.diagram;
+
+  function mount() {
+    const el = $('diagram');
+    mounted?.destroy();
+    el.innerHTML = '';
+    mounted = pele.mount(el, diagramText(), {
+      idPrefix: (optionId || 'd') + '-',
+      zoom: false,
+      onRender: () => { svg = el.querySelector('svg'); applyStep(stepIndex, false); },
+      onError: e => console.error('[viz-explainer] diagram error', e),
+    });
+  }
+
+  function clearFocus() { svg?.querySelectorAll('.is-focus').forEach(n => n.classList.remove('is-focus')); }
+
+  function applyStep(i, animated) {
+    const list = steps();
+    const step = list[i];
+    $('stepLabel').textContent = list.length ? `Step ${i + 1} of ${list.length}` : '';
+    $('caption').textContent = step?.caption || '';
+    $('evidence').innerHTML = (step?.evidence || []).map(e => `<li>${esc(e)}</li>`).join('');
+    $('prev').disabled = i <= 0; $('next').disabled = i >= list.length - 1;
+    $('dots').innerHTML = list.map((_, k) => `<i class="${k === i ? 'on' : ''}"></i>`).join('');
+    if (!svg || !step) return;
+    running?.complete?.();
+    clearFocus();
+    const nodes = svg.querySelectorAll('.pele-node, .pele-cluster');
+    const edges = svg.querySelectorAll('.pele-edge, .pele-edge-label');
+    const focusIds = step.focus || [], edgeIds = step.edges || [];
+    const on = focusIds.map(id => svg.querySelector(`.pele-node[data-id="${id}"], .pele-cluster[data-id="${id}"]`)).filter(Boolean);
+    const onEdges = edgeIds.map(id => svg.querySelector(`.pele-edge[data-id="${id}"]`)).filter(Boolean);
+    const dim = focusIds.length || edgeIds.length ? 0.3 : 1;
+    const dur = animated ? 180 * D : 0;
+    anime.animate(nodes, { opacity: dim, duration: dur, ease: 'outQuad' });
+    anime.animate(edges, { opacity: dim, duration: dur, ease: 'outQuad' });
+    anime.animate(on, { opacity: 1, duration: dur, ease: 'outQuad' });
+    on.forEach(n => n.classList.add('is-focus'));
+    onEdges.forEach((g, k) => {
+      g.classList.add('is-focus');
+      anime.animate(g, { opacity: 1, duration: dur, ease: 'outQuad' });
+      const label = svg.querySelector(`.pele-edge-label[data-id="${g.dataset.id}"]`); if (label) anime.animate(label, { opacity: 1, duration: dur });
+      const path = g.querySelector('path');
+      if (path && animated && D) {
+        const [drawable] = anime.svg.createDrawable(path);
+        running = anime.animate(drawable, { draw: ['0 0', '0 1'], duration: 420, delay: k * 120, ease: 'inOutQuad' });
+      }
+    });
+    post({ type: 'greenhouse:step', index: i, id: step.id });
+  }
+
+  function go(i) { const n = steps().length; stepIndex = Math.max(0, Math.min(n - 1, i)); applyStep(stepIndex, true); }
+  $('prev').onclick = () => go(stepIndex - 1);
+  $('next').onclick = () => go(stepIndex + 1);
+  addEventListener('keydown', e => { if (e.key === 'ArrowRight') go(stepIndex + 1); if (e.key === 'ArrowLeft') go(stepIndex - 1); });
+
+  // Options: tabs, comparison, decision
+  if (spec.options?.length) {
+    const tabs = $('tabs'); tabs.hidden = false;
+    tabs.innerHTML = spec.options.map(o => `<button role="tab" data-id="${esc(o.id)}" aria-selected="${o.id === optionId}">${esc(o.label)}</button>`).join('');
+    tabs.onclick = e => { const b = e.target.closest('button'); if (!b) return; optionId = b.dataset.id; stepIndex = 0; [...tabs.children].forEach(t => t.setAttribute('aria-selected', t === b)); mount(); };
+
+    const axes = [['Call sites touched', o => o.axes?.callSites ? `${o.axes.callSites.count}${o.axes.callSites.list?.length ? ' · ' + o.axes.callSites.list.map(esc).join(', ') : ''}` : ''], ['Mechanical vs judgement', o => esc(o.axes?.mechanical || '')], ['Silent behaviour changes', o => esc(o.axes?.silent || '')], ['Invariant at risk', o => esc(o.axes?.invariant || '')]];
+    if (spec.options.some(o => o.axes)) {
+      $('compare').hidden = false;
+      $('compare').innerHTML = `<table><thead><tr><th></th>${spec.options.map(o => `<th>${esc(o.label)}</th>`).join('')}</tr></thead><tbody>${axes.map(([name, f]) => `<tr><td>${name}</td>${spec.options.map(o => `<td>${f(o)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+    }
+
+    if (spec.kind === 'decision-report') {
+      $('decide').hidden = false;
+      renderOptions();
+    }
+  }
+
+  function renderOptions() {
+    $('options').innerHTML = spec.options.map(o => {
+      const tried = o.tried ? `<span class="tried">tried · ${esc(o.tried.kind)} ${o.tried.ref ? (o.tried.href ? `<a href="${esc(o.tried.href)}">${esc(o.tried.ref)}</a>` : esc(o.tried.ref)) : ''}${o.tried.summary ? ' · ' + esc(o.tried.summary) : ''}</span>` : `<span class="tried no">not explored yet · cannot be chosen</span>`;
+      const chosen = decision?.optionId === o.id;
+      return `<div class="option ${chosen ? 'chosen' : ''}" data-id="${esc(o.id)}"><h3>${esc(o.label)}</h3><p>${esc(o.summary || '')}</p>${tried}<button ${(!o.tried || decision) ? 'disabled' : ''} data-choose="${esc(o.id)}">${chosen ? 'Chosen' : 'Choose'}</button></div>`;
+    }).join('');
+    if (decision) { $('lock').hidden = false; $('lock').textContent = `Decided by ${decision.by?.name || 'unknown'} · ${fmt(decision.at)} · ${spec.options.find(o => o.id === decision.optionId)?.label || decision.optionId}`; }
+  }
+  let pending = null;
+  $('options').onclick = e => {
+    const b = e.target.closest('button[data-choose]'); if (!b || b.disabled) return;
+    pending = b.dataset.choose;
+    if (participant) return commit();
+    $('who').style.display = 'flex'; $('whoName').focus();
+  };
+  $('whoOk').onclick = () => { const n = $('whoName').value.trim(); if (!n) return; participant = { id: null, name: n, kind: 'person' }; $('who').style.display = 'none'; commit(); };
+  function commit() {
+    const o = spec.options.find(x => x.id === pending); if (!o) return;
+    decision = { optionId: o.id, label: o.label, by: participant, at: new Date().toISOString(), tried: o.tried ? { kind: o.tried.kind, ref: o.tried.ref } : null };
+    post({ type: 'greenhouse:decision', ...decision });
+    renderOptions();
+    $('status').textContent = host ? 'recorded in plan' : 'recorded locally (no host)';
+  }
+
+  // State-explorer proposals
+  if (spec.proposals) {
+    $('propose').hidden = false;
+    $('pSend').onclick = () => { const m = { type: 'greenhouse:proposal', from: $('pFrom').value.trim(), to: $('pTo').value.trim(), command: $('pCmd').value.trim() }; if (!m.from || !m.to || !m.command) return; post(m); $('pSend').textContent = 'Proposed'; setTimeout(() => $('pSend').textContent = 'Propose', 1500); };
+  }
+
+  // Host protocol
+  addEventListener('message', e => {
+    const m = e.data; if (!m || m.type !== 'greenhouse:init') return;
+    host = m; participant = m.participant || null;
+    if (m.theme) for (const [k, v] of Object.entries(m.theme)) document.documentElement.style.setProperty(k, v);
+    if (m.decision) { decision = m.decision; if (spec.options) renderOptions(); }
+    $('status').textContent = `in plan · ${participant?.name || 'anonymous'}`;
+  });
+  post({ type: 'greenhouse:ready', kind: spec.kind, question: spec.question });
+
+  function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+  function fmt(iso) { try { return new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }); } catch { return iso; } }
+
+  mount();
+})();
+</script>
+</body>
+</html>
