@@ -11,8 +11,10 @@ read -rsp "password for $email: " pw; echo
 tmp="$(mktemp -t gh-account.XXXXXX).sql"; trap 'rm -f "$tmp"' EXIT
 printf '%s' "$pw" | bun "$root/packages/db/add-account.ts" "$email" "$name" "$role" > "$tmp"; unset pw
 remote="--local"; [ "${GH_REMOTE:-}" = "1" ] && remote="--remote"
+# GH_ENV=demo with GH_REMOTE=1 targets the demo site's database (greenhouse-demo.tarp.sh); otherwise the finished site's.
+[ "${GH_ENV:-}" = "demo" ] && remote="$remote --env demo"
 cd "$root/apps/api"
-if bunx wrangler d1 execute greenhouse $remote --file "$tmp" >/dev/null 2>"$tmp.err"; then echo "✓ $email opened as $role ($remote)"
+if bunx wrangler d1 execute DB $remote --file "$tmp" >/dev/null 2>"$tmp.err"; then echo "✓ $email opened as $role ($remote)"
 elif grep -q UNIQUE "$tmp.err"; then echo "✗ $email already has an account ($remote)"; rm -f "$tmp.err"; exit 1
 else cat "$tmp.err"; rm -f "$tmp.err"; exit 1; fi
 rm -f "$tmp.err"

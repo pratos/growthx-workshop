@@ -44,9 +44,8 @@ case "$cp" in
   cp-01)
     bash -n scripts/deploy.sh && test -f .github/workflows/deploy.yml && test -f docs/DEPLOY.md || fail "deploy script, workflow or guide missing"
     grep -q "fetch-depth: 0" .github/workflows/deploy.yml || fail "the workflow's checkout is shallow"
-    live="https://greenhouse-api.prthamesh-sarang.workers.dev"
-    v=$(curl -sf --max-time 20 "$live/healthz" | jq -r '"\(.version.label) (\(.version.id))"') || v="unreachable"
-    pass "deployable: just deploy and the GitHub workflow (check, preview, deploy from main, manual migrate); live api: $v" ;;
+    v=$(curl -sf --max-time 20 "https://greenhouse-demo.tarp.sh/healthz" | jq -r '"\(.api.version.label) (\(.api.version.id))"') || v="not deployed yet"
+    pass "deployable: just deploy prod|demo and the GitHub workflow (check, preview, deploy main to the demo site, manual migrate); demo site: $v" ;;
   cp-02)
     skills/ddd-vocabulary/scripts/check-domain-vocabulary.sh docs/DOMAIN-VOCABULARY.md packages apps >/dev/null || fail "vocabulary check fails"
     bun skills/viz-explainer/scripts/build.mjs docs/decisions/agent-loop.spec.json /tmp/gh-agent-loop.html >/dev/null || fail "decision report does not build"

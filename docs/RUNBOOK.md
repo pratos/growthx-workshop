@@ -19,7 +19,7 @@ cmux panes: `just up` · a shell on main · `tail -f /tmp/gh-*.log` · the brows
 | Stage | Live | Twin (always works) |
 |---|---|---|
 | 0 · Scaffold | `git clone … && just up`; `/healthz`; `just agent-ready` | `just step 0` |
-| 1 · First deploy | push to `main`; Actions deploys; live `/healthz`; `just rollback api <id>` | `just step 1` |
+| 1 · First deploy | merge PR cp-01 into `main`; Actions deploys greenhouse-demo.tarp.sh; its `/healthz`; `just rollback api <id> demo` | `just step 1` |
 | 2 · Design | the architecture map; `docs/decisions/agent-loop.html`; ask pi to "add resolve thread" and watch the names | `just step 2` |
 | 3 · Engine, sign-up and sign-in | sign up at `/signup`; `cat packages/domain/src/account/__expect__/sign-up.snap.txt` | `just step 3` |
 | 4 · Admin | sign in as Admin, `/admin`; as Sam, refused; `just e2e admin` | `just step 4` |
@@ -28,7 +28,7 @@ cmux panes: `just up` · a shell on main · `tail -f /tmp/gh-*.log` · the brows
 | 7 · UI and UX | Claude Code with impeccable and animate; one Agentation note | `just step 7` |
 | 8 · The agent's failures | `cat packages/agent/test/__expect__/fails-after-three.snap.txt`; with a key, `kill -9` the agent mid-answer and run it again | `just step 8` |
 | 9 · End to end | `just e2e` | `just step 9` |
-| 10 · Release behind a flag | `GH_REMOTE=1 just flag user resolve-thread <you>`, switch back to the tab, Resolve appears; flag off, it goes | `just step 10` |
+| 10 · Release behind a flag | on greenhouse.tarp.sh: `GH_REMOTE=1 just flag user resolve-thread <you>`, switch back to the tab, Resolve appears; flag off, it goes | `just step 10` |
 
 ## The map
 

@@ -1,5 +1,8 @@
 {
   "$schema": "../../node_modules/wrangler/config-schema.json",
+  // Two sites. The top level is the finished product, deployed by hand from the last stage (greenhouse.tarp.sh, through
+  // the web Worker). `--env demo` is the workshop's demo site, deployed by GitHub Actions on every merge to main
+  // (greenhouse-demo.tarp.sh), with its own Workers, D1 and plan rooms. `just dev` and `just up` use the top level locally.
   "name": "greenhouse-api",
   "main": "src/index.ts",
   "compatibility_date": "2026-10-20",
@@ -9,5 +12,16 @@
   "vars": { "GIT_DESCRIBE": "dev" },
   "d1_databases": [{ "binding": "DB", "database_name": "greenhouse", "database_id": "96c06c57-93db-4a43-99d0-3a14bd1e55a5", "migrations_dir": "migrations" }],
   "durable_objects": { "bindings": [{ "name": "PLAN_ROOM", "class_name": "PlanRoom" }] },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["PlanRoom"] }]
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["PlanRoom"] }],
+  "env": {
+    "demo": {
+      "name": "greenhouse-demo-api",
+      "vars": { "GIT_DESCRIBE": "dev" },
+      "version_metadata": { "binding": "VERSION" },
+      "d1_databases": [{ "binding": "DB", "database_name": "greenhouse-demo", "database_id": "859ec79d-95bb-4ae6-aa81-62eddfd68c0d", "migrations_dir": "migrations" }],
+      "durable_objects": { "bindings": [{ "name": "PLAN_ROOM", "class_name": "PlanRoom" }] },
+      "migrations": [{ "tag": "v1", "new_sqlite_classes": ["PlanRoom"] }],
+      "observability": { "enabled": true, "logs": { "enabled": true, "head_sampling_rate": 1 }, "traces": { "enabled": true, "head_sampling_rate": 0.1 } }
+    }
+  }
 }

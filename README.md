@@ -38,5 +38,5 @@ Start it, sign in as the seeded accounts, and the things worth trying: [`docs/TE
 <!-- <cp-01> -->
 ## Deploying
 
-GitHub Actions deploys `main` to Cloudflare Workers; migrations are applied by hand. One-time setup, the first deploy, and what each failure means: [`docs/DEPLOY.md`](docs/DEPLOY.md).
+Two sites: GitHub Actions deploys `main` to greenhouse-demo.tarp.sh on every merge; the finished product goes to greenhouse.tarp.sh by hand from the last stage. Migrations are applied by hand. Setup, the order of first deploys, and what each failure means: [`docs/DEPLOY.md`](docs/DEPLOY.md).
 <!-- </cp-01> -->

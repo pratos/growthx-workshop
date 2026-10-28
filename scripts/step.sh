@@ -4,13 +4,15 @@
 set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"; cd "$root"
 n="${1:?usage: just step N   (0-10)}"; cp=$(printf 'cp-%02d' "$n"); prev=$(printf 'cp-%02d' $((n - 1)))
-# Each checkpoint is a branch named cp-NN-<what it adds>, local or on origin; the tag cp-NN points at the same commit.
+# Stage 0 is main; each later stage is a branch named cp-NN-<what it adds>, local or on origin.
 ref="$(git for-each-ref --format='%(refname:short)' "refs/heads/$cp-*" | head -1)"
+[ "$n" -gt 0 ] || ref="main"
 [ -n "$ref" ] || ref="$(git for-each-ref --format='%(refname:short)' "refs/remotes/origin/$cp-*" | head -1)"
 [ -n "$ref" ] || { git rev-parse -q --verify "refs/tags/$cp" >/dev/null && ref="$cp"; }
 [ -n "$ref" ] || { echo "no branch or tag for $cp (git fetch origin?)"; exit 2; }
 prevref="$(git for-each-ref --format='%(refname:short)' "refs/heads/$prev-*" "refs/remotes/origin/$prev-*" | head -1)"
-[ "$n" -gt 0 ] || prevref="$(git for-each-ref --format='%(refname:short)' refs/heads/stack-base refs/remotes/origin/stack-base | head -1)"
+[ "$n" -ne 1 ] || prevref="main"
+[ "$n" -gt 0 ] || prevref=""
 [ -n "$prevref" ] || prevref="$prev"
 dir="${GH_STEPS:-$HOME/.cache/greenhouse-steps}/$cp"
 if [ -d "$dir" ]; then git -C "$dir" checkout -q --detach -f "$ref"; git -C "$dir" clean -qfd -e node_modules -e .wrangler

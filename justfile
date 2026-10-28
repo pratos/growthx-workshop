@@ -118,9 +118,10 @@ artifact spec out:
 user-add email name role="member":
     scripts/user-add.sh {{email}} "{{name}}" {{role}}
 
-# Apply pending D1 migrations to the remote database. By hand, after reading them; deploy never does this
-migrate-remote:
-    cd apps/api && bunx wrangler d1 migrations list greenhouse --remote && bunx wrangler d1 migrations apply greenhouse --remote
+# Apply pending D1 migrations to a site's database, by hand, after reading them; deploy never does this.
+# just migrate-remote prod (greenhouse.tarp.sh) | demo (greenhouse-demo.tarp.sh)
+migrate-remote site="prod":
+    cd apps/api && e=$([ "{{site}}" = demo ] && echo "--env demo" || true) && bunx wrangler d1 migrations list DB --remote $e && bunx wrangler d1 migrations apply DB --remote $e
 
 # End-to-end tests in a real browser against the local app (starts it if :3000 is free): just e2e [filter]
 e2e filter="":
@@ -155,17 +156,26 @@ secret action name:
     @read -rs -p "{{name}}: " v; echo; [ -n "$v" ] || { echo "empty, nothing written"; exit 1; }; \
     touch .dev.vars; grep -v "^{{name}}=" .dev.vars > .dev.vars.tmp || true; printf '%s=%s\n' "{{name}}" "$v" >> .dev.vars.tmp; mv .dev.vars.tmp .dev.vars; chmod 600 .dev.vars; echo "{{name}} stored in .dev.vars"
 
-# Deploy api then web with wrangler. Stops if a D1 migration is pending. `just deploy staging` uses the wrangler env of that name.
+# Deploy api then web: just deploy prod (greenhouse.tarp.sh, by hand from cp-10) | demo (greenhouse-demo.tarp.sh; GitHub does
+# this on every merge to main). Stops if a D1 migration is pending.
 deploy env="prod":
     @scripts/deploy.sh {{env}}
 
-# Roll a Worker back to its previous version: just rollback api | web [version-id]
-rollback app version="":
-    cd apps/{{app}} && bunx wrangler rollback {{version}}
+# Roll a Worker back to a previous version: just rollback api|web [version-id] [prod|demo]
+rollback app version="" site="prod":
+    cd apps/{{app}} && bunx wrangler rollback {{version}} $([ "{{site}}" = demo ] && echo "--env demo" || true)
 
 # Serve the deck from the repo root so its diagram links resolve: http://localhost:8777/deck/
 deck:
     python3 -m http.server 8777 --bind 127.0.0.1
+
+# On a workshop branch: the stage to build next, its phases, the files each may touch, how to check it
+next:
+    @bun scripts/stage.ts next
+
+# On a workshop branch: run the stage plan's checks and list any changed file the plan does not name
+stage-check:
+    @bun scripts/stage.ts check
 
 # Run one checkpoint's deterministic beat in this folder: just demo cp-03
 demo cp:
