@@ -52,7 +52,9 @@ for (const [i, ph] of (plan.phases ?? []).entries()) {
   for (const c of ph.changes ?? []) {
     need(c.file && c.intent, `${where}: every change needs a file and a one-sentence intent`);
     if (c.intent && c.intent.split(/(?<=[.!?])\s/).length > 2) warnings.push(`${where}, ${c.file}: intent is more than two sentences; say what must be true, not how`);
-    if (/\.(tsx|jsx|vue|svelte|css|html)$/.test(c.file ?? '') || /(^|\/)(web|ui|components)\//.test(c.file ?? '')) uiTouched = true;
+    // UI is product code people use: components and styles anywhere, HTML only inside app or package source (not docs or talk pages).
+    const f = c.file ?? '';
+    if (/\.(tsx|jsx|vue|svelte|css)$/.test(f) || (/\.html$/.test(f) && /(^|\/)(apps|packages|src)\//.test(f)) || /(^|\/)(web|ui|components)\//.test(f)) uiTouched = true;
     if (c.contract) {
       const n = String(c.contract.code ?? '').trimEnd().split('\n').length;
       codeLines += n;

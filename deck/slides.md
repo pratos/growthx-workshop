@@ -1,12 +1,15 @@
 <!-- .slide: class="statement" -->
 
-<div class="poster-label">GROWTHX · SHIPPING RELIABLE PRODUCTS</div>
+# The engineering playbook for shipping with AI
 
-# Use Opus 5.5 mid on Claude Code.
+<p class="subtitle">pratos · GrowthX</p>
+
+---
+<!-- .slide: class="statement" -->
+
+# Use Opus 5.5 at mid thinking.
 
 Note:
-Use this file as the source of truth. New horizontal slides with `---`, vertical /btw slides with `--`.
-
 Say it flat. Let it sit for two seconds. Click.
 
 ---
@@ -14,15 +17,13 @@ Say it flat. Let it sit for two seconds. Click.
 
 # Fin.
 
-<p class="subtitle fragment fade-in">😛</p>
+<p class="subtitle fragment fade-in">:P</p>
 
 Note:
-Hold. Let them laugh or not. Click.
+Hold. Let them laugh or not. Press down for the thank you.
 
----
+--
 <!-- .slide: class="statement" -->
-
-<div class="poster-label">WHOAMI</div>
 
 # thank you. i'm pratos.
 
@@ -33,197 +34,24 @@ Hold. Let them laugh or not. Click.
 
 Note:
 Beat. Then: "fine. Here's the actual talk."
+Cut from screen: header label "WHOAMI"
 
 ---
-<!-- .slide: class="statement" -->
+<!-- .slide: class="statement" data-part="Prompting vs engineering" -->
 
-<div class="poster-label">THE THESIS</div>
+## There is no right way to do AI coding.
 
-## Agents made the typing cheap.
+<h2 class="fragment fade-in">Every path leads to tech debt.</h2>
 
-<h2 class="fragment fade-in">They did not make the thinking cheap.</h2>
-
-<p class="kicker fragment fade-in">Everyone is a product engineer. The agent is your colleague. Your job is to make its life easier.</p>
+<p class="kicker fragment fade-in">any code committed is tech debt. an arrow shot cannot be taken back. what changed is who shoots, and how fast.</p>
 
 Note:
-Any code committed is tech debt. An arrow shot cannot be taken back. What changed is who shoots and how fast. In the rush we dropped the engineering practices that got us here. They were never about typing speed. They are about keeping a system legible to whoever works on it next, and the agent is now whoever works on it next.
-
----
-<!-- .slide: class="statement" -->
-
-<div class="poster-label">THE CHECK-IN · N = 12</div>
-
-## Who is in the room
-
-<div class="tile-row four">
-  <div class="poster-tile fragment fade-in"><h3>9 of 12</h3><p>L3/L4, terminal every day</p></div>
-  <div class="poster-tile fragment fade-in"><h3>7 of 12</h3><p>want parallel agents, automation, custom tooling</p></div>
-  <div class="poster-tile fragment fade-in"><h3>3 of 12</h3><p>work in a large production codebase</p></div>
-  <div class="poster-tile you fragment fade-in"><h3>5 of 12</h3><p>debug by pasting the error back, or starting over</p></div>
-</div>
-
-Note:
-Six engineers, two growth, two founders, one PM, one data. The last tile is the one the whole evening is about.
-
----
-<!-- .slide: class="meme-slide" -->
-
-<div class="poster-label">HOW WE DEBUG TODAY</div>
-
-## "paste the error back, or start over"
-
-<img class="meme-image" src="images/kot/psyduck.webp" alt="Psyduck staring at a monitor, holding its head" />
-
-<p class="caption">five of twelve. no judgement. this was me in March.</p>
-
----
-<!-- .slide: class="statement" -->
-
-<div class="poster-label">RUN OF SHOW · 19:30–22:00 IST</div>
-
-## Two and a half hours, two agent runs, one ticket
-
-<ul class="agenda">
-  <li><span class="t">19:30</span><span>How coding agents work</span><span class="d">10 min · live</span></li>
-  <li><span class="t">19:40</span><span>Prompting vs engineering · ten tenets</span><span class="d">15 min</span></li>
-  <li><span class="t">19:55</span><span>Brooks, twice</span><span class="d">15 min · poll</span></li>
-  <li class="hands"><span class="t">20:10</span><span>Run 1 · pi · fresh clone → passing expect test</span><span class="d">30 min · hands-on</span></li>
-  <li><span class="t">20:40</span><span>Questions · break</span><span class="d">18 min</span></li>
-  <li class="hands"><span class="t">20:58</span><span>Run 2 · Claude Code · UI → merge-ready PR</span><span class="d">25 min · hands-on</span></li>
-  <li><span class="t">21:30</span><span>Durable and multiplayer: the harness in the cloud</span><span class="d">20 min</span></li>
-  <li><span class="t">21:50</span><span>Released, then changed under real users</span><span class="d">7 min</span></li>
-  <li><span class="t">21:57</span><span>You are the gardener</span><span class="d">3 min</span></li>
-</ul>
-
-Note:
-Everything hands-on happens inside the two runs. Clone Greenhouse during the break if you haven't.
-
----
-<!-- .slide: class="section-slide" -->
-
-<div class="num">00</div>
-
-# How coding agents work
-
-<p class="subtitle">most of what feels like magic is six lines of plumbing</p>
-
----
-
-<div class="poster-label">THE LOOP, HONESTLY</div>
-
-## A harness is a program
-
-```text
-context = system prompt + AGENTS.md + skills + conversation + tool results
-loop:
-  reply  = model(context, tools)
-  if reply has no tool call: break
-  result = execute(reply.tool_call)       # shell, read, write, browser…
-  context += reply + result               # this is where context grows
-```
-
-
-Note:
-Assemble context, ask a model, execute whatever tool call comes back, feed the result in again until the model stops asking. That's it. Everything else is a decision the harness made for you.
-Cut from screen: you decide: which tools exist · what needs approval · what gets compacted · what persists · who else can see the thread
-
----
-<!-- .slide: class="meme-slide" -->
-
-<div class="poster-label">CONTEXT ASSEMBLY</div>
-
-## Everything the agent "knows", the harness put there
-
-<img class="meme-image" src="images/kot/pepe-silvia.webp" alt="Pepe Silvia conspiracy board" />
-
-<p class="caption">instructions files · loaded skills · tool results.</p>
-
-Note:
-Cut from screen: instructions files · loaded skills · tool results. skills are just files added to context on demand. this is why AGENTS.md and the living wiki matter.
-
----
-
-<div class="poster-label">CONTEXT ECONOMICS</div>
-
-<div class="live">live</div>
-
-## The model remembers nothing. Every turn re-sends everything.
-
-```text
-[ system prompt + tool definitions ]   changes when: tool set changes, upgrade
-[ CLAUDE.md · auto memory · rules   ]   changes when: session start, /clear, /compact
-[ conversation · tool results        ]   changes when: every turn (appended at the end)
-
-turn n:   [sys][ctx][msg1 … msg n-1] ← cache   [msg n] ← processed
-/model:   [sys][ctx][msg1 … msg n  ] ← ALL recomputed. each model has its own cache.
-```
-
-<p class="kicker">the cache matches the <strong>prefix</strong>, exactly. change byte 1 and everything after it is recomputed.</p>
-
-Note:
-Live: tail a pi session log while it runs one tool call. Then /usage in Claude Code to show the hit ratio and the reason for the last miss.
+There are many things you can use, and every path leads to tech debt, because any code committed is tech debt. An arrow shot cannot be taken back. What changed is who shoots and how fast.
 
 --
-<!-- .slide: class="btw-slide" -->
+<!-- .slide: class="meme-slide btw-slide" -->
 
-<div class="poster-label">/BTW</div>
-
-## What breaks the cache, what keeps it
-
-<div class="split">
-  <div>
-    <h3 class="you-h">breaks it</h3>
-    <ul>
-      <li>switching model, changing effort, toggling fast mode</li>
-      <li>changing the loaded tool set (an MCP connecting, denying a whole tool)</li>
-      <li>compaction, by design</li>
-    </ul>
-  </div>
-  <div>
-    <h3 class="agent-h">keeps it</h3>
-    <ul>
-      <li>editing files, invoking skills (appended)</li>
-      <li>changing permission mode, /rewind</li>
-      <li>spawning a subagent (its own cache)</li>
-    </ul>
-  </div>
-</div>
-
-<p class="kicker">pick model and effort at the top of a session and leave them. hence: <strong>Opus 5.5 mid. Fin.</strong></p>
-
-Note:
-Editing CLAUDE.md mid-session keeps the cache because it does not apply until the next /clear. Run /compact at a boundary between tasks, not mid-task.
-
---
-<!-- .slide: class="btw-slide" -->
-
-<div class="poster-label">/BTW</div>
-
-## Token diet
-
-<div class="tile-row three">
-  <div class="poster-tile"><h3>Tool output is tokens</h3><p>A <code>just test</code> that prints 400 lines on success is a tax on every later turn. Quiet on success.</p></div>
-  <div class="poster-tile"><h3>Defer the schemas</h3><p>MCP tool schemas loaded on demand: a connector costs a name, not a schema.</p></div>
-  <div class="poster-tile"><h3>Research elsewhere</h3><p>DeepWiki or a throwaway session. Only the answer comes back, as a paragraph you read first.</p></div>
-</div>
-
-<p class="kicker mono">/context shows what is in the window · /usage shows the hit ratio and names the last miss</p>
-
----
-<!-- .slide: class="section-slide" -->
-
-<div class="num">01</div>
-
-# Prompting vs engineering
-
-<p class="subtitle">why basics, why now</p>
-
----
-<!-- .slide: class="meme-slide" -->
-
-<div class="poster-label">THERE IS NO RIGHT WAY TO DO AI CODING</div>
-
-<img class="meme-image wide up" src="images/kot/midwit.webp" alt="IQ bell curve meme" />
+<img class="meme-image wide up" src="images/kot/midwit.png" alt="IQ bell curve meme" />
 
 <div class="tile-row three" style="position:absolute;left:96px;right:96px;bottom:48px;margin:0">
   <div class="poster-tile fragment fade-in"><p>"just prompt it bro"</p></div>
@@ -231,131 +59,203 @@ Editing CLAUDE.md mid-session keeps the cache because it does not apply until th
   <div class="poster-tile fragment fade-in"><p>"just prompt it bro"<br><em>…with types, tests and a glossary</em></p></div>
 </div>
 
-Note:
-Every path leads to tech debt. The difference is whether the next reader, human or model, can still tell what the system is.
+---
+<!-- .slide: class="statement" -->
+
+## Agents are a new primitive.
+
+<p class="subtitle">Machine empathy made you a good engineer for the computer. It now extends to agent empathy.</p>
+
+<p class="kicker">good agent experience still needs great developer experience underneath, and it needs updating as models change.</p>
 
 ---
 <!-- .slide: class="statement" -->
 
-<div class="poster-label">A WORKING DEFINITION FOR THE DAY</div>
+## Tonight is about you, not your team
 
-## An agent will cook.
-
-<h2 class="fragment fade-in">Whether what comes out is edible depends on your intent.</h2>
-
-<p class="kicker fragment fade-in">and intent is an engineering artefact.</p>
-
-Note:
-Machine empathy made you a good engineer for the computer. Agent empathy is the same muscle. Good agent experience needs great developer experience underneath it.
-
----
-<!-- .slide: class="statement" -->
-
-<div class="poster-label">SCOPE</div>
-
-<div class="split" style="margin-top:120px">
+<div class="split">
   <div>
-    <h3 class="agent-h">personal level · in scope</h3>
-    <p>A very good bump in what one person can do. One person can change their own habits tomorrow.</p>
+    <h3>personal level · in scope</h3>
+    <p>A very good bump in what one person can do. The basics pay off fastest here, because one person can change their own habits tomorrow.</p>
   </div>
   <div>
-    <h3 class="you-h">team level · out of scope</h3>
-    <p>Huge variance. Another session. Nothing tonight depends on a process change.</p>
+    <h3>team level · out of scope today</h3>
+    <p>Huge variance in how teams do this. Left for another session; nothing here depends on a process change.</p>
   </div>
 </div>
 
 ---
-<!-- .slide: class="section-slide" -->
+<!-- .slide: class="meme-slide" data-part="Everyone is a product engineer" -->
 
-<div class="num">Pillar 01</div>
+## Everyone is a product engineer
 
-# Everyone is a product engineer
+<img class="meme-image" src="images/kot/astronaut.png" alt="Two astronauts looking at Earth; the one behind holds a pistol: always has been" />
 
-<p class="subtitle">features are not asks · any code that makes money is good code</p>
+<p class="caption">wait, it's all product engineering? &nbsp;·&nbsp; always has been.</p>
 
 ---
-<!-- .slide: class="meme-slide" -->
+<!-- .slide: class="statement" -->
 
-<div class="poster-label">INTENT IS THE INPUT</div>
+## Features ≠ asks
+
+<p class="subtitle">An ask is what someone typed in a ticket. A feature is the change in the user's day.</p>
+
+<p class="kicker fragment fade-in">The agent will faithfully build the ask; translating it into the feature is yours.</p>
+
+---
+<!-- .slide: class="statement" -->
+
+## Outcome over output
+
+<p class="subtitle">"Any code that makes money is good code" is only half a joke.</p>
+
+<p class="kicker fragment fade-in">If the measure is the outcome, then verifying the outcome, not the diff, is the work.</p>
+
+---
+<!-- .slide: class="statement" -->
+
+## Intent is the input
+
+<p class="subtitle">Prompts, plans, tests, types and docs are all the same thing.</p>
+
+<p class="kicker fragment fade-in">ways of writing intent down so a second brain can act on it without you in the room.</p>
+
+--
+<!-- .slide: class="meme-slide btw-slide" -->
 
 ## your intent &nbsp;·&nbsp; what the agent built
 
-<img class="meme-image tall" src="images/kot/mona-lisa.webp" alt="Mona Lisa next to a child's crayon copy" />
+<img class="meme-image tall" src="images/kot/mona-lisa.png" alt="Mona Lisa next to a child's crayon copy" />
 
 <p class="caption">the agent faithfully built the ask. translating the ask into the feature was yours.</p>
-
-Note:
-An ask is what someone typed in a ticket. A feature is the change in the user's day. Prompts, plans, tests, types and docs are all the same thing: intent written down so a second brain can act on it without you in the room.
-
----
-
-<div class="poster-label">THE TEN TENETS</div>
-
-## None of these are about tools
-
-<div class="tile-row five">
-  <div class="poster-tile fragment fade-in"><h3>01</h3><p>Understand the problem space</p></div>
-  <div class="poster-tile fragment fade-in"><h3>02</h3><p>User, machine, fellow-dev… and <strong>agent</strong> empathy</p></div>
-  <div class="poster-tile fragment fade-in"><h3>03</h3><p>Outcomes, not output</p></div>
-  <div class="poster-tile fragment fade-in"><h3>04</h3><p>Be comfortable with ambiguity. Agents are not.</p></div>
-  <div class="poster-tile fragment fade-in"><h3>05</h3><p>Ship fast, think and act slowly</p></div>
-  <div class="poster-tile you fragment fade-in"><h3>06</h3><p>Talk to users who use your product</p></div>
-  <div class="poster-tile fragment fade-in"><h3>07</h3><p>Always use your product</p></div>
-  <div class="poster-tile fragment fade-in"><h3>08</h3><p>Connect the dots</p></div>
-  <div class="poster-tile fragment fade-in"><h3>09</h3><p>Use LLMs to augment your learning</p></div>
-  <div class="poster-tile fragment fade-in"><h3>10</h3><p>Develop taste</p></div>
-</div>
-
-
-Note:
-Output is now nearly free; measure yourself by it and the agent buries you in it. Resolving ambiguity before handoff is the highest-leverage thing you do all day. Taste is what you review with; without it every suggestion looks equally fine.
-Cut from screen: every one of them changes what the agent gets handed.
-
----
-<!-- .slide: class="statement" -->
-
-<div class="poster-label you">TENET 06 · THE EXTRA MINUTE</div>
-
-## How well do you interview your users?
-
-<p class="kicker">no agent can do this for you, and everything downstream depends on it.</p>
-
----
-<!-- .slide: class="statement" -->
-
-<div class="poster-label">ONE SENTENCE ON PARALLEL AGENTS</div>
-
-## Explore in parallel. Commit serially.
-
-<p class="subtitle fragment fade-in">many threads to explore · one thread to build · one inverted reviewer after</p>
-
-Note:
-Coding is one sixth of the job. A fan-out there speeds up the sixth and multiplies the five sixths you still owe. The merge is where correct code becomes wrong. Brooks will say why in a minute.
 
 ---
 <!-- .slide: class="section-slide" -->
 
-<div class="num">Pillar 02 · 03</div>
+# Ten tenets of a product engineer
 
-# Brooks, twice
+<p class="subtitle">none of them are about tools</p>
 
-<p class="subtitle">The Mythical Man-Month (1975) · No Silver Bullet (1986)</p>
+Note:
+I run a small workshop on what constitutes a product engineer. These are its ten tenets.
+
+---
+<!-- .slide: class="statement" data-section="Tenet 01 of 10" -->
+
+## Understand the problem space
+
+<p class="subtitle">The agent only knows the problem you managed to describe.</p>
+
+<p class="kicker fragment fade-in">time spent here is the planning third of Brooks's schedule.</p>
+
+Note:
+Brooks's schedule comes up properly in a few minutes.
+
+---
+<!-- .slide: class="statement" data-section="Tenet 02 of 10" -->
+
+## User, machine, fellow-dev… and agent empathy
+
+<p class="subtitle">The next reader of your code is as likely to be a model as a colleague.</p>
+
+---
+<!-- .slide: class="statement" data-section="Tenet 03 of 10" -->
+
+## Think in outcomes, not output
+
+<p class="subtitle">Output is now nearly free.</p>
+
+<p class="kicker fragment fade-in">measure yourself by it and the agent will happily bury you in it.</p>
+
+---
+<!-- .slide: class="statement" data-section="Tenet 04 of 10" -->
+
+## Be comfortable with ambiguity
+
+<p class="subtitle">Agents are not.</p>
+
+<p class="kicker fragment fade-in">resolving ambiguity before you hand work over is the highest-leverage thing you do all day.</p>
+
+Note:
+Long-running agents will hit ambiguity. They can write reliable code, but is it right for the context?
+
+---
+<!-- .slide: class="statement" data-section="Tenet 05 of 10" -->
+
+## Ship fast, think and act slowly
+
+<p class="subtitle">Slow is smooth. Smooth is fast.</p>
+
+<p class="kicker fragment fade-in">the agent supplies the fast; you supply the slow.</p>
+
+---
+<!-- .slide: class="statement" data-section="Tenet 06 of 10" -->
+
+## Talk to users who use your product
+
+<p class="subtitle">Or to your ideal customers. How well do you interview your users?</p>
+
+<p class="kicker fragment fade-in">no agent can do this for you, and everything downstream depends on it.</p>
+
+---
+<!-- .slide: class="statement" data-section="Tenet 07 of 10" -->
+
+## Always use your product
+
+<p class="subtitle">Dogfood. The agent can run the tests; it cannot feel the friction.</p>
+
+<p class="kicker fragment fade-in">that is the review only you can give.</p>
+
+---
+<!-- .slide: class="statement" data-section="Tenet 08 of 10" -->
+
+## Connect the dots
+
+<p class="subtitle">Across the codebase, the user's day and the business.</p>
+
+<p class="kicker fragment fade-in">agents see one context window; you see the whole board.</p>
+
+Note:
+Your job is to make your own life easy: write the code, write the skills.
+
+---
+<!-- .slide: class="statement" data-section="Tenet 09 of 10" -->
+
+## Use LLMs to augment your learning
+
+<p class="subtitle">Ask the agent to explain why it did the thing.</p>
+
+<p class="kicker fragment fade-in">the point is that you understand more at the end of the session, not less.</p>
+
+---
+<!-- .slide: class="statement" data-section="Tenet 10 of 10" -->
+
+## Develop taste in code, design and UX
+
+<p class="subtitle">Taste is what you review with.</p>
+
+<p class="kicker fragment fade-in">without it, every agent suggestion looks equally fine.</p>
+
+---
+<!-- .slide: class="section-slide" -->
+
+# The Mythical Man-Month
+
+<p class="subtitle">Frederick P. Brooks Jr. · 1975</p>
 
 ---
 <!-- .slide: class="statement" -->
 
-<div class="poster-label">THE BOOK'S OPENING EPIGRAPH</div>
-
 ## "Good cooking takes time. If you are made to wait, it is to serve you better, and to please you."
 
-<p class="subtitle">Menu of Antoine's, New Orleans</p>
+<p class="subtitle">Menu of Antoine's, New Orleans · the book's opening epigraph</p>
 
-<p class="kicker fragment fade-in">agents collapsed the wait. the cooking still takes the time it takes. it moved from the keyboard into planning, testing and reading.</p>
+<p class="kicker fragment fade-in">agents collapsed the wait. the cooking still takes the time it takes; it moved into planning, testing and reading. spend none of it and you get the coin toss.</p>
+
+Note:
+Agents collapsed the wait. The cooking still takes the time it takes, it just moved from the keyboard into planning, testing and reading. If you spend none of it, you get the coin toss.
 
 ---
-
-<div class="poster-label">ESTIMATION AND OPTIMISM · CHAPTER TWO</div>
-
 ## Coding was already the smallest slice in 1975
 
 <div class="fractions">
@@ -365,130 +265,401 @@ Coding is one sixth of the job. A fan-out there speeds up the sixth and multipli
   <div><strong>1/4</strong><span>system test</span></div>
 </div>
 
+<p class="kicker">the other five sixths are still yours. treat the coding slice as the whole job and your estimate is off by six.</p>
 
 Note:
-Optimism and bad estimation sink software, and they are the same thing. Agents give us even less reason to pause.
-Cut from screen: treat the coding slice as the whole job and your estimate is off by a factor of six before you start.
+Brooks's rule of thumb for a schedule. Agents shrink the coding sixth further. Component test includes early system test; system test means all components in hand.
 
 ---
-
-<div class="poster-label">THE SURGICAL TEAM · CHAPTER THREE · REMAPPED</div>
-
 ## One surgeon. Not ten surgeons operating at once.
 
 <table class="tight">
-  <tr><th>role</th><th>filled by</th><th>at your desk</th></tr>
+  <tr><th>role in Mills's team</th><th>filled by</th><th>at your desk</th></tr>
   <tr><td>Surgeon</td><td><span class="tag you">you</span></td><td>owns the problem, the design, the final call</td></tr>
-  <tr><td>Copilot</td><td><span class="tag agent">agent</span></td><td>knows the design, argues with it, writes most of the code. does not own it</td></tr>
-  <tr><td>Administrator</td><td><span class="tag you">you</span></td><td>environment, tooling, access. make it run anywhere</td></tr>
+  <tr><td>Copilot</td><td><span class="tag agent">agent</span></td><td>argues with the design, writes a lot of the code, does not own it</td></tr>
+  <tr><td>Administrator</td><td><span class="tag you">you</span></td><td>environment, tooling, access: runs anywhere</td></tr>
   <tr><td>Editor</td><td><span class="tag agent">agent</span></td><td>docs, changelogs, the "why", kept current</td></tr>
-  <tr><td>Program clerk</td><td><span class="tag agent">agent</span></td><td>review passes, skills, bookkeeping of what was tried</td></tr>
-  <tr><td>Toolsmith · tester · lawyer</td><td><span class="tag both">shared</span></td><td>agents do the volume; you decide what counts as passing</td></tr>
+  <tr><td>Program clerk</td><td><span class="tag agent">agent</span></td><td>review passes, skills, what was tried</td></tr>
+  <tr><td>Toolsmith · tester</td><td><span class="tag both">shared</span></td><td>agents do the volume; you decide what passes</td></tr>
 </table>
 
----
-<!-- .slide: class="statement" -->
-
-<div class="poster-label">BROOKS'S LAW, 2026 EDITION</div>
-
-## Adding agent sessions to a confused task makes it more confused.
-
-<p class="kicker fragment fade-in">every session routes its questions through the same person. <strong>you are the communication overhead now.</strong></p>
-
 Note:
-Also from the book: "How does a project get to be a year late? One day at a time." Agents hide slippage well because something always got produced. Plan to throw one away is finally affordable: let the agent build v1 to learn the problem, then throw it away on purpose.
+Surgeon: conceptual integrity lives in one head. Administrator: make things easy to run anywhere, for yourself and for the agent. Program clerk: review passes, skill and prompt writing, bookkeeping of what was tried. Toolsmith, tester, language lawyer: agents do the volume; you decide what counts as a passing test and which idioms are allowed.
 
 ---
+## Brooks, applied to agents
 
-<div class="poster-label">NO SILVER BULLET · 1986</div>
-
-## Agents are the strongest attack on accident we have seen. The essence did not move.
-
-<div class="split">
-  <div>
-    <h3 class="agent-h">accidental difficulty</h3>
-    <ul>
-      <li>syntax, boilerplate, glue</li>
-      <li>looking things up, remembering APIs</li>
-      <li>mechanical refactors, test scaffolding</li>
-      <li>translating between languages and formats</li>
-    </ul>
-  </div>
-  <div>
-    <h3 class="you-h">essential difficulty</h3>
-    <ul>
-      <li><strong>complexity</strong>: the shape of the data and its invariants</li>
-      <li><strong>conformity</strong>: the messy world the software must match</li>
-      <li><strong>changeability</strong>: what users will ask for next</li>
-      <li><strong>invisibility</strong>: nobody sees the whole system. not the agent either</li>
-    </ul>
-  </div>
+<div class="ladder">
+  <div><span class="n">1</span><span>Adding agent sessions to a confused task makes it more confused.</span></div>
+  <div><span class="n">2</span><span>Explore in parallel. Commit serially.</span></div>
+  <div><span class="n">3</span><span>Agents hide slippage well, because something always got produced.</span></div>
+  <div><span class="n">4</span><span>Gold-plating is now cheap to generate. Leaving things out is human.</span></div>
+  <div><span class="n">5</span><span>Plan to throw one away. It is finally affordable.</span></div>
 </div>
 
 Note:
-Agent complexity is hill climbing. Given a hard target it takes shortcuts, and it cannot do well on things it cannot see. So No Silver Bullet is a to-do list: everything that shrinks the essence for a human shrinks it for the agent.
-
----
-
-<div class="poster-label">KEEPING UP WITHOUT THE FOMO</div>
-
-## "everyone on the timeline is doing unbelievable things"
-
-<div class="split">
-  <div>
-    <h3 class="agent-h">keep up with</h3>
-    <p>Your own loop: intent → verified change. Measure it on your repo, not a demo. One new tool a month, on a real ticket, kept only if the loop got faster.</p>
-  </div>
-  <div>
-    <h3 class="you-h">let go of</h3>
-    <p>Leaderboards, launches, thirty-second clips. The unbelievable thing in the clip was usually the basics, applied by someone who did not skip them.</p>
-  </div>
-</div>
-
-Note:
-Cut from screen: the gain any tool can give you is bounded by how much accident is left in your work.
-
----
-<!-- .slide: class="statement" -->
-
-<div class="poster-label you">CHAT POLL · 2 MINUTES</div>
-
-## Estimate GH-12 with the fractions.
-
-<p class="subtitle">"Resolve a comment thread into a decision." Command, two events, a projection, a resolve button, one browser flow.</p>
-
-<p class="kicker fragment fade-in">write a number of hours in chat. we come back to it at 21:57.</p>
+Brooks's law. Adding people to a late project makes it later. Adding agent sessions to a confused task makes it more confused, because every session routes its questions through the same person: you are the communication overhead now.
+On parallel agents. A position: parallel exploration, serial commitment. Threads that each implement a different option before you decide are cheap and worth it; that is Appleton's "making contact with reality", and it needs no branches or worktrees when each thread is its own implementation you compare. What Brooks rules out is several agents building the committed version of one ticket at once: it speeds up the sixth and multiplies the five sixths you still owe, each agent holds partial context, and the merge is where correct code becomes wrong. Many threads to explore, one thread to build, one inverted reviewer after.
+One day at a time. "How does a project get to be a year late? One day at a time." Keep milestones small and visibly true or false.
+The second system. The gold-plated version was always tempting; now it is also cheap to generate. The discipline of leaving things out is a human one.
+Plan to throw one away. Let the agent build the first version to learn the problem, then throw it away on purpose rather than by accident.
 
 ---
 <!-- .slide: class="section-slide" -->
 
-<div class="num">Run 1 · 30 min · hands-on</div>
+# No Silver Bullet
 
-# pi: fresh clone → passing expect test
-
-<p class="subtitle">git clone … && just up</p>
+<p class="subtitle">Essence and accident in software engineering · 1986</p>
 
 ---
+## Accidental difficulty
 
-<div class="poster-label">GH-12 · THE REAL TICKET · BOTH RUNS</div>
+<p class="subtitle"><span class="tag agent" style="margin-left:0">agent</span> takes most of this</p>
 
-## Resolve a comment thread into a decision
+<ul class="plain">
+  <li>syntax, boilerplate, glue code</li>
+  <li>looking things up, remembering APIs</li>
+  <li>mechanical refactors, test scaffolding</li>
+  <li>translating between languages and formats</li>
+</ul>
 
-<div class="tile-row three">
-  <div class="poster-tile agent"><h3>Domain · Run 1</h3><p><code>ResolveThread</code> → <code>ThreadResolved</code>, <code>DecisionRecorded</code>. Decision-log projection. Expect test read as a story.</p></div>
-  <div class="poster-tile agent"><h3>UI · Run 2</h3><p>Resolve action on the thread, one-line "what was decided", marker on the block. One Stagehand flow.</p></div>
-  <div class="poster-tile you"><h3>Review</h3><p>A different model, against GLOSSARY.md. There is a planted bug. We'll see if it survives.</p></div>
+---
+## Essential difficulty
+
+<p class="subtitle"><span class="tag you" style="margin-left:0">you</span> still hold all four</p>
+
+<ul class="plain">
+  <li><strong>complexity</strong>: the shape of the data and its invariants</li>
+  <li><strong>conformity</strong>: the messy world the software must match</li>
+  <li><strong>changeability</strong>: what users will ask for next</li>
+  <li><strong>invisibility</strong>: nobody sees the whole system, the agent included</li>
+</ul>
+
+---
+<!-- .slide: class="statement" -->
+
+## Agent complexity is hill climbing.
+
+<p class="subtitle">Given a hard target the agent takes shortcuts, and it cannot reliably do well on things it cannot see.</p>
+
+<p class="kicker fragment fade-in">No Silver Bullet is not pessimism. it is a to-do list: everything that shrinks the essence for a human also shrinks it for the agent.</p>
+
+---
+## Brooks's "promising attacks", thirty years on
+
+<div class="ladder">
+  <div><span class="n">1</span><span><strong>Buy, don't build.</strong> Boring, opinionated frameworks are the constraint an agent needs.</span></div>
+  <div><span class="n">2</span><span><strong>Rapid prototyping.</strong> A rendered screen beats a paragraph of requirements.</span></div>
+  <div><span class="n">3</span><span><strong>Grow, don't build.</strong> Plan, build, verify, feed it back. Let work compound.</span></div>
+  <div><span class="n">4</span><span><strong>Great designers.</strong> The one role you cannot delegate. You are the gardener.</span></div>
 </div>
 
-<p class="kicker mono">invariant: a decision references exactly one thread and one block. a resolved thread cannot be resolved twice.</p>
-
 Note:
-This is Chopin's "decision ownership" problem as one ticket. Done means: expect and e2e green, Stagehand green, glossary updated, PR with walkthrough, release checklist attached. And the GH-12 plan, inside Greenhouse, shows the decision that chose the modelling.
+Buy, don't build: boring, opinionated frameworks are slower to start and better to live in. Rails-style "one way to do the right thing" is exactly the constraint an agent needs. Read the docs for the platforms you deploy to; people get burned by serverless and cloud pricing when they let the agent configure it blind.
+Rapid prototyping: align visually. Show me, don't tell me, no walls of text.
+Grow, don't build: loops with forward and backward pressure. Let the work compound across sessions instead of starting from zero every time.
+Great designers: Brooks's last hope was cultivating great designers. That is now the only role you cannot delegate.
 
 ---
+<!-- .slide: class="statement" -->
 
-<div class="poster-label">THE SPEAKER'S DESK · 2 MIN</div>
+## Keeping up without the FOMO
 
+<p class="subtitle">"Everyone on the timeline is doing unbelievable things."</p>
+
+<p class="kicker fragment fade-in">the gain any tool gives you is bounded by how much accident is left in your work. the essence is where the compounding happens, and none of it expires when the next tool ships.</p>
+
+Note:
+One check-in said it plainly: watching the timeline, it feels like everyone else is doing unbelievable things, and the question is what it takes to catch up. No Silver Bullet is the answer, and it is a kind one. Every tool on the timeline is an attack on accidental difficulty, and a good one. The essence (knowing what to build, the shape of the data, what correct means) is where the compounding happens.
+
+---
+<!-- .slide: class="statement" -->
+
+## Keep up with your own loop.
+
+<p class="subtitle">How fast you get from intent to a verified change. Measure it on your repo, not on a demo.</p>
+
+<p class="kicker fragment fade-in">one new tool a month, tried on a real ticket, kept only if the loop got faster.</p>
+
+---
+<!-- .slide: class="statement" -->
+
+## Let go of the leaderboards.
+
+<p class="subtitle">Model launches, other people's thirty-second clips. A harness is six lines of plumbing.</p>
+
+<p class="kicker fragment fade-in">the unbelievable thing in the clip was usually the basics you already know, applied by someone who did not skip them.</p>
+
+---
+<!-- .slide: data-section="The playbook · 01 of 10" -->
+
+## Make it run anywhere
+
+<div class="split">
+  <div>
+    <span class="tag you" style="margin-left:0">you</span>
+    <p>A repo that runs locally with one command is the difference between a two-week onboarding and a two-hour one.</p>
+  </div>
+  <div>
+    <span class="tag agent" style="margin-left:0">agent</span>
+    <p>If the agent cannot run the thing in its own environment, you become the test harness.</p>
+  </div>
+</div>
+
+<p class="kicker mono">DX is agent DX</p>
+
+Note:
+Postgres locally, config in env files, no shared staging dependency for everyday work. Object storage behind a local stand-in (MinIO for S3), fixtures that seed a believable state. Twelve-factor is still the cheapest checklist. One team spent two to three weeks on a single problem: getting a repo to run on a laptop.
+
+---
+<!-- .slide: data-section="The playbook · 02 of 10" -->
+
+## Types as the design language
+
+<div class="split">
+  <div>
+    <span class="tag you" style="margin-left:0">you</span>
+    <p>Picking the right shape of data is most of the design. Types hold the invariants you would otherwise carry in your head.</p>
+  </div>
+  <div>
+    <span class="tag agent" style="margin-left:0">agent</span>
+    <p>A whole class of mistakes cannot be generated. The compiler is feedback in milliseconds, with no prompt.</p>
+  </div>
+</div>
+
+<p class="kicker mono">make illegal states unrepresentable</p>
+
+Note:
+Application-specific invariants get their own types, not a comment. Anti-slop rules for your language live in the type config and lint config, not in a prompt the agent may skim.
+
+---
+<!-- .slide: data-section="The playbook · 03 of 10" -->
+
+## Tests the agent can learn from
+
+<div class="split">
+  <div>
+    <span class="tag you" style="margin-left:0">you</span>
+    <p>Committed examples prove intent in a way prose cannot, and they survive you forgetting why.</p>
+  </div>
+  <div>
+    <span class="tag agent" style="margin-left:0">agent</span>
+    <p>Feedback in milliseconds beats feedback in a code review. The faster the loop, the better the agent climbs.</p>
+  </div>
+</div>
+
+<p class="kicker mono">agents thrive on feedback</p>
+
+Note:
+No unit tests for their own sake. Three layers: expect tests at the library level, event-replay end-to-end through the domain, Stagehand for the few flows where the browser is the point. Expect tests are the legible kind: a human reads the output and says "yes, that". Example-based over clever.
+
+---
+<!-- .slide: data-section="The playbook · 04 of 10" -->
+
+## Keep it simple, three times
+
+<div class="split">
+  <div>
+    <span class="tag you" style="margin-left:0">you</span>
+    <p>Simplicity makes the bus factor survivable, and the bus is now also "the model changed".</p>
+  </div>
+  <div>
+    <span class="tag agent" style="margin-left:0">agent</span>
+    <p>Agents do well on well-trodden paths. Every unusual choice is a place the agent will confidently guess.</p>
+  </div>
+</div>
+
+<p class="kicker mono">simple code · simple components · simple tech choices</p>
+
+---
+<!-- .slide: data-section="The playbook · 05 of 10" -->
+
+## Review for understanding, not for approval
+
+<div class="split">
+  <div>
+    <span class="tag you" style="margin-left:0">you</span>
+    <p>Check the code matches the product and that you could still explain it. Stacked PRs. Ask questions.</p>
+  </div>
+  <div>
+    <span class="tag agent" style="margin-left:0">agent</span>
+    <p>Ask it why it did the thing. If it cannot explain the change, treat that as a finding.</p>
+  </div>
+</div>
+
+<p class="kicker mono">your understanding ↔ the agent's</p>
+
+Note:
+Correct code can be wrong: a diff that passes every test can still contradict how the codebase works. Review agents fail predictably: missed bugs, missing context, nitpicks; tell them to skip the nitpicks. Model inversion: author with one model, review with a different one. Different blind spots.
+
+--
+<!-- .slide: class="meme-slide btw-slide" -->
+
+## Model inversion: author with one, review with another
+
+<img class="meme-image" src="images/kot/same-stupidity.png" alt="Man gesturing at a laptop: now see for yourself, he is doing same stupidity that he always does" />
+
+<p class="caption">correct code can be wrong. every test passed. the vocabulary broke.</p>
+
+---
+<!-- .slide: data-section="The playbook · 06 of 10" -->
+
+## One vocabulary, three speakers
+
+<div class="split">
+  <div>
+    <span class="tag you" style="margin-left:0">you</span>
+    <p>The words in the code are the words in the conversation with the user. No translation layer where meaning leaks.</p>
+  </div>
+  <div>
+    <span class="tag agent" style="margin-left:0">agent</span>
+    <p>The agent learns the domain from your identifiers. Name the concept once and it speaks it back to your user.</p>
+  </div>
+</div>
+
+<p class="kicker mono">domain-driven design</p>
+
+Note:
+If Order, Booking and Reservation all mean the same thing, it will invent a fourth. Bounded contexts tell the agent where a word stops meaning what it meant. Put the glossary in the repo, next to the code. When a user's phrase does not map to a type, that is a design finding, not a naming chore.
+
+--
+<!-- .slide: class="meme-slide btw-slide" -->
+
+## Order, Booking, Reservation… the agent invents a fourth
+
+<img class="meme-image" src="images/kot/circles.png" alt="Factory worker watching a circle come down a triangle conveyor: i guess we doin circles now" />
+
+<p class="caption">put the glossary in the repo, next to the code.</p>
+
+---
+<!-- .slide: data-section="The playbook · 07 of 10" -->
+
+## Event sourcing: e2e without the browser
+
+<div class="split">
+  <div>
+    <span class="tag you" style="margin-left:0">you</span>
+    <p>Spreadsheets won because the data and its flow are visible. The log of what happened is the system of record.</p>
+  </div>
+  <div>
+    <span class="tag agent" style="margin-left:0">agent</span>
+    <p>An e2e test is "replay these commands, expect these events". Deterministic, fast, legible.</p>
+  </div>
+</div>
+
+<p class="kicker mono">make the data visible</p>
+
+Note:
+Browser e2e is slow, flaky and expensive for an agent to iterate on. Pair event sourcing with the expect idiom: the snapshot is the event stream, reviewed like a story. Audits over the log let the agent verify its own work. Keep the browser for the flows where it is the point.
+
+---
+<!-- .slide: data-section="The playbook · 08 of 10" -->
+
+## Keep a living wiki
+
+<div class="split">
+  <div>
+    <span class="tag you" style="margin-left:0">you</span>
+    <p>The decisions that are not in the code are the ones that get re-litigated. Write down the why once.</p>
+  </div>
+  <div>
+    <span class="tag agent" style="margin-left:0">agent</span>
+    <p>Instructions, skills and notes are a living wiki whether you call it that or not. Feed it back.</p>
+  </div>
+</div>
+
+<p class="kicker mono">codebase context</p>
+
+Note:
+Feed user feedback and post-mortems back in so the next session starts smarter.
+
+---
+<!-- .slide: data-section="The playbook · 09 of 10" -->
+
+## Read the docs
+
+<div class="split">
+  <div>
+    <span class="tag you" style="margin-left:0">you</span>
+    <p>For the tools you use and the platforms you deploy to. The agent's knowledge is a snapshot; yours can be current.</p>
+  </div>
+  <div>
+    <span class="tag agent" style="margin-left:0">agent</span>
+    <p>Point it at the actual docs. Guessing a platform's pricing is how a weekend project becomes an invoice.</p>
+  </div>
+</div>
+
+<p class="kicker mono">no substitute</p>
+
+---
+<!-- .slide: data-section="The playbook · 10 of 10" -->
+
+## Climb the trust ladder
+
+<div class="ladder">
+  <div><span class="n">1</span><span>small, vanilla agent. <em>start here.</em></span></div>
+  <div><span class="n">2</span><span>add plugins and skills: your conventions</span></div>
+  <div><span class="n">3</span><span>add connectors (MCP): your systems</span></div>
+  <div><span class="n">4</span><span>deploy to the cloud, unattended</span></div>
+</div>
+
+<p class="kicker">building your own small harness, even a toy one, is the fastest way to see what a coding agent does.</p>
+
+Note:
+You: what you know, you know. What you don't, you don't, and there are unknown unknowns. Clarity of thought is not always there; experimenting is how you work it out.
+Agent: agents can see screens and drive computers now, so they can verify their own work. Let them, in a sandbox, before you let them touch anything with consequences.
+
+---
+<!-- .slide: class="section-slide" -->
+
+# Picking your tool
+
+<p class="subtitle">for your platform, not the leaderboard</p>
+
+---
+<!-- .slide: class="statement" data-section="Picking your tool" -->
+
+## pi
+
+<p class="subtitle">Small, vanilla, hackable harness.</p>
+
+<p class="kicker">For someone who wants to understand what a coding agent does, and build up plugins, skills and connectors one rung at a time.</p>
+
+---
+<!-- .slide: class="statement" data-section="Picking your tool" -->
+
+## Claude Code
+
+<p class="subtitle">Terminal-first agent with skills, hooks and subagents.</p>
+
+<p class="kicker">For someone who lives in a repo and a shell, wants long autonomous runs and a way to encode conventions.</p>
+
+---
+<!-- .slide: class="statement" data-section="Picking your tool" -->
+
+## Codex
+
+<p class="subtitle">Cloud sandboxes plus a CLI.</p>
+
+<p class="kicker">For someone who wants parallel tasks running away from their laptop, each in its own environment.</p>
+
+---
+<!-- .slide: class="statement" data-section="Picking your tool" -->
+
+## AmpCode
+
+<p class="subtitle">Editor-integrated agent with shared threads.</p>
+
+<p class="kicker">For someone who wants the agent inside the editor and a record of sessions to go back to.</p>
+
+---
+<!-- .slide: class="section-slide" -->
+
+# My setup
+
+<p class="subtitle">press down for the desk</p>
+
+--
 <div class="live">live</div>
 
 ## cmux: four panes, one workspace
@@ -502,395 +673,19 @@ This is Chopin's "decision ownership" problem as one ticket. Done means: expect 
 
 Note:
 Cut from screen: dotfiles · keybindings · global AGENTS.md
-
----
-
-<div class="poster-label">RUN 1 · THE SCRIPT</div>
-
-<div class="live">live</div>
-
-## Nobody at the keyboard
-
-```text
-just up                 # nix develop + process-compose: db, minio, mail, api, web
-just plan GH-12         # a plan room opens. the agent drafts blocks.
-just explore GH-12      # two threads: one event or two? both get implemented.
-                        # → decision report in the plan. click one. it is recorded.
-just new command ResolveThread
-just new event ThreadResolved
-just new projection DecisionLog
-just test               # expect (ms) → event-replay e2e (s), running in the background
-```
-
-
-Note:
-Attendees clone alongside. If just up is over three minutes on their machine they watch Run 1 and follow along in Run 2.
-Cut from screen: the decision comes back as an interactive report, not a three-option prompt. pick one, then the domain half.
-
---
-<!-- .slide: class="btw-slide" -->
-
-<div class="poster-label">/BTW · GREENHOUSE</div>
-
-## A planning room, in the spirit of GitHub Next's Chopin
-
-```text
-Plan         — a document tied to a repo; a stream of events
-Block        — a unit of the plan: prose, artifact, or research
-Thread       — a comment thread anchored to one block
-Decision     — how a thread ended: who, when, what, which block
-Exploration  — an agent thread implementing one option, reporting back
-Participant  — a person or an agent; same commands, same rights
-
-EditBlock → BlockEdited      OpenThread → ThreadOpened      Reply → ReplyPosted
-ResolveThread → ThreadResolved → DecisionRecorded
-RequestExploration → ExplorationStarted … ExplorationReported
-```
-
-
-Note:
-Chopin names three gaps: plans are not interactive, decisions have no owner, agents explain in text when a picture would do. Greenhouse is the smallest cut that still proves the point.
-Cut from screen: decisions are events, so event sourcing is the model, not a flourish. the ticket for Greenhouse gets planned inside Greenhouse.
-
---
-<!-- .slide: class="btw-slide" -->
-
-<div class="poster-label">/BTW · THE STACK</div>
-
-## Good enough. Boring on purpose.
-
-<table class="tight">
-  <tr><th>layer</th><th>choice</th><th>practice it shows</th></tr>
-  <tr><td>runtime</td><td>Bun + TypeScript</td><td>run anywhere</td></tr>
-  <tr><td>backend · schema</td><td>Effect, Effect Schema shared across API, UI, MCP, tests</td><td>types as design language · one vocabulary</td></tr>
-  <tr><td>db · events</td><td>Postgres + Drizzle, one append-only events table</td><td>make the data visible</td></tr>
-  <tr><td>realtime · agent</td><td>Durable Object per plan, pi-durable session per room</td><td>event sourcing · trust ladder</td></tr>
-  <tr><td>frontend</td><td>TanStack Start, shadcn/ui, block-level Markdown, no CRDT</td><td>simple components</td></tr>
-  <tr><td>local · deploy</td><td>Nix + process-compose · Alchemy on Cloudflare</td><td>DX is agent DX · read the docs</td></tr>
-</table>
-
-Note:
-Cut from screen: every unusual choice is a place where the agent will confidently guess.
-
---
-<!-- .slide: class="btw-slide" -->
-
-<div class="poster-label">/BTW · THE JUSTFILE</div>
-
-## If a thing is not a recipe here, the agent will invent its own way to do it
-
-```text
-just up · just test · just test:ui
-just new command|event|projection|route <Name>
-just plan <ticket> · just explore <ticket>
-just trace <session-id> · just replay <stream-id>
-just review · just deploy
-```
-
-Note:
-Cut from screen: the justfile is the contract between you, the agent and the sandbox.
-
----
-<!-- .slide: class="meme-slide" -->
-
-<div class="poster-label">ONE VOCABULARY, THREE SPEAKERS</div>
-
-## Order, Booking, Reservation… the agent invents a fourth
-
-<img class="meme-image" src="images/kot/circles.webp" alt="Factory worker watching a circle come down a triangle conveyor: i guess we doin circles now" />
-
-<p class="caption">put the glossary in the repo, next to the code.</p>
-
-Note:
-DDD's ubiquitous language: the words in the code are the words in the conversation with the user. When a user's phrase does not map to a type, that is a design finding, not a naming chore. Watch for it in the review: the planted bug is a vocabulary bug.
-Cut from screen: the agent learns the domain from your identifiers. put the glossary in the repo, next to the code, where both of you read it.
-
----
-
-<div class="poster-label">TESTS THE AGENT CAN LEARN FROM</div>
-
-## Three layers. No unit tests for their own sake.
-
-<div class="tile-row three">
-  <div class="poster-tile agent"><h3>expect · ms</h3><p>command + starting stream in, events out, as a snapshot a human reads like a story. simulated clock.</p></div>
-  <div class="poster-tile agent"><h3>event-replay e2e · s</h3><p>commands through the real API against local Postgres. assert on the stream. no browser.</p></div>
-  <div class="poster-tile you"><h3>Stagehand · min</h3><p>the three or four flows where the browser is the point. natural-language steps.</p></div>
-</div>
-
-
-Note:
-Do not write: unit tests of a function the types already constrain, mocks of your own modules, browser tests for things the event log already proves.
-Cut from screen: feedback in milliseconds beats feedback in a code review. the faster and more deterministic the loop, the better the agent climbs.
-
----
-<!-- .slide: class="statement" -->
-
-<div class="poster-label">QUESTIONS · ROUND ONE</div>
-
-## while the e2e replay runs
-
-<p class="subtitle">then 10 minutes. the Stagehand flow stays on screen.</p>
+Cut from screen: header label "THE SPEAKER'S DESK · 2 MIN"
 
 ---
 <!-- .slide: class="section-slide" -->
 
-<div class="num">Run 2 · 25 min · hands-on</div>
+# Building Greenhouse
 
-# Claude Code: UI → merge-ready PR
-
-<p class="subtitle">impeccable · animation skills · one Stagehand flow · just review</p>
-
----
-
-<div class="poster-label">RUN 2 · THE SCRIPT</div>
-
-<div class="live">live</div>
-
-## Show me, don't tell me
-
-<div class="tile-row four">
-  <div class="poster-tile agent fragment fade-in"><h3>1 · artifact first</h3><p>a self-contained HTML mock of the resolve action, before any real UI. Agentation notes on it.</p></div>
-  <div class="poster-tile agent fragment fade-in"><h3>2 · build under skills</h3><p>impeccable for craft, Emil's skills for the motion. Mobbin for "how do shipped apps do this".</p></div>
-  <div class="poster-tile agent fragment fade-in"><h3>3 · Stagehand</h3><p>open a plan, comment, resolve, see the decision in the log.</p></div>
-  <div class="poster-tile you fragment fade-in"><h3>4 · just review</h3><p>a different model. the glossary in context. walkthrough attached to the PR.</p></div>
-</div>
+<p class="subtitle">a planning room in the spirit of GitHub Next's Chopin · press down for the demo</p>
 
 Note:
-Cut from screen: a rendered screen is a far better requirements document than a paragraph, for both of you.
-
----
-<!-- .slide: class="meme-slide" -->
-
-<div class="poster-label">REVIEW FOR UNDERSTANDING, NOT FOR APPROVAL</div>
-
-## Model inversion: author with one, review with another
-
-<img class="meme-image" src="images/kot/same-stupidity.webp" alt="Man gesturing at a laptop: now see for yourself, he is doing same stupidity that he always does" />
-
-<p class="caption">correct code can be wrong. the first pass named the event <code>ThreadClosed</code>. every test passed. the vocabulary broke.</p>
-
-Note:
-Review agents fail in predictable ways: missed bugs, missing context, nitpicks, more runs producing more "bugs". Tell them to skip the nitpicks. The two models have different blind spots; that is the whole trick. Ask the agent to tell you why it did the thing. If it cannot explain the change, that is a finding.
-
----
-
-<div class="poster-label">THE PLAYBOOK · TEN BASICS, NONE NEW</div>
-
-## Each one written twice: for you, for the agent
-
-<div class="tile-row five">
-  <div class="poster-tile"><h3>01</h3><p>Make it run anywhere</p></div>
-  <div class="poster-tile"><h3>02</h3><p>Types as the design language</p></div>
-  <div class="poster-tile"><h3>03</h3><p>Tests the agent can learn from</p></div>
-  <div class="poster-tile"><h3>04</h3><p>Keep it simple, three times</p></div>
-  <div class="poster-tile"><h3>05</h3><p>Review for understanding</p></div>
-  <div class="poster-tile"><h3>06</h3><p>One vocabulary, three speakers</p></div>
-  <div class="poster-tile"><h3>07</h3><p>Event sourcing: e2e without the browser</p></div>
-  <div class="poster-tile"><h3>08</h3><p>Keep a living wiki</p></div>
-  <div class="poster-tile"><h3>09</h3><p>Read the docs</p></div>
-  <div class="poster-tile"><h3>10</h3><p>Climb the trust ladder</p></div>
-</div>
-
-
-Note:
-You just watched 1 through 9 run. 10 is the next section. The companion page has the depth for each.
-Cut from screen: if the agent cannot run the thing in its own environment, you become the test harness.
-
----
-
-<div class="poster-label">10 · THE TRUST LADDER</div>
-
-## Earn autonomy one rung at a time
-
-<div class="ladder">
-  <div><span class="n">1</span><span>small, vanilla agent. <em>start here.</em></span></div>
-  <div><span class="n">2</span><span>add plugins and skills: your conventions</span></div>
-  <div><span class="n">3</span><span>add connectors (MCP): your systems</span></div>
-  <div><span class="n">4</span><span>deploy to the cloud, unattended</span></div>
-</div>
-
-Note:
-Cut from screen: building your own small harness, even a toy one, is still the fastest way to understand what a coding agent is actually doing.
-
----
-<!-- .slide: class="statement" -->
-
-<div class="poster-label">QUESTIONS · ROUND TWO</div>
-
-## usually about tools
+One small repo that does everything the playbook asks, so each practice can be shown running instead of described.
 
 --
-<!-- .slide: class="btw-slide" -->
-
-<div class="poster-label">/BTW · PICK THE TOOL FOR YOUR PLATFORM, NOT THE LEADERBOARD</div>
-
-<table class="tight">
-  <tr><th>tool</th><th>shape</th><th>fits an individual who…</th></tr>
-  <tr><td>pi</td><td>small, vanilla, hackable harness</td><td>wants to understand what a coding agent does, one rung at a time</td></tr>
-  <tr><td>Claude Code</td><td>terminal-first; skills, hooks, subagents</td><td>lives in a repo and a shell, wants long autonomous runs</td></tr>
-  <tr><td>Codex</td><td>cloud sandboxes plus a CLI</td><td>wants parallel tasks away from the laptop, each in its own env</td></tr>
-  <tr><td>Amp</td><td>editor-integrated, shared threads</td><td>wants the agent in the editor and a record to go back to</td></tr>
-</table>
-
-<div class="tile-row four" style="margin-top:22px">
-  <div class="poster-tile"><h3>platform first</h3><p>can it run your stack in its own sandbox?</p></div>
-  <div class="poster-tile"><h3>harness ownership</h3><p>how much of the loop do you want to see?</p></div>
-  <div class="poster-tile"><h3>legibility</h3><p>can you get the "why" out afterwards?</p></div>
-  <div class="poster-tile"><h3>model inversion</h3><p>keep a second model around to review.</p></div>
-</div>
-
----
-<!-- .slide: class="section-slide" -->
-
-<div class="num">20 min</div>
-
-# Durable and multiplayer
-
-<p class="subtitle">the harness in the cloud</p>
-
----
-<!-- .slide: class="statement" -->
-
-<div class="poster-label">TWO KINDS OF DURABILITY</div>
-
-## Claude Code resumes a <em>conversation</em>.
-
-<h2 class="fragment fade-in">pi-durable resumes a <em>run</em>.</h2>
-
-<p class="kicker fragment fade-in">on your laptop the first is usually enough. for an agent triggered by a webhook, unattended, the second is the whole point.</p>
-
----
-
-<div class="poster-label">THE TABLE IS THE SLIDE</div>
-
-<table class="tight">
-  <tr><th></th><th>pi (vanilla)</th><th>Claude Code</th><th>pi-durable</th></tr>
-  <tr><td>transcript</td><td>session file, reopen later</td><td>JSONL, saved continuously; <code>--resume</code>, <code>/branch</code>, <code>--fork-session</code></td><td>committed entries in a store: SQLite, JSONL, memory</td></tr>
-  <tr><td>killed mid tool call</td><td>result lost; re-prompt</td><td>marked cut off; model told to check before rerunning</td><td>resumes from last checkpoint; <code>replay: 'safe'</code> tools rerun</td></tr>
-  <tr><td>same prompt twice</td><td>runs twice</td><td>runs twice</td><td>same <code>requestId</code> → same answer, no rerun</td></tr>
-  <tr><td>second device</td><td>no</td><td>Remote Control attaches to a running session</td><td><code>viewState</code>: a subscribable view; any client rebuilds the screen</td></tr>
-  <tr><td>what does not survive</td><td>anything in flight</td><td>background subagents and Bash</td><td>nothing is exactly-once. checkpointed, not transactional</td></tr>
-  <tr><td>status</td><td>stable</td><td>stable, documented</td><td>experimental; pin the lockfile</td></tr>
-</table>
-
----
-
-<div class="poster-label">PI-DURABLE, PICKED APART</div>
-
-## Three packages, two files, one store
-
-```ts
-export const serviceStatus = defineTool({
-  name: "service_status",
-  replay: "safe",                    // rerun after a crash; no side effects
-  async execute(input, context) { /* 10s */ return { checkout: "degraded" }; },
-});
-
-const storage = openNodeSqliteStorage("./agent.sqlite");   // one process owns this
-const harness = createHarness({ storage, tools: [serviceStatus], model });
-const root = await harness.root(context, { conversationId: ROOT });
-harness.resume();                                           // pick up anything mid-flight
-
-await root.submit(context, { requestId: "incident-106", text: "Checkout status?", whenBusy: "steer" });
-for await (const view of root.viewState(context)) render(view.entries, view.runningTools);
-```
-
----
-
-<div class="poster-label">THE DEMOS · RECORDED FALLBACK EXISTS</div>
-
-<div class="live">live</div>
-
-<div class="tile-row four" style="margin-top:70px">
-  <div class="poster-tile agent fragment fade-in"><h3>kill -9</h3><p>start incident-106, wait for "tool started", kill the process, run the same command.</p></div>
-  <div class="poster-tile agent fragment fade-in"><h3>two clients</h3><p>a terminal and a browser on one <code>viewState</code>.</p></div>
-  <div class="poster-tile agent fragment fade-in"><h3>in the cloud</h3><p>a Durable Object per session is the store.</p></div>
-  <div class="poster-tile you fragment fade-in"><h3>webhook</h3><p>a PR opened starts a review session. sandbox, agent, webhook. the finale.</p></div>
-</div>
-
-
-Note:
-If 21:30 arrives and Run 2 is not done, skip the live multiplayer and play the five-minute recording. The release segment is a promise on the listing and does not get cut.
-Cut from screen: multiplayer with zero extra code: two people subscribed to one root, either able to submit. a plan room is a durable session with people in it.
-Cut from screen: same id, resumes, tool reruns, answer lands. third run: saved answer, no tool call.
-Cut from screen: type in one, watch the other. close the browser mid-run, reopen, it rebuilds.
-Cut from screen: a Container per session runs the repo and just. one owner per object, free.
-
----
-<!-- .slide: class="section-slide" -->
-
-<div class="num">7 min</div>
-
-# Released, then changed under real users
-
-<p class="subtitle">a green PR is the middle of the job, not the end</p>
-
----
-
-<div class="poster-label">THE WORKFLOW · ONE TASK END TO END</div>
-
-<div class="strip">
-  <div class="you"><span class="n">1</span><b>Interview</b><span class="tag you">you</span></div>
-  <div class="you"><span class="n">2</span><b>Name it</b><span class="tag you">you</span></div>
-  <div class="you"><span class="n">3</span><b>Estimate</b><span class="tag you">you</span></div>
-  <div class="both"><span class="n">4</span><b>Plan as a boundary object</b><span class="tag both">shared</span></div>
-  <div class="agent"><span class="n">4b</span><b>Scaffold</b><span class="tag agent">agent</span></div>
-  <div class="agent"><span class="n">5</span><b>Build in the loop</b><span class="tag agent">agent</span></div>
-  <div class="you"><span class="n">6</span><b>Dogfood</b><span class="tag you">you</span></div>
-  <div class="both"><span class="n">7</span><b>Review inverted</b><span class="tag both">shared</span></div>
-  <div class="you"><span class="n">8</span><b>Release staged</b><span class="tag you">you</span></div>
-</div>
-
-<p class="kicker">9 · feed it back: what the release taught goes into docs/decisions and the skills. the next session starts smarter.</p>
-
-Note:
-Count the oxblood. Coding is one box out of nine.
-
----
-
-<div class="poster-label">RELEASE CHECKLIST · docs/RELEASE.md</div>
-
-## Short on purpose. A checklist nobody finishes protects nobody.
-
-<div class="tile-row three">
-  <div class="poster-tile you"><h3>product fit</h3><p>the user's sentence · dogfooded today · vocabulary intact · signal defined (which event, what number in a week)</p></div>
-  <div class="poster-tile ink"><h3>staged rollout</h3><p>behind a flag, default off · you first · Workers versions 1% → 100% in steps you can watch · migrations additive · watch window</p></div>
-  <div class="poster-tile agent"><h3>rollback path</h3><p>decided before deploy · flag off is step one · previous version pinned · events are facts, never deleted · postmortem in decisions</p></div>
-</div>
-
----
-
-<div class="poster-label">THE FOUR QUESTIONS A LIVE PRODUCT ASKS · ONE MINUTE EACH</div>
-
-<div class="tile-row four" style="margin-top:70px">
-  <div class="poster-tile fragment fade-in"><h3>events already recorded</h3><p>you do not change the past.</p></div>
-  <div class="poster-tile fragment fade-in"><h3>flags vs versions</h3><p>versions decide which <em>code</em> runs.</p></div>
-  <div class="poster-tile fragment fade-in"><h3>rollouts you can watch</h3><p>you → a named slice (the people from tenet 6) → 5 / 25 / 100 → the code version separately → data last.</p></div>
-  <div class="poster-tile fragment fade-in"><h3>bugs the agent can reproduce</h3><p>one report button.</p></div>
-</div>
-
-Note:
-Depth is on the companion page. The talk only names them.
-Cut from screen: climb the ladder: avoid → simple mapping → upcast on read → new event type → migrate. the agent will edit the schema in place unless told.
-Cut from screen: flags decide which behaviour. roll back a version when code is broken; flip a flag when the feature is wrong. OpenFeature.
-Cut from screen: it carries the stream. just replay rebuilds what the user saw. failing expect test first, then the fix.
-
----
-<!-- .slide: class="section-slide" -->
-
-<div class="num">60 min · live</div>
-
-# Greenhouse · the demo
-
-<p class="subtitle">seven beats · one repo · minute 0 to 60</p>
-
-Note:
-Minute 0. The whole hour is in this repo; every beat has a tag and a `just demo cp-NN` twin from docs/RUNBOOK.md. Say the order once: scaffold, plan, vocabulary, backend, components, why Cloudflare, flags.
-
----
-
-<div class="poster-label">GREENHOUSE · THE DEMO · 01 SCAFFOLD · cp-00</div>
-
 ## The layout is the first thing the agent reads
 
 ```text
@@ -907,11 +702,9 @@ justfile          every runnable thing is a recipe
 
 Note:
 Minute 0 to 3. Type `ls` then `ls apps packages`; point at the two Workers and the two packages. Then `cat justfile | head -40`: if it is not a recipe here, the agent invents its own way.
+Cut from screen: header label "GREENHOUSE · THE DEMO · 01 SCAFFOLD · cp-00"
 
----
-
-<div class="poster-label">GREENHOUSE · THE DEMO · 01 SCAFFOLD · cp-00</div>
-
+--
 <div class="live">live</div>
 
 ## Health before login
@@ -927,11 +720,10 @@ just up                                  # api + web locally, D1 and DO in minif
 
 Note:
 Minute 3 to 6. Run `just up`, open http://localhost:3000/healthz and point at the two versions, web and api, coming through the binding. Then `/login`. If the laptop is slow, `just demo cp-00` runs the two curls.
+Cut from screen: header label "GREENHOUSE · THE DEMO · 01 SCAFFOLD · cp-00"
 
----
+--
 <!-- .slide: class="statement" -->
-
-<div class="poster-label">GREENHOUSE · THE DEMO · 02 PLAN THE PRODUCT</div>
 
 ## Where does the agent's loop live?
 
@@ -941,11 +733,9 @@ Minute 3 to 6. Run `just up`, open http://localhost:3000/healthz and point at th
 
 Note:
 Minute 6 to 9. Say the planning question out loud before the agent hears it. Open the plan room at http://localhost:3000/plans/gh-12 and show the Blocks the agent drafted; the question is a Thread on one Block.
+Cut from screen: header label "GREENHOUSE · THE DEMO · 02 PLAN THE PRODUCT"
 
----
-
-<div class="poster-label">GREENHOUSE · THE DEMO · 02 PLAN THE PRODUCT · cp-04</div>
-
+--
 ## The plan is a page you look at, not a wall of Markdown
 
 ```sh
@@ -960,11 +750,9 @@ just plan docs/plans/2026-10-28-resolve-thread.plan.json
 
 Note:
 Minute 9 to 13. Run `/create_plan GH-12` in Claude Code; it writes the plan JSON and the hook builds the page. Open it: scroll the summary, open the decision and point at the locked choice, then the three states of the resolve component. Say: the plan tells the agent where to look and what must be true; the tests tell it when it is done.
+Cut from screen: header label "GREENHOUSE · THE DEMO · 02 PLAN THE PRODUCT · cp-04"
 
----
-
-<div class="poster-label">GREENHOUSE · THE DEMO · 03 ONE VOCABULARY · cp-01</div>
-
+--
 ## The glossary lives next to the code
 
 <p><code>docs/GLOSSARY.md</code>: Thread, Decision, Participant, each with the events and commands that carry it.</p>
@@ -974,11 +762,9 @@ Minute 9 to 13. Run `/create_plan GH-12` in Claude Code; it writes the plan JSON
 Note:
 Minute 13 to 16. `cat docs/GLOSSARY.md` and point at the "Not:" line under Decision. Then ask pi "add resolve thread" and watch the names it picks; the ddd-vocabulary skill makes it search first.
 Cut from screen: The agent searches the web before it names: how Linear, GitHub and Chopin say it.
+Cut from screen: header label "GREENHOUSE · THE DEMO · 03 ONE VOCABULARY · cp-01"
 
----
-
-<div class="poster-label">GREENHOUSE · THE DEMO · 03 ONE VOCABULARY · cp-01</div>
-
+--
 <div class="live">live</div>
 
 ## The check that catches ThreadClosed
@@ -993,11 +779,9 @@ just glossary-check                      # cp-01
 
 Note:
 Minute 16 to 20. Run `just glossary-check` on main, then `git checkout wrong/cp-01 && just glossary-check` and point at the two names it rejects. Come back with `git checkout main`. If there is time, start `HEAD_REF=wrong/cp-01 just review cp-02` and let it run in the background pane.
+Cut from screen: header label "GREENHOUSE · THE DEMO · 03 ONE VOCABULARY · cp-01"
 
----
-
-<div class="poster-label">GREENHOUSE · THE DEMO · 04 THE BACKEND · cp-02 · cp-03</div>
-
+--
 ## Hono at the edge. Effect behind it.
 
 <p>Schema decodes at the boundary; nothing unknown gets past the handler.</p>
@@ -1010,11 +794,9 @@ Note:
 Minute 20 to 25. Open apps/api/src/services.ts and scroll: Flags.layer against D1, Flags.layerTest against a list; PlanRooms.layer against the namespace, PlanRooms.layerTest against a Map. Then packages/domain/src/thread/decider.ts, the ResolveThread case: the flag gate, the state check, two events.
 Cut from screen: Test layers swap D1 and the Durable Object for memory. The tests do not know.
 Cut from screen: A rejection is a typed error, not a thrown string.
+Cut from screen: header label "GREENHOUSE · THE DEMO · 04 THE BACKEND · cp-02 · cp-03"
 
----
-
-<div class="poster-label">GREENHOUSE · THE DEMO · 04 THE BACKEND · cp-02</div>
-
+--
 <div class="live">live</div>
 
 ## The test is a story a person can read
@@ -1031,11 +813,10 @@ then   ThreadResolved     t7 by pratos
 
 Note:
 Minute 25 to 28. Run `just test`, then `cat packages/domain/src/thread/__expect__/resolve.snap.txt`. Ask pi for a test and watch it reach for a mock; point at the snapshot and say this is the test it should have written.
+Cut from screen: header label "GREENHOUSE · THE DEMO · 04 THE BACKEND · cp-02"
 
 --
 <!-- .slide: class="btw-slide" -->
-
-<div class="poster-label">/BTW · 04 THE BACKEND · cp-03</div>
 
 ## Changing a recorded event
 
@@ -1051,11 +832,9 @@ read through upcast
 Note:
 Minute 28 to 32. Ask Claude Code to "add rationale to decisions" and watch it edit the schema in place; stop it. Then `cat packages/domain/src/upcast/__expect__/*.snap.txt`. Point at the AGENTS.md line about repos/effect and the oxlint ignore.
 Cut from screen: The Effect source sits at repos/effect, read-only. The agent reads it before it writes Effect code, and never imports from it.
+Cut from screen: header label "/BTW · 04 THE BACKEND · cp-03"
 
----
-
-<div class="poster-label">GREENHOUSE · THE DEMO · 05 COMPONENTS · cp-05</div>
-
+--
 <div class="live">live</div>
 
 ## Build the plan page under skills
@@ -1067,11 +846,9 @@ Cut from screen: The Effect source sits at repos/effect, read-only. The agent re
 Note:
 Minute 32 to 37. Open http://localhost:3000/plans/gh-12 with the Agentation toolbar on, leave one note on the resolve button, and let Claude Code pick it up. Then open the flags panel and show resolve-thread off. Point at skills/manifest.json: the sha is bumped on purpose, never the morning of.
 Cut from screen: Skills are vendored at a pinned commit in skills/manifest.json.
+Cut from screen: header label "GREENHOUSE · THE DEMO · 05 COMPONENTS · cp-05"
 
----
-
-<div class="poster-label">GREENHOUSE · THE DEMO · 05 COMPONENTS · cp-08</div>
-
+--
 <div class="live">live</div>
 
 ## Two tabs, one Durable Object
@@ -1088,11 +865,10 @@ bun scripts/ws-check.ts <api url>
 
 Note:
 Minute 37 to 41. Two tabs on /plans/gh-12 side by side; open a Thread in one, watch it land in the other. Then apps/api/src/plan-room.ts: acceptWebSocket, getWebSockets, broadcast after the insert. If the socket misbehaves, `just demo cp-08`.
+Cut from screen: header label "GREENHOUSE · THE DEMO · 05 COMPONENTS · cp-08"
 
 --
 <!-- .slide: class="btw-slide" -->
-
-<div class="poster-label">/BTW · 05 COMPONENTS · packages/agent</div>
 
 ## kill -9, then the same command
 
@@ -1103,11 +879,10 @@ Minute 37 to 41. Two tabs on /plans/gh-12 side by side; open a Thread in one, wa
 
 Note:
 Minute 41 to 45. Start the agent in packages/agent with one request id, wait for "tool started", `kill -9` it, run the same command and watch it resume. Run it a third time and point at the answer arriving with no model call in the log. The recorded fallback is in demo/.
+Cut from screen: header label "/BTW · 05 COMPONENTS · packages/agent"
 
----
+--
 <!-- .slide: class="statement" -->
-
-<div class="poster-label">GREENHOUSE · THE DEMO · 06 WHY CLOUDFLARE</div>
 
 ## One owner per stream is a Durable Object.
 
@@ -1117,11 +892,9 @@ Minute 41 to 45. Start the agent in packages/agent with one request id, wait for
 
 Note:
 Minute 45 to 48. Three sentences, three clicks. Point back at plan-room.ts: the object that owns the event log is the object that knows when it changed, and the same shape holds a pi-durable session.
+Cut from screen: header label "GREENHOUSE · THE DEMO · 06 WHY CLOUDFLARE"
 
----
-
-<div class="poster-label">GREENHOUSE · THE DEMO · 07 SHIP BEHIND A FLAG · cp-07</div>
-
+--
 ## Flags default off, in decide()
 
 ```sh
@@ -1134,11 +907,9 @@ GH_REMOTE=1 just flag user resolve-thread pratos
 
 Note:
 Minute 48 to 53. `just deploy` first, about a minute including the smoke. Then the flag command above, use the resolve action live on prod, and point at `bucket()` in services.ts: FNV over flag and participant, mod 100.
+Cut from screen: header label "GREENHOUSE · THE DEMO · 07 SHIP BEHIND A FLAG · cp-07"
 
----
-
-<div class="poster-label">GREENHOUSE · THE DEMO · 07 SHIP BEHIND A FLAG · cp-07</div>
-
+--
 <div class="live">live</div>
 
 ## The code version is a separate dial
@@ -1156,49 +927,163 @@ just rollback api <version-id>
 
 Note:
 Minute 53 to 58. `curl https://greenhouse-api.prthamesh-sarang.workers.dev/healthz` and point at version.label and version.id. Flip the flag off and show the resolve action gone without a deploy; then `just rollback api <id>` with the id from `bunx wrangler deployments list`. Minute 58 to 60 hands back to the close.
+Cut from screen: header label "GREENHOUSE · THE DEMO · 07 SHIP BEHIND A FLAG · cp-07"
 
 ---
-<!-- .slide: class="section-slide" -->
+<!-- .slide: class="statement" data-part="Workflow and release" -->
 
-<div class="num">09</div>
+## From merge-ready to released
 
-# You are the gardener
+<p class="subtitle">A green PR is the middle of the job, not the end.</p>
 
-<p class="subtitle">the agent grows the code. the basics are how you shape what grows.</p>
-
-Note:
-The soil it runs in, the trellis of types and tests, the names on the labels. None of that is new. Growing is no longer the bottleneck, so the shaping is the job.
+<p class="kicker fragment fade-in">one task end to end, then a release checklist with product fit, a staged rollout and a rollback path.</p>
 
 ---
+## One task, end to end
 
-<div class="poster-label">ESTIMATION EXERCISE · TAKE IT HOME</div>
-
-## Pick a small CRUD app that does one thing with AI
-
-<div class="ladder" style="margin-top:28px">
-  <div><span class="n">1</span><span>write the <strong>feature</strong>, not the ask: who is better off, and how would you know</span></div>
-  <div><span class="n">2</span><span>estimate with Brooks's fractions. coding at one sixth. what is in the other five?</span></div>
-  <div><span class="n">3</span><span>mark each piece <span class="tag you">you</span> or <span class="tag agent">agent</span>. notice where the essence lands</span></div>
-  <div><span class="n">4</span><span>name the first test the agent would need to verify its own work without you</span></div>
+<div class="strip">
+  <div class="you"><span class="n">1</span><b>Interview</b><span class="tag you">you</span></div>
+  <div class="you"><span class="n">2</span><b>Name it</b><span class="tag you">you</span></div>
+  <div class="you"><span class="n">3</span><b>Estimate</b><span class="tag you">you</span></div>
+  <div class="both"><span class="n">4</span><b>Plan as a boundary object</b><span class="tag both">shared</span></div>
+  <div class="agent"><span class="n">5</span><b>Scaffold, build in the loop</b><span class="tag agent">agent</span></div>
+  <div class="you"><span class="n">6</span><b>Dogfood</b><span class="tag you">you</span></div>
+  <div class="both"><span class="n">7</span><b>Review inverted</b><span class="tag both">shared</span></div>
+  <div class="you"><span class="n">8</span><b>Release staged</b><span class="tag you">you</span></div>
+  <div class="both"><span class="n">9</span><b>Feed it back</b><span class="tag both">shared</span></div>
 </div>
 
-<p class="kicker fragment fade-in">now look at the number you typed in chat at 20:08.</p>
+Note:
+1 Interview: talk to the user who asked, or the one who would. Write the feature, not the ask.
+2 Name it: new nouns go in the glossary and the schema first. If a word has no type, stop here.
+3 Estimate: Brooks's fractions. The coding sixth is the agent's; budget the other five sixths for yourself.
+4 Plan: just plan. Open decisions come back as built artifacts and explored threads, not prose questions.
+4b Scaffold: just new … so the shape is right before any code exists. 5 Build: domain first, UI second, each with its own test layer.
+6 Dogfood: the Stagehand flow proves it works; only you can tell whether it feels right.
+7 Review inverted: a different model, the glossary in context, walkthrough attached.
+8 Release staged: yourself, then a slice, then everyone, with the way back decided in advance.
+9 Feed it back: what the release taught goes into docs/decisions and the skills.
 
 ---
-<!-- .slide: class="statement" -->
+## Release checklist
 
-<div class="poster-label">TAKEAWAYS</div>
+<div class="tile-row three">
+  <div class="poster-tile"><h3>Product fit</h3><p>the user's sentence · dogfooded today · vocabulary intact · signal defined</p></div>
+  <div class="poster-tile"><h3>Staged rollout</h3><p>behind a flag · you first · 1% → 100% in steps you watch · additive migrations · a watch window</p></div>
+  <div class="poster-tile"><h3>Rollback path</h3><p>decided before deploy · flag off first · previous version pinned · events never deleted</p></div>
+</div>
 
-## Opus 5.5 mid on Claude Code.
+<p class="kicker">short on purpose. a checklist nobody finishes protects nobody.</p>
 
-<p class="subtitle fragment fade-in">plus a glossary, three kinds of tests, a justfile, a flag, and a second model that disagrees with the first.</p>
-
-<p class="kicker fragment fade-in">Fin. for real this time.</p>
+Note:
+Lives in the repo as docs/RELEASE.md; the PR template links it.
+The user's sentence: one line, in the user's words, of what is now possible. If you cannot write it, you built an ask. Signal defined: which event tells you it is used, and what number you expect in a week.
+Behind a flag, default off in prod. You first: flag on for your account, run the Stagehand flow against prod. Workers versions split traffic 1% to 100%. Migrations add; nothing dropped or renamed in the same release. Watch errors and the usage event for a stated time.
+Rollback command written in the PR, not improvised. Flag off kills the behaviour in seconds. Workers rollback is one command; know the version id. Rollback never deletes events: rebuild a bad projection with just replay, compensate a bad command with a new event. Postmortem goes in decisions before the retry.
 
 ---
+<!-- .slide: class="statement" data-part="Changing what people already use" -->
 
-<div class="poster-label">LINKS · QUESTIONS</div>
+## Four questions a live product asks
 
+<div class="ladder">
+  <div><span class="n">1</span><span>How do I change events people already recorded?</span></div>
+  <div><span class="n">2</span><span>Is this a flag or a version?</span></div>
+  <div><span class="n">3</span><span>What rollout can I actually watch?</span></div>
+  <div><span class="n">4</span><span>Can the agent reproduce a user's bug?</span></div>
+</div>
+
+Note:
+Everything before this assumed a clean slate. Real products have users mid-task, data in old shapes and opinions about your changes. Four things the agent will get wrong unless the basics are in place first.
+
+---
+## You do not change the past
+
+<div class="ladder">
+  <div><span class="n">0</span><span><strong>Avoid it.</strong> Keep streams short-lived where you can.</span></div>
+  <div><span class="n">1</span><span><strong>Simple mapping.</strong> Nullable new fields, defaults, old JSON names kept.</span></div>
+  <div><span class="n">2</span><span><strong>Upcast on read.</strong> DecisionRecorded.v1 reads as .v2.</span></div>
+  <div><span class="n">3</span><span><strong>New event type.</strong> The meaning changed, not the shape.</span></div>
+  <div><span class="n">4</span><span><strong>Migrate.</strong> Last resort, in two phases.</span></div>
+</div>
+
+<p class="kicker">asked to "add a rationale to decisions", the agent will edit the schema in place and break every replay. tell it to climb from the bottom.</p>
+
+Note:
+An event-sourced product evolves by changing how events are read, not what was written. Least invasive first.
+Avoid: a plan lives as long as the work does; a thread opens and resolves within days. Frequent event changes usually mean the model, not the schema, is wrong.
+Upcast: a small function between the store and the domain, registered per event type, tested with an expect test whose input is a real old event from prod.
+New event type: old projections keep working; new ones handle both.
+Migrate: rewrite a stream as a one-off job that itself emits events. Ship code that reads both, migrate, remove the old path.
+The event-sourcing skill makes the ladder explicit and makes the expect tests the gate.
+
+---
+## Versions decide which code. Flags decide which behaviour.
+
+<div class="split">
+  <div>
+    <h3>roll back a version</h3>
+    <p>when the code is broken. Workers gradual deployments split traffic between two uploaded versions.</p>
+  </div>
+  <div>
+    <h3>flip a flag</h3>
+    <p>when the feature is wrong. One version serves all traffic; the flag picks the behaviour.</p>
+  </div>
+</div>
+
+<p class="kicker">every new command ships behind a flag, default off, checked in one place. a flag older than two releases is a lint error.</p>
+
+Note:
+Code against OpenFeature, the CNCF vendor-neutral flag API, so the provider is swappable. On Cloudflare, Flagship is the native flag service on OpenFeature, evaluated locally in the Worker; closed beta at the time of writing, so have a fallback. For one person: a flags table in your own Postgres keyed by user id behind an OpenFeature provider you write in an afternoon, or PostHog flags.
+
+---
+## A rollout you can watch
+
+<div class="ladder">
+  <div><span class="n">1</span><span><strong>You.</strong> Flag on for your account in prod. Dogfood for a day.</span></div>
+  <div><span class="n">2</span><span><strong>A named slice.</strong> The users you interviewed. Tell them it is on.</span></div>
+  <div><span class="n">3</span><span><strong>A percentage.</strong> 5, 25, 100, each with a watch window.</span></div>
+  <div><span class="n">4</span><span><strong>The code version.</strong> Separately, 1% to 100%. A different day.</span></div>
+  <div><span class="n">5</span><span><strong>Data last.</strong> Additive first; drops a release later.</span></div>
+</div>
+
+Note:
+At each percentage step, watch two things: error rate, and the usage event you defined in the release checklist. Two knobs, moved on different days if you can. Migrations ship before the code that needs them; drops and renames ship a release after the code that stopped using them.
+
+---
+## Bugs the agent can reproduce
+
+<div class="ladder">
+  <div><span class="n">1</span><span>One report button. The user types a sentence; the system attaches the rest.</span></div>
+  <div><span class="n">2</span><span><code>just replay &lt;stream-id&gt;</code> rebuilds exactly what the user saw.</span></div>
+  <div><span class="n">3</span><span>The agent writes the failing expect test first, then the fix.</span></div>
+  <div><span class="n">4</span><span>Reply with what changed. Users who see a fix send the next bug.</span></div>
+</div>
+
+<p class="kicker">a bug report is a repro you did not have to write.</p>
+
+Note:
+The button files a ReportFiled event: the user's note, session id, plan and block, the last few events, console errors, a screenshot. Off the shelf: Sentry User Feedback, PostHog replay and surveys, Jam. For "this looks wrong" from you or a designer, Agentation beats a bug tracker: the note arrives with the selector. Report count per release goes on the dashboard next to the usage event.
+
+---
+<!-- .slide: data-part="Estimation" -->
+
+## Estimate your own ticket. Then time it.
+
+<div class="ladder">
+  <div><span class="n">1</span><span>Pick something real you will build this week, small enough for an evening.</span></div>
+  <div><span class="n">2</span><span>Write the feature, not the ask: who is better off, and how would you know.</span></div>
+  <div><span class="n">3</span><span>Estimate each slice in hours: plan, code, component test, system test.</span></div>
+  <div><span class="n">4</span><span>Mark each slice <span class="tag you">you</span> or <span class="tag agent">agent</span>.</span></div>
+  <div><span class="n">5</span><span>Build it with the agent. Log the actual hours per slice.</span></div>
+</div>
+
+<p class="kicker">compare estimate and actual, slice by slice. where did the five sixths go?</p>
+
+Note:
+Everyone picks their own ticket instead of a shared CRUD example. Brooks's fractions are the starting guess: plan a third, code a sixth, test half. The point is the comparison afterwards: most people find coding shrank and the other slices did not. Bring the numbers back; the delta is the lesson.
+
+--
 ## Thank you
 
 <div class="contact-grid">
@@ -1212,3 +1097,4 @@ The soil it runs in, the trellis of types and tests, the names on the labels. No
 
 Note:
 Leave this up. Fill in the repo link and the companion page URL before the dry run.
+Cut from screen: header label "LINKS · QUESTIONS"

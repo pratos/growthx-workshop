@@ -29,36 +29,38 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
     <script>
-      // Each slide becomes an order ticket: running header with the order number and the item.
+      // Each slide becomes an order ticket: ORDER # · running section · agenda clock (IST).
       function ticket() {
         const leaves = [...document.querySelectorAll(".reveal .slides section")].filter((s) => !s.querySelector("section"));
-        let fig = 0;
+        let fig = 0, section = "GrowthX · The engineering playbook", clock = "";
         leaves.forEach((s, i) => {
           if (s.querySelector(".kot-hd")) return;
-          const label = s.querySelector(".poster-label");
-          const num = s.querySelector(".num");
+          if (s.dataset.part) { section = s.dataset.part; clock = ""; }
+          if (s.classList.contains("section-slide")) {
+            const h = s.querySelector("h1");
+            const num = s.querySelector(".num");
+            section = h ? h.textContent.trim() : section;
+            clock = num ? num.textContent.trim() : "";
+          }
           const btw = s.classList.contains("btw-slide");
-          let item = label ? label.textContent : num ? num.textContent : "";
-          if (btw) item = item.replace(/^\/btw\s*·?\s*/i, "");
           const hd = document.createElement("header");
           hd.className = "kot-hd";
           hd.setAttribute("aria-hidden", "true");
-          const no = document.createElement("span");
-          no.className = "no";
-          no.textContent = "Order #" + String(i + 1).padStart(3, "0") + (btw ? " · /btw" : "");
-          const it = document.createElement("span");
-          it.className = "item";
-          it.textContent = item;
-          hd.append(no, it);
+          const cell = (cls, text) => { const e = document.createElement("span"); e.className = cls; e.textContent = text; return e; };
+          hd.append(
+            cell("no", "Order #" + String(i + 1).padStart(3, "0") + (btw ? " · /btw" : "")),
+            cell("item", s.dataset.section || section),
+            cell("clock", s.dataset.clock || clock),
+          );
           const live = s.querySelector(".live");
-          if (live) hd.append(live);
+          if (live) { live.textContent = "Fire"; hd.append(live); }
           s.prepend(hd);
-          const cap = s.querySelector(".meme-slide .caption, .caption");
-          if (s.querySelector(".meme-image") && cap) {
-            const f = document.createElement("span");
-            f.className = "fig";
-            f.textContent = "FIG. " + String(++fig).padStart(2, "0");
-            cap.prepend(f);
+          const img = s.querySelector(".meme-image");
+          if (img) {
+            const f = cell("fig", "FIG. " + String(++fig).padStart(2, "0"));
+            const cap = s.querySelector(".caption");
+            if (cap) cap.prepend(f);
+            else { const p = document.createElement("p"); p.className = "figtag"; p.append(f); s.append(p); }
           }
         });
       }
