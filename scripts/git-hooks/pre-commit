@@ -10,3 +10,7 @@ if grep -qx 'docs/ARCHITECTURE.md' <<<"$staged"; then
   git add docs/architecture/index.html docs/architecture/architecture.spec.json
   echo "pre-commit: architecture map rebuilt and staged"
 fi
+for f in $(grep -E '\.plan\.json$' <<<"$staged" || true); do
+  bun skills/create-plan/scripts/build.mjs "$f" >/dev/null
+  git add "${f%.plan.json}.plan.html"
+done

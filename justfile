@@ -80,6 +80,14 @@ arch-check:
     bun scripts/arch.ts --coverage
     bun scripts/arch.ts --check
 
+# Build a plan page from its JSON (a hook does this on every edit): just plan docs/plans/2026-10-28-resolve-thread.plan.json
+plan file:
+    bun skills/create-plan/scripts/build.mjs {{file}}
+
+# List plans, newest first, with status and progress
+plans:
+    @for f in $(ls -t docs/plans/*.plan.json 2>/dev/null); do jq -r --arg f "$f" '[.status, .title, ([.phases[].verify | (.automated + .manual)[] | select(.done)] | length | tostring) + "/" + ([.phases[].verify | (.automated + .manual)[]] | length | tostring), $f] | @tsv' "$f"; done
+
 # Build a viz-explainer artifact: just artifact spec.json docs/decisions/x.html
 artifact spec out:
     bun skills/viz-explainer/scripts/build.mjs {{spec}} {{out}}

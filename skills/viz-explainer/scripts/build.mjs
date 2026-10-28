@@ -3,11 +3,12 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { render } from 'pele';
+import { load } from './load.mjs';
 
 const [specPath, outPath] = process.argv.slice(2);
 if (!specPath || !outPath) { console.error('usage: build.mjs spec.json out.html'); process.exit(2); }
 const here = dirname(fileURLToPath(import.meta.url));
+const { render } = await load('pele', '1.12.0', here);
 const tpl = readFileSync(join(here, '..', 'assets', 'template.html'), 'utf8');
 const specText = readFileSync(specPath, 'utf8');
 const spec = JSON.parse(specText);

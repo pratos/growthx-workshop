@@ -16,6 +16,7 @@ Three sources set the bar. Maggie Appleton's "Planning with Agents": the plan is
 - You are about to ask a question in prose whose answers are options the reader has to picture.
 - A plan, PR or review needs "what did the agent touch, and why" attached to it.
 - A `just explain`, `just trace` or `just plan` recipe asks for an artifact.
+- A plan is being written: `create-plan` embeds diagrams and decision reports built by this skill, so write their specs into the plan JSON rather than separate files.
 - The project's architecture document changed: rebuild the one architecture map with `just arch` (a hook usually does this already).
 
 Do not fire for a single fact, a code snippet, or anything a one-line sentence already says. A diagram with two boxes is prose wearing a costume.

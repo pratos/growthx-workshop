@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Claude Code PostToolUse hook (Edit|Write|MultiEdit). Keeps docs/architecture/index.html in step with docs/ARCHITECTURE.md,
-# and stops the agent when a new app or package lands without a place on the map.
+# Claude Code PostToolUse hook (Edit|Write|MultiEdit). Keeps the built pages in step with their sources:
+#   docs/ARCHITECTURE.md → docs/architecture/index.html; any *.plan.json → its .plan.html.
+# Stops the agent when a new app or package lands without a place on the map, or a plan breaks a plan rule.
 # Exit 2 sends stderr back to the agent so it fixes the doc; exit 0 stays quiet.
 set -uo pipefail
 root="${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}"
@@ -11,6 +12,9 @@ case "$rel" in
   docs/ARCHITECTURE.md)
     out="$(cd "$root" && bun scripts/arch.ts 2>&1)" || { echo "$out" >&2; exit 2; }
     echo "architecture map rebuilt: docs/architecture/index.html" ;;
+  *.plan.json)
+    out="$(cd "$root" && bun skills/create-plan/scripts/build.mjs "$rel" 2>&1)" || { echo "$out" >&2; exit 2; }
+    echo "$out" | tail -1 ;;
   apps/*/package.json|packages/*/package.json|apps/*/wrangler.jsonc)
     out="$(cd "$root" && bun scripts/arch.ts --coverage 2>&1)" || { echo "$out" >&2; exit 2; } ;;
 esac

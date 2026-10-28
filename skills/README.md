@@ -5,6 +5,7 @@ Loaded by both Claude Code (`.claude/skills/*` symlinks) and pi (`.pi/skills/*` 
 | Skill | Fires when | Explains with |
 |---|---|---|
 | viz-explainer | architecture, lifecycles, event streams, decisions, agent traces | a Pele + anime.js HTML artifact (also a Greenhouse Artifact block) |
+| create-plan | /create_plan, "plan this", any change over more than one phase | an HTML plan built from JSON: diagrams, decision reports, live components, contracts only |
 | ddd-vocabulary | any new noun, synonym, or "what does X mean" | a vocabulary map built by viz-explainer |
 | event-sourcing | anything under packages/domain, new command/event/projection, changing a recorded event | an event-stream story, state explorer or decision report |
 | scaffold | creating or restructuring a package, Worker, route, command, migration or deployment | the layout and checklist in its references |

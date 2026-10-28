@@ -95,6 +95,8 @@
   .propose button { font: inherit; font-size: 14px; padding: 7px 12px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: var(--radius); cursor: pointer; }
   footer { padding-bottom: 20px; font-size: 12.5px; color: var(--muted); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   [hidden] { display: none !important; }
+  .embedded body { min-height: 0; }
+  .embedded header { padding-top: 22px; }
 </style>
 </head>
 <body>
@@ -241,6 +243,10 @@
 <script>
 (() => {
   const spec = JSON.parse(document.getElementById('spec').textContent);
+  // Embedded in a plan or a doc: size against a fixed reference instead of the frame (which grows to fit us), and report our height.
+  const embedded = window.parent !== window;
+  if (embedded) document.documentElement.classList.add('embedded');
+  const viewH = () => embedded ? 760 : innerHeight;
   const $ = id => document.getElementById(id);
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const D = reduced ? 0 : 1;
@@ -315,8 +321,8 @@
     if (!full) return;
     const stage = document.querySelector('.stage');
     // A diagram that fits at natural size gets a stage its own height and no camera. A wider one gets most of the viewport.
-    const h = fitsWhole() ? full[3] + 32 : Math.max(innerHeight * 0.56, 420, stage.clientWidth * (full[3] / full[2]));
-    stage.style.height = `${Math.round(Math.min(innerHeight * 0.64, Math.max(300, h)))}px`;
+    const h = fitsWhole() ? full[3] + 32 : Math.max(viewH() * 0.56, 420, stage.clientWidth * (full[3] / full[2]));
+    stage.style.height = `${Math.round(Math.min(viewH() * 0.64, Math.max(300, h)))}px`;
   }
 
   function fitsWhole() { const stage = document.querySelector('.stage'); return !!full && full[2] <= stage.clientWidth * 1.05; }
@@ -457,9 +463,11 @@
     $('status').textContent = `in plan · ${participant?.name || 'anonymous'}`;
   });
   post({ type: 'greenhouse:ready', kind: spec.kind, question: spec.question });
+  if (embedded) new ResizeObserver(() => parent.postMessage({ frameHeight: Math.ceil(document.body.getBoundingClientRect().height) }, '*')).observe(document.body);
 
   function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
-  function fmt(iso) { try { return new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }); } catch { return iso; } }
+  // A plain date stays a plain date; only a full timestamp gets a time, so a date never turns into a timezone artifact.
+  function fmt(iso) { if (/^\d{4}-\d{2}-\d{2}$/.test(String(iso))) return iso; try { return new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }); } catch { return iso; } }
 
   mount();
 })();
