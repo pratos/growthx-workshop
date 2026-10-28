@@ -5,6 +5,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import { TaskItem, TaskList } from '@tiptap/extension-list';
 import Suggestion from '@tiptap/suggestion';
 import type { PlanBody } from '@greenhouse/schema';
+import { slugify } from '@greenhouse/schema/slug';
 import './plan-editor.css';
 
 // The Plan's text: a Tiptap editor. It saves the whole text (the editor's JSON) as EditPlan a moment after you stop
@@ -31,7 +32,7 @@ const BLOCKS: Item[] = [
 
 const parse = (content: string) => { try { return content ? (JSON.parse(content) as object) : ''; } catch { return ''; } };
 
-export function PlanEditor({ body, onSave, onAsk }: { body: PlanBody; onSave: (content: string, basedOn: number) => Promise<Saved>; onAsk?: (prompt: string) => Promise<string | null> }) {
+export function PlanEditor({ body, onSave, onAsk, onComment }: { body: PlanBody; onSave: (content: string, basedOn: number) => Promise<Saved>; onAsk?: (prompt: string) => Promise<string | null>; onComment?: (blockId: string, question: string) => Promise<void> }) {
   const based = useRef(body.edits);
   const dirty = useRef(false);
   const timer = useRef<number | undefined>(undefined);
@@ -40,6 +41,9 @@ export function PlanEditor({ body, onSave, onAsk }: { body: PlanBody; onSave: (c
   const saveRef = useRef<(editor: Editor) => Promise<boolean>>(async () => false);
   const [status, setStatus] = useState<{ kind: 'saved' | 'unsaved' | 'saving' | 'refused'; text?: string }>({ kind: 'saved' });
   const [menu, setMenu] = useState<Menu | null>(null);
+  // Select text, press Comment: a Thread opens on the block you selected (named from its first words).
+  const [bubble, setBubble] = useState<{ top: number; left: number; blockId: string; asking: boolean } | null>(null);
+  const commentRef = useRef(onComment); commentRef.current = onComment;
   const menuRef = useRef(menu); menuRef.current = menu;
 
   const items = useMemo(() => {
@@ -135,6 +139,20 @@ export function PlanEditor({ body, onSave, onAsk }: { body: PlanBody; onSave: (c
 
   useEffect(() => () => window.clearTimeout(timer.current), []);
 
+  useEffect(() => {
+    if (!editor) return;
+    const onSelect = () => {
+      const { from, to, empty, $from } = editor.state.selection;
+      if (empty || !commentRef.current || to - from < 2) { setBubble((b) => (b?.asking ? b : null)); return; }
+      const at = editor.view.coordsAtPos(from);
+      const block = $from.depth > 0 ? $from.node(1) : undefined;
+      const blockId = slugify((block?.textContent ?? '').split(/\s+/).slice(0, 6).join(' '), 40) || `block-${$from.index(0) + 1}`;
+      setBubble({ top: at.top, left: at.left, blockId, asking: false });
+    };
+    editor.on('selectionUpdate', onSelect);
+    return () => { editor.off('selectionUpdate', onSelect); };
+  }, [editor]);
+
   return (
     <div className="gh-plan-editor">
       <EditorContent editor={editor} />
@@ -142,6 +160,19 @@ export function PlanEditor({ body, onSave, onAsk }: { body: PlanBody; onSave: (c
         {status.kind === 'saving' ? 'Saving…' : status.kind === 'unsaved' ? 'Unsaved changes' : status.kind === 'refused' ? status.text
           : body.edits === 0 ? 'Nothing written yet' : `Saved${body.by ? `, last edit by ${body.by}` : ''}`}
       </p>
+      {bubble && (
+        <div className="gh-comment-bubble" style={{ top: bubble.top - 44, left: bubble.left }}>
+          {bubble.asking ? (
+            <form className="flex gap-1.5" onSubmit={(e) => { e.preventDefault(); const q = new FormData(e.currentTarget).get('question'); if (typeof q === 'string' && q.trim()) void commentRef.current?.(bubble.blockId, q.trim()).then(() => setBubble(null)); }}>
+              <input name="question" autoFocus required aria-label="What should we decide" placeholder="What should we decide?" className="gh-input !h-7 !w-64"
+                onKeyDown={(e) => { if (e.key === 'Escape') setBubble(null); }} />
+              <button type="submit" className="gh-btn gh-btn-primary !h-7">Open</button>
+            </form>
+          ) : (
+            <button type="button" className="gh-btn !h-7" onMouseDown={(e) => e.preventDefault()} onClick={() => setBubble({ ...bubble, asking: true })}>Comment</button>
+          )}
+        </div>
+      )}
       {menu && menu.rect && (
         <div className="gh-slash" role="listbox" aria-label="Blocks" style={{ top: menu.rect.bottom + 6, left: menu.rect.left }}>
           {menu.items.length === 0 ? <p className="gh-slash-empty">No block called “{menu.query}”</p> : menu.items.map((item, i) => (

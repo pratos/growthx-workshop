@@ -26,3 +26,4 @@
 .gh-slash-item[aria-selected="true"] { background: var(--ch-selected); }
 .gh-slash-hint { color: var(--ch-ink-3); font-size: var(--ch-text-xs); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .gh-slash-empty { padding: 4px 6px; font-size: var(--ch-text-sm); color: var(--ch-ink-3); }
+.gh-comment-bubble { position: fixed; z-index: 50; padding: 4px; background: var(--ch-page); border-radius: var(--ch-radius-lg); box-shadow: 0 0 0 1px var(--ch-edge), var(--ch-shadow-overlay); }

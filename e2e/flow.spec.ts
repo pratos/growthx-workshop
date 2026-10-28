@@ -3,7 +3,7 @@ import { spawn, type ChildProcess } from 'node:child_process';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { logins, ready, signIn, signOut } from './helpers';
+import { commentOn, logins, ready, signIn, signOut } from './helpers';
 
 // The whole product as people use it, on a fresh plan per run: sign up, comment to decision, two people live in one
 // room, and a session the agent answers. The agent is the real `agent-serve` process with the faux model.
@@ -37,10 +37,8 @@ test('a newcomer signs up and lands signed in', async ({ page }) => {
 test('a comment thread ends in a decision', async ({ page }) => {
   await signIn(page, logins.admin);
   await openPlan(page);
-  await page.getByLabel('Block id').fill('b3');
-  await page.getByLabel('What should we decide').fill('retries in the client or the wrapper?');
-  await page.getByRole('button', { name: 'Open', exact: true }).click();
-  const thread = page.locator('[data-thread]').first();
+  await commentOn(page, 'retries in the client or the wrapper?');
+  const thread = page.locator('[data-thread]', { hasText: 'retries in the client or the wrapper?' }).last();
   await expect(thread).toContainText('retries in the client or the wrapper?');
   await thread.getByLabel('What was decided').fill('the wrapper');
   await thread.getByRole('button', { name: 'Resolve', exact: true }).click();
@@ -56,9 +54,7 @@ test('two people in one room see each other, and the agent answers in their sess
   await expect(sam.locator('[data-live="live"]')).toBeVisible();
 
   // A thread opened by one appears for the other without a reload.
-  await admin.getByLabel('Block id').fill('b7');
-  await admin.getByLabel('What should we decide').fill('who owns the retry budget?');
-  await admin.getByRole('button', { name: 'Open', exact: true }).click();
+  await commentOn(admin, 'who owns the retry budget?', 'The retry budget needs an owner.');
   await expect(sam.locator('[data-thread]', { hasText: 'who owns the retry budget?' })).toBeVisible();
 
   // The admin starts a session; Sam joins it and asks; the agent answers, and both see the answer.
@@ -119,9 +115,7 @@ test('a shared link to a thread brings someone signed out back to that thread af
   const plan = `share-${Date.now().toString(36)}`;
   await signIn(page, logins.admin);
   await ready(page, `/plans/${plan}`);
-  await page.getByLabel('Block id').fill('b1');
-  await page.getByLabel('What should we decide').fill('who signs off the rollout?');
-  await page.getByRole('button', { name: 'Open', exact: true }).click();
+  await commentOn(page, 'who signs off the rollout?', 'Roll out behind a flag.');
   const id = await page.locator('[data-thread]').first().getAttribute('data-thread');
   await signOut(page);
   await ready(page, `/plans/${plan}#thread-${id}`);

@@ -167,9 +167,10 @@ function PlanPage() {
           ) : (
             <>
               <PlanEditor body={plan.body} onSave={(content, basedOn) => savePlanText(planId, by, content, basedOn)}
+                onComment={(blockId, body) => run(openThread({ data: { planId, blockId, by, body } })).then(() => undefined)}
                 onAsk={async (prompt) => { const refused = await askToWrite(planId, by, prompt, WRITE_PREFIX); setSessionTick((n) => n + 1); return refused; }} />
               <section className="mt-8 space-y-4" aria-label="Comment threads">
-                {plan.threads.length === 0 && <p className="gh-muted text-sm">No threads on this plan yet. Open the first one below: a question about one block that should end in a decision.</p>}
+                {plan.threads.length === 0 && <p className="gh-muted text-sm">No comments yet. Select text in the plan and press Comment to ask what should be decided about it.</p>}
                 {plan.threads.map((t) => {
                   const decision = plan.decisions.find((d) => d.threadId === t.threadId);
                   return (
@@ -198,15 +199,7 @@ function PlanPage() {
                 })}
               </section>
 
-              <form className="mt-10 flex flex-col gap-2 border-t pt-6" style={{ borderColor: 'var(--ch-divider)' }} onSubmit={(e) => { e.preventDefault(); const f = new FormData(e.currentTarget); void run(openThread({ data: { planId, blockId: field(f, 'blockId'), body: field(f, 'body'), by } })); e.currentTarget.reset(); }}>
-                <h2>Open a thread</h2>
-                <p className="gh-muted text-sm">A question about one block of the plan. It collects replies and ends in a decision.</p>
-                <div className="mt-1 flex gap-2">
-                  <input name="blockId" required aria-label="Block id" placeholder="Block id" className="gh-input !w-32" />
-                  <input name="body" required aria-label="What should we decide" placeholder="What should we decide?" className="gh-input" />
-                  <button type="submit" className="gh-btn">Open</button>
-                </div>
-              </form>
+
             </>
           )}
         </div>
