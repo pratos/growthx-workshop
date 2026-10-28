@@ -1,0 +1,19 @@
+when   Sam has an account
+then   AccountOpened      sam by sam email="sam@greenhouse.test" name="Sam" admin=false passwordHash=•••
+when   Sam signs in with the wrong password
+then   rejected           wrong email or password
+when   nobody@greenhouse.test signs in
+then   rejected           wrong email or password
+when   Sam signs in
+then   SignedIn           sam by sam tokenHash=••• expiresAt="2026-11-27T19:30:00.000Z"
+when   Sam signs in on a second device
+then   SignedIn           sam by sam tokenHash=••• expiresAt="2026-11-27T19:30:00.000Z"
+read   sign_ins           sam  2026-11-27T19:30:00.000Z
+                          sam  2026-11-27T19:30:00.000Z
+       — the first token belongs to sam
+when   Sam signs out on the first device
+then   SignedOut          sam by sam tokenHash=•••
+when   Sam signs out on the first device again
+then   nothing recorded
+       — the first token now belongs to nobody
+read   sign_ins           sam  2026-11-27T19:30:00.000Z

@@ -1,0 +1,13 @@
+{
+  "name": "@greenhouse/domain",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@greenhouse/schema": "workspace:*",
+    "effect": "4.0.7",
+    "@greenhouse/engine": "workspace:*"
+  }
+}

@@ -18,6 +18,8 @@
     "apps/api": {
       "name": "@greenhouse/api",
       "dependencies": {
+        "@greenhouse/domain": "workspace:*",
+        "@greenhouse/engine": "workspace:*",
         "@greenhouse/schema": "workspace:*",
         "effect": "4.0.7",
         "hono": "^4.10.0",
@@ -55,6 +57,31 @@
         "typescript": "^6.0.2",
         "vite": "^8.0.0",
         "wrangler": "^4.70.0",
+      },
+    },
+    "packages/db": {
+      "name": "@greenhouse/db",
+      "dependencies": {
+        "@greenhouse/domain": "workspace:*",
+        "@greenhouse/engine": "workspace:*",
+        "effect": "4.0.7",
+      },
+    },
+    "packages/domain": {
+      "name": "@greenhouse/domain",
+      "dependencies": {
+        "@greenhouse/engine": "workspace:*",
+        "@greenhouse/schema": "workspace:*",
+        "effect": "4.0.7",
+      },
+    },
+    "packages/engine": {
+      "name": "@greenhouse/engine",
+      "dependencies": {
+        "effect": "4.0.7",
+      },
+      "devDependencies": {
+        "@electric-sql/pglite": "0.3.14",
       },
     },
     "packages/schema": {
@@ -116,6 +143,8 @@
     "@cloudflare/workers-types": ["@cloudflare/workers-types@5.20261028.1", "", {}, "sha512-a0Ceo9MtNZej9s7iZAvYD0txFXlFb1le4rhJ+x4mrC02hsXy4T0RHCqpX1zEOnrI1504Ro8HwJQtKMh2/MVDCw=="],
 
     "@cspotcode/source-map-support": ["@cspotcode/source-map-support@0.8.1", "", { "dependencies": { "@jridgewell/trace-mapping": "0.3.9" } }, "sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw=="],
+
+    "@electric-sql/pglite": ["@electric-sql/pglite@0.3.14", "", {}, "sha512-3DB258dhqdsArOI1fIt7cb9RpUOgcDg5hXWVgVHAeqVQ/qxtFy605QKs4gx6mFq3jWsSPqDN8TgSEsqC3OfV9Q=="],
 
     "@emnapi/core": ["@emnapi/core@1.11.3", "", { "dependencies": { "@emnapi/wasi-threads": "1.2.3", "tslib": "^2.4.0" } }, "sha512-zLpS5asjEb7lq8jYLq37N6XKaE41DIexlY1rF/z4/tIl3wo13Sqm28fRyfIsKZD+NZ8mM5RoKkpW/rBcuoSZSg=="],
 
@@ -182,6 +211,12 @@
     "@floating-ui/utils": ["@floating-ui/utils@0.2.12", "", {}, "sha512-HpCo8tmWzLVad5s2d19EhAz5zqrrQ6s69qd6moPMQvkOuSwDT1YgRfWSVuc4ennqrgv3OHppiOGMQ7oC13yIww=="],
 
     "@greenhouse/api": ["@greenhouse/api@workspace:apps/api"],
+
+    "@greenhouse/db": ["@greenhouse/db@workspace:packages/db"],
+
+    "@greenhouse/domain": ["@greenhouse/domain@workspace:packages/domain"],
+
+    "@greenhouse/engine": ["@greenhouse/engine@workspace:packages/engine"],
 
     "@greenhouse/schema": ["@greenhouse/schema@workspace:packages/schema"],
 

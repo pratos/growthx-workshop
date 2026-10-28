@@ -1,0 +1,12 @@
+# Copy to apps/api/.dev.vars for local development. Local-only values: these accounts exist only in the local D1 seed,
+# never in production. Production accounts are added with `GH_REMOTE=1 just user-add EMAIL NAME admin`, which asks for the password.
+ADMIN_EMAIL=admin@greenhouse.test
+ADMIN_PASSWORD=greenhouse-admin-local
+USER_EMAIL=sam@greenhouse.test
+USER_PASSWORD=greenhouse-sam-local
+# Shown on /healthz as version.label; deploy sets it from git describe.
+GIT_DESCRIBE=dev
+# The agent signs in like any Participant (same commands, same rights), with its own local account.
+AGENT_EMAIL=agent@greenhouse.test
+AGENT_PASSWORD=greenhouse-agent-local
+ANTHROPIC_API_KEY=

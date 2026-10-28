@@ -1,0 +1,12 @@
+when   Sam signs up as sam@greenhouse.test
+then   AccountOpened      sam by sam email="sam@greenhouse.test" name="Sam" admin=false passwordHash=•••
+when   someone signs up again with SAM@greenhouse.test
+then   rejected           an account with this email exists
+when   Ana signs up with a short password
+then   rejected           an email, a name, a password of at least 12 characters, and a username of 2 to 32 lowercase letters, digits or dashes
+when   sam@elsewhere.test signs up, wanting the id sam
+then   rejected           the name sam is taken; use another email
+when   an admin is opened by `just user-add`
+then   AccountOpened      admin by admin email="admin@greenhouse.test" name="Admin" admin=true passwordHash=•••
+read   accounts           admin  admin@greenhouse.test  Admin  1
+                          sam  sam@greenhouse.test  Sam  0

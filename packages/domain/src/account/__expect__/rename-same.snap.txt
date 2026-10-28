@@ -1,0 +1,2 @@
+given  AccountOpened      agent email="agent@greenhouse.test" name="Agent" admin=false passwordHash=•••
+when   RenameAccount      agent name="Agent"
