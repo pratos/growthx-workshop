@@ -1,0 +1,21 @@
+{
+  "name": "@greenhouse/engine",
+  "private": true,
+  "type": "module",
+  "description": "Minimal event sourcing on Effect: deciders, an event store with optimistic appends, and projections written in the same transaction. SQLite (bun, Durable Object), D1 and Postgres adapters.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./kernel": "./src/kernel.ts",
+    "./story": "./src/story.ts",
+    "./adapters/bun-sqlite": "./src/adapters/bun-sqlite.ts",
+    "./adapters/durable-object": "./src/adapters/durable-object.ts",
+    "./adapters/d1": "./src/adapters/d1.ts",
+    "./adapters/postgres": "./src/adapters/postgres.ts"
+  },
+  "dependencies": {
+    "effect": "4.0.7"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.3.14"
+  }
+}
