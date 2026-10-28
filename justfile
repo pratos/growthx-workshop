@@ -87,6 +87,10 @@ migrate-remote site="prod":
 agent-ready:
     skills/agent-ready/scripts/check.sh
 
+# Fail if a command or event in code is missing from the domain vocabulary
+domain-vocabulary-check:
+    skills/ddd-vocabulary/scripts/check-domain-vocabulary.sh docs/DOMAIN-VOCABULARY.md packages apps
+
 # Score prose for slop: rules first, then Jev if a key is present
 slop file:
     uvx --from slop-guard==0.5.0 sg -v --counts {{file}}

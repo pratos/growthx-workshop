@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>What runs, before the product exists?</title>
+<title>What happens when someone uses Greenhouse?</title>
 <script src="https://cdn.jsdelivr.net/npm/pele@1.12.0/dist/pele.global.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/4.5.0/anime.umd.min.js"></script>
 <style>
@@ -139,17 +139,17 @@
 <script type="application/json" id="spec">
 {
   "kind": "architecture-map",
-  "question": "What runs, before the product exists?",
+  "question": "What happens when someone uses Greenhouse?",
   "meta": {
     "builtBy": "just arch",
     "builtAt": "2026-10-28",
     "source": "docs/ARCHITECTURE.md"
   },
-  "diagram": "flowchart LR\n  P[\"You · in a browser\"]\n  subgraph cf[\"Runs on Cloudflare\"]\n    W[\"Web app\"]\n    A[\"API\"]\n    D[(\"Database · empty for now\")]\n  end\n  P -- \"opens the app\" --> W\n  W -- \"asks on your behalf\" --> A\n  A -- \"checks it can reach\" --> D",
+  "diagram": "flowchart LR\n  P[\"You · in a plan\"]\n  P2[\"Teammate · watching the same plan\"]\n  REL[\"You · releasing a feature\"]\n  subgraph cf[\"Runs on Cloudflare\"]\n    W[\"Web app\"]\n    A[\"API · knows every plan room\"]\n    RW[\"Rules and shared words\"]\n    R[(\"Plan room · one per plan · what happened, in order\")]\n    D[(\"Settings, accounts and the list of plan rooms · switches, who can sign in, who is where\")]\n  end\n  subgraph ag[\"Agent\"]\n    AG[\"Agent · a participant like you\"]\n    CP[(\"Agent memory · every step saved\")]\n  end\n  CK[\"Workshop check-in · a separate small app\"]\n  P -- \"opens a plan, writes, decides\" --> W\n  W -- \"asks on your behalf\" --> A\n  A -- \"is this on for you?\" --> D\n  A -- \"follows\" --> RW\n  A -- \"records it\" --> R\n  R -- \"shows it at once\" --> P2\n  R -- \"says who is here\" --> D\n  AG -- \"answers @agent, streams, writes into the plan\" --> A\n  AG -- \"saves each step\" --> CP\n  REL -- \"on for a few, then everyone\" --> D",
   "steps": [
     {
       "id": "open",
-      "caption": "You open the web app; it answers before anyone has signed in.",
+      "caption": "You open a plan in the web app and write, reply or decide.",
       "focus": [
         "P",
         "W"
@@ -160,7 +160,7 @@
     },
     {
       "id": "ask",
-      "caption": "The web app reaches the API over a private binding, never the database.",
+      "caption": "The web app asks the API, which knows every plan room and who is in each.",
       "focus": [
         "W",
         "A"
@@ -170,14 +170,74 @@
       ]
     },
     {
-      "id": "ready",
-      "caption": "The API says it is ready only when it can reach the database.",
+      "id": "check",
+      "caption": "The API checks whether this feature is switched on for you.",
       "focus": [
         "A",
         "D"
       ],
       "edges": [
         "L_A_D_0"
+      ]
+    },
+    {
+      "id": "record",
+      "caption": "If it is, the API follows the rules and the plan room records what happened.",
+      "focus": [
+        "A",
+        "RW",
+        "R"
+      ],
+      "edges": [
+        "L_A_RW_0",
+        "L_A_R_0"
+      ]
+    },
+    {
+      "id": "share",
+      "caption": "Everyone in the plan sees the change at once, and the room tells the API who is here.",
+      "focus": [
+        "R",
+        "P2",
+        "D"
+      ],
+      "edges": [
+        "L_R_P2_0",
+        "L_R_D_0"
+      ]
+    },
+    {
+      "id": "agent",
+      "caption": "Mention @agent in chat: it answers as it writes, draws or edits the plan, through the same steps as you.",
+      "focus": [
+        "ag",
+        "AG",
+        "A"
+      ],
+      "edges": [
+        "L_AG_A_0"
+      ]
+    },
+    {
+      "id": "resume",
+      "caption": "The agent saves every step, so a crash picks up exactly where it stopped.",
+      "focus": [
+        "AG",
+        "CP"
+      ],
+      "edges": [
+        "L_AG_CP_0"
+      ]
+    },
+    {
+      "id": "release",
+      "caption": "A new feature starts switched off, then goes on for you, a few people, and everyone.",
+      "focus": [
+        "REL",
+        "D"
+      ],
+      "edges": [
+        "L_REL_D_0"
       ]
     }
   ]

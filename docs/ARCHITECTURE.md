@@ -1,46 +1,92 @@
 # Architecture
 
-Two Workers joined by a service binding, and one D1. The product's shape arrives with its design (cp-02); this map shows what runs today.
+Two Workers joined by a service binding, one Durable Object per Plan, one D1. The API is the orchestrator: it routes each plan to its own room and keeps the list of rooms in D1, with who is in each right now. The event log is the system of record; everything else is a projection.
 
 This file is the source of the architecture map. `just arch` turns the Mermaid block and the walkthrough below into `docs/architecture/index.html`, a plain-language map a person can step through. A hook runs it whenever this file changes, and refuses a new folder under `apps/` or `packages/` until the "Where it lives" table names it. The oxlint boundary rule enforces the edge that matters most today.
 
 ```mermaid
 flowchart LR
-  P["You · in a browser"]
+  P["You · in a plan"]
+  P2["Teammate · watching the same plan"]
+  REL["You · releasing a feature"]
   subgraph cf["Runs on Cloudflare"]
     W["Web app"]
-    A["API"]
-    D[("Database · empty for now")]
+    A["API · knows every plan room"]
+    RW["Rules and shared words"]
+    R[("Plan room · one per plan · what happened, in order")]
+    D[("Settings, accounts and the list of plan rooms · switches, who can sign in, who is where")]
   end
-  P -- "opens the app" --> W
+  subgraph ag["Agent"]
+    AG["Agent · a participant like you"]
+    CP[("Agent memory · every step saved")]
+  end
+  CK["Workshop check-in · a separate small app"]
+  P -- "opens a plan, writes, decides" --> W
   W -- "asks on your behalf" --> A
-  A -- "checks it can reach" --> D
+  A -- "is this on for you?" --> D
+  A -- "follows" --> RW
+  A -- "records it" --> R
+  R -- "shows it at once" --> P2
+  R -- "says who is here" --> D
+  AG -- "answers @agent, streams, writes into the plan" --> A
+  AG -- "saves each step" --> CP
+  REL -- "on for a few, then everyone" --> D
 ```
 
 ## Walkthrough
 
-**Question:** What runs, before the product exists?
+**Question:** What happens when someone uses Greenhouse?
+
+The map is plain language: no file names, no code. Each row is a state a person works through, eight at most. Focus names ids from the block above; edges are written `FROM->TO`. Captions are sentences a person would say aloud.
 
 | Step | Focus | Edges | Caption |
 |---|---|---|---|
-| open | P W | P->W | You open the web app; it answers before anyone has signed in. |
-| ask | W A | W->A | The web app reaches the API over a private binding, never the database. |
-| ready | A D | A->D | The API says it is ready only when it can reach the database. |
+| open | P W | P->W | You open a plan in the web app and write, reply or decide. |
+| ask | W A | W->A | The web app asks the API, which knows every plan room and who is in each. |
+| check | A D | A->D | The API checks whether this feature is switched on for you. |
+| record | A RW R | A->RW A->R | If it is, the API follows the rules and the plan room records what happened. |
+| share | R P2 D | R->P2 R->D | Everyone in the plan sees the change at once, and the room tells the API who is here. |
+| agent | ag AG A | AG->A | Mention @agent in chat: it answers as it writes, draws or edits the plan, through the same steps as you. |
+| resume | AG CP | AG->CP | The agent saves every step, so a crash picks up exactly where it stopped. |
+| release | REL D | REL->D | A new feature starts switched off, then goes on for you, a few people, and everyone. |
 
 ## Where it lives
 
-The map's parts, and the folders that hold them. `just arch` refuses a folder under `apps/` or `packages/` that is not in this table.
+The map's parts, and the folders that hold them. `just arch` refuses a folder under `apps/` or `packages/` that is not in this table, so a new addition reaches the map before it reaches main.
 
 | Part of the map | Folders |
 |---|---|
 | Web app | `apps/web` |
 | API | `apps/api` |
-| Database | `apps/api/migrations` |
+| Plan room | `apps/api` (the PlanRoom Durable Object), `packages/domain`, `packages/engine` (the event log every stream is written through) |
+| Rules and shared words | `packages/domain`, `packages/schema`, `docs/DOMAIN-VOCABULARY.md` |
+| Settings, accounts and the list of plan rooms | `apps/api/migrations`, `packages/db`, `packages/engine` (accounts are a stream in D1) |
+| Agent | `packages/agent` |
+| Agent memory | `packages/agent` (SQLite checkpoints) |
+| Workshop check-in | `apps/checkin` |
 
 ## Allowed edges
 
 | From | May import | Must not import |
 |---|---|---|
-| apps/web | the API over `env.API` | any database client |
-| apps/api | effect, hono | apps/web |
+| apps/web | packages/schema, the API over `env.API` | packages/domain, packages/db, any database client |
+| apps/api | packages/domain, packages/engine, packages/schema | apps/web |
+| packages/agent | @earendil-works/pi-durable, pi-ai, chord; bun:sqlite; the API over HTTP as the agent account. Its tests use packages/domain and packages/engine in place of the API | apps/*; packages/domain outside tests |
+| apps/checkin | nothing; a standalone Worker that shares the toolchain | packages/* |
+| packages/domain | packages/schema, packages/engine, effect | anything with I/O outside the engine's Sql port |
+| packages/engine | effect; bun:sqlite and PGlite in its adapters and tests | packages/domain, packages/schema, apps/* |
+| packages/schema | effect | everything else |
+| packages/db | packages/domain, packages/engine: prints seeds and new accounts as SQL, produced by the engine | apps/* |
 | .github/workflows | runs the same `just` recipes | |
+
+## Decisions already made
+
+- **D1 everywhere.** Local D1 through wrangler, prod D1. Postgres through Hyperdrive is an option (a `hyperdrive` binding in `apps/api/wrangler.jsonc`), not a default.
+- **The event log lives in the PlanRoom DO**, one per Plan. Single writer, strong order, append in one synchronous block. D1 holds auth, flags and cross-plan projections rebuilt by `just replay`.
+- **Flags are evaluated in `decide()`**, from a D1 table read once per request and passed to the Durable Object as a list of names. A function would cross the RPC boundary as an async stub and its promise would read as true; that bug was caught by the first smoke test. Never in the web Worker. Default off.
+- **Migrations never run on deploy.** `just deploy` stops if any are pending; they are applied by hand and are additive.
+- **The web Worker has no data access.** It reads through the API binding. A database import under `apps/web` is a lint error.
+- **`/healthz` carries two versions**: a `label` from `git describe` for people, an `id` from the version metadata binding for `wrangler rollback`. The deploy passes the label in as a var.
+- **Hono is the edge, Effect is everything behind it.** `apps/api/src/services.ts`: Flags, PlanRooms and Commands are services with Layers; handlers run programs through one ManagedRuntime per env; rejections are typed errors; tests swap the D1 and Durable Object layers for in-memory ones. The vendored Effect source at `repos/effect` is read-only reference.
+- **Multiplayer is the Durable Object's job.** Every open tab holds a hibernating WebSocket on the plan's object; an append broadcasts to all of them. The browser reaches the socket through the web Worker, which proxies the upgrade over the service binding.
+- **Everything that runs is a `just` recipe**, so the agent and the sandbox use the same commands a person does.

@@ -1,0 +1,1336 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Event-sourcing engine, sign-up and sign-in</title>
+<script>
+  // Frames report their own height; listen before any of them load, and match by sender, not by a label.
+  addEventListener('message', (e) => {
+    const h = e.data && e.data.frameHeight; if (!h) return;
+    for (const f of document.querySelectorAll('iframe')) if (f.contentWindow === e.source && !f.classList.contains('is-expanded')) f.style.height = Math.min(Math.max(h + 4, 60), 2400) + 'px';
+  });
+</script>
+<style>:root {
+  --bg: #fffcf0; --fg: #100f0f; --muted: #6f6e69; --line: #dad8ce; --surface: #f2f0e5; --surface-alt: #e6e4d9;
+  --accent: #205ea6; --ok: #66800b; --warn: #ad8301; --err: #af3029;
+  --font: ui-sans-serif, system-ui, -apple-system, "Inter", sans-serif;
+  --mono: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, monospace;
+  --measure: 68ch;
+  --syn-kw: #5e409d; --syn-str: #66800b; --syn-num: #ad8301; --syn-type: #205ea6; --syn-fn: #24837b; --syn-com: #878580; --syn-add: #66800b; --syn-del: #af3029;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #100f0f; --fg: #cecdc3; --muted: #878580; --line: #343331; --surface: #1c1b1a; --surface-alt: #282726;
+    --accent: #4385be; --ok: #879a39; --warn: #d0a215; --err: #d14d41;
+    --syn-kw: #8b7ec8; --syn-str: #879a39; --syn-num: #d0a215; --syn-type: #4385be; --syn-fn: #3aa99f; --syn-com: #6f6e69; --syn-add: #879a39; --syn-del: #d14d41;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 17px/1.6 var(--font); -webkit-font-smoothing: antialiased; }
+::selection { background: color-mix(in oklab, var(--accent) 28%, transparent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+a { color: var(--accent); text-underline-offset: 3px; }
+code { font: 0.86em/1.5 var(--mono); background: var(--surface); border: 1px solid var(--line); border-radius: 5px; padding: 0.05em 0.35em; }
+pre { margin: 0; overflow-x: auto; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+pre code { display: block; padding: 14px 16px; border-radius: 10px; font-size: 13.5px; line-height: 1.6; white-space: pre; }
+
+.layout { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 56px; max-width: 1320px; margin: 0 auto; padding: 0 24px; }
+@media (max-width: 980px) { .layout { grid-template-columns: 1fr; gap: 0; padding: 0 16px; } .toc { display: none; } }
+
+.toc { position: sticky; top: 0; align-self: start; max-height: 100vh; overflow-y: auto; padding: 40px 0 24px; font-size: 14px; }
+.toc-title { margin: 0 0 12px; font-weight: 600; line-height: 1.3; text-wrap: balance; }
+.progress { height: 4px; background: var(--surface-alt); border-radius: 999px; overflow: hidden; }
+.progress span { display: block; height: 100%; background: var(--ok); }
+.progress-label { margin: 6px 0 18px; color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.toc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.toc li { display: flex; justify-content: space-between; gap: 8px; }
+.toc a { color: var(--muted); text-decoration: none; padding: 3px 0; transition: color .15s ease; }
+@media (hover: hover) and (pointer: fine) { .toc a:hover { color: var(--fg); } }
+.toc a[aria-current] { color: var(--fg); font-weight: 550; }
+.toc-count { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; padding-top: 4px; }
+
+main { padding: 40px 0 80px; min-width: 0; }
+main > section, main > header, main > footer { max-width: 920px; }
+main p, main li { max-width: var(--measure); }
+.plan-head h1 { margin: 0; font-size: clamp(30px, 3.4vw, 42px); line-height: 1.12; letter-spacing: -0.025em; font-weight: 650; text-wrap: balance; max-width: 24ch; }
+.byline { margin: 14px 0 0; color: var(--muted); font-size: 14px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.byline b { color: var(--fg); font-weight: 550; }
+.lede { font-size: 19.5px; line-height: 1.55; margin-top: 28px; }
+.lede p { margin: 0 0 0.7em; }
+
+h2 { margin: 64px 0 14px; font-size: 25px; line-height: 1.2; letter-spacing: -0.015em; font-weight: 640; text-wrap: balance; }
+h3 { margin: 32px 0 10px; font-size: 18px; letter-spacing: -0.005em; font-weight: 620; }
+h4 { margin: 0 0 8px; font-size: 13.5px; font-weight: 600; color: var(--muted); }
+main ul { padding-left: 1.2em; }
+main li { margin: 0.25em 0; }
+.discoveries li::marker { color: var(--accent); }
+
+.pill { display: inline-block; font-size: 12.5px; line-height: 1; padding: 5px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pill-final, .pill-done { color: var(--ok); border-color: color-mix(in oklab, var(--ok) 45%, transparent); }
+.pill-implementing, .pill-in-progress { color: var(--accent); border-color: color-mix(in oklab, var(--accent) 45%, transparent); }
+.pill-draft { color: var(--warn); border-color: color-mix(in oklab, var(--warn) 45%, transparent); }
+
+.phase { padding-top: 8px; }
+.phase-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-top: 72px; padding-top: 24px; border-top: 1px solid var(--line); }
+.phase-head h2 { margin: 0; }
+.phase-num { color: var(--muted); font-weight: 500; margin-right: 6px; }
+.changes { list-style: none; padding: 0; margin: 0; display: grid; gap: 14px; }
+.change { max-width: none !important; display: grid; gap: 6px; }
+.change .file { justify-self: start; font-size: 13px; }
+.change .intent { max-width: var(--measure); }
+.change .intent p { margin: 0; }
+.contract { max-width: 920px; }
+
+/* Code blocks: every contract and every fence in prose. A bar names the language; colours come from the palette above. */
+.codeblock { margin: 0; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden; max-width: 920px; }
+.codeblock figcaption { display: flex; justify-content: space-between; gap: 12px; padding: 6px 14px; border-bottom: 1px solid var(--line); background: var(--surface-alt); font: 600 11.5px/1.4 var(--font); letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.codeblock figcaption .where { font-weight: 500; text-transform: none; letter-spacing: 0; }
+.codeblock pre code { border: 0; border-radius: 0; background: none; padding: 12px 16px 14px; }
+.tok-kw { color: var(--syn-kw); } .tok-str { color: var(--syn-str); } .tok-num { color: var(--syn-num); }
+.tok-type { color: var(--syn-type); } .tok-fn { color: var(--syn-fn); } .tok-com { color: var(--syn-com); font-style: italic; }
+.tok-add { color: var(--syn-add); } .tok-del { color: var(--syn-del); }
+/* A Markdown contract reads as the document it will become: headings, tables and code, wrapped, never a raw source dump. */
+.contract.is-md .md-body { padding: 4px 18px 14px; font-size: 15px; line-height: 1.55; }
+.contract.is-md .md-body > :first-child { margin-top: 10px; }
+.contract.is-md .md-body h1, .contract.is-md .md-body h2 { font-size: 17px; margin: 14px 0 6px; }
+.contract.is-md .md-body h3, .contract.is-md .md-body h4 { font-size: 15.5px; margin: 12px 0 4px; }
+.contract.is-md .md-body p { margin: 4px 0; max-width: var(--measure); }
+.contract.is-md .md-body table { font-size: 14px; margin: 6px 0; }
+.contract.is-md .md-body .codeblock { margin: 8px 0; background: var(--bg); }
+main .prose .codeblock, main section > .codeblock { margin: 12px 0; }
+.verify { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px 32px; }
+.checks { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.check { display: grid; grid-template-columns: 20px 1fr; gap: 10px; align-items: start; }
+.check input { margin: 4px 0 0; accent-color: var(--ok); width: 16px; height: 16px; }
+.check.is-done span { color: var(--muted); }
+.none { color: var(--muted); font-size: 14px; }
+.phase-notes { margin-top: 18px; color: var(--muted); }
+
+.decision { margin: 22px 0 30px; }
+.decision h3 { margin-top: 0; }
+.chosen { margin: 0 0 8px; }
+.chosen b { color: var(--ok); font-weight: 600; }
+.open { color: var(--warn); }
+
+iframe.viz { display: block; width: 100%; max-width: 1040px; height: 640px; transition: height .2s ease; border: 1px solid var(--line); border-radius: 14px; margin: 18px 0 8px; background: var(--bg); }
+.component-block { margin: 18px 0 26px; max-width: 1040px; }
+.component-block figcaption { font-size: 14.5px; color: var(--muted); margin-bottom: 10px; }
+.component-block figcaption b { color: var(--fg); font-weight: 600; }
+.states { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+.state-label { font-size: 12.5px; color: var(--muted); margin: 0 0 6px; display: flex; justify-content: space-between; align-items: baseline; }
+.state-label .full { font: inherit; font-size: 12px; color: var(--muted); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+@media (hover: hover) and (pointer: fine) { .state-label .full:hover { color: var(--fg); } }
+iframe.component:fullscreen { height: 100vh !important; border: 0; border-radius: 0; }
+iframe.component { display: block; width: 100%; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); transition: height .2s ease; }
+details { margin-top: 10px; }
+details summary { cursor: pointer; color: var(--muted); font-size: 13.5px; }
+details pre code { margin-top: 8px; }
+
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.swatch { display: grid; grid-template-columns: 36px 1fr; grid-template-rows: auto auto; column-gap: 10px; align-items: center; font-size: 13.5px; }
+.swatch span { grid-row: span 2; width: 36px; height: 36px; border-radius: 9px; border: 1px solid var(--line); }
+.swatch code { background: none; border: 0; padding: 0; color: var(--muted); font-size: 12px; }
+.type { display: grid; gap: 14px; }
+.type-row { display: grid; grid-template-columns: 170px 1fr; gap: 16px; align-items: baseline; }
+.type-meta { color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.space { display: grid; gap: 6px; }
+.space-row { display: grid; grid-template-columns: 1fr; gap: 4px; }
+.space-row .bar { display: block; height: 10px; background: var(--accent); border-radius: 3px; opacity: .75; }
+.space-row code { background: none; border: 0; padding: 0; color: var(--muted); font-size: 12px; }
+.radii { display: flex; gap: 16px; flex-wrap: wrap; }
+.radius { display: grid; gap: 6px; justify-items: start; }
+.radius span { width: 56px; height: 40px; border: 1.5px solid var(--fg); }
+.radius code { background: none; border: 0; padding: 0; color: var(--muted); font-size: 12px; }
+
+table { border-collapse: collapse; width: 100%; font-size: 15px; }
+th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-top: 1px solid var(--line); }
+th { color: var(--muted); font-weight: 600; font-size: 13px; }
+main > footer { margin-top: 72px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13.5px; }
+
+details.report { margin-top: 8px; }
+details.report > summary { font-size: 14px; color: var(--accent); width: fit-content; }
+details.report[open] > summary { margin-bottom: 4px; }
+
+iframe.is-expanded { position: fixed; inset: 0; z-index: 1000; width: 100vw !important; max-width: none; height: 100vh !important; margin: 0; border: 0; border-radius: 0; }
+body.has-expanded { overflow: hidden; }
+.expanded-close { position: fixed; z-index: 1001; top: 14px; right: 18px; font: inherit; font-size: 13px; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); cursor: pointer; box-shadow: 0 6px 20px -8px rgb(0 0 0 / .5); }
+
+/* Versions: newest first; who, through what, why, what changed; the prompt and session folded away. */
+.v-how { color: var(--muted); font-size: 14px; }
+.versions { list-style: none; padding: 0; margin: 16px 0 0; display: grid; gap: 18px; }
+.version { border-left: 2px solid var(--line); padding: 2px 0 2px 16px; }
+.version:first-child { border-left-color: var(--accent); }
+.v-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; font-size: 13.5px; color: var(--muted); }
+.v-num { font-weight: 650; color: var(--fg); font-variant-numeric: tabular-nums; }
+.v-commit { font-size: 12px; }
+.v-intent { margin: 4px 0 2px; max-width: var(--measure); }
+.v-changes { margin: 0; padding-left: 18px; font-size: 14px; color: var(--muted); }
+.v-changes li { margin: 1px 0; }
+.v-origin { margin-top: 6px; font-size: 14px; }
+.v-origin > summary { color: var(--accent); cursor: pointer; width: fit-content; }
+.v-origin blockquote { margin: 8px 0 4px; padding: 8px 12px; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; white-space: pre-wrap; max-width: var(--measure); }
+.v-session { margin: 4px 0 0; color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+
+/* Vocabulary: one table per context; the status is a quiet tag, the word reads first. */
+.term-counts { color: var(--muted); font-size: 14px; display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; }
+.term-context { margin: 26px 0 6px; font-size: 15px; letter-spacing: 0.02em; color: var(--muted); }
+.table-wrap { overflow-x: auto; }
+.terms th[scope="row"] { color: var(--fg); font-size: 15px; font-weight: 600; white-space: nowrap; }
+.terms td { font-size: 14.5px; }
+.terms thead th:first-child { width: 9.5em; } .terms thead th:nth-child(2) { width: 6.5em; } .terms thead th:last-child { width: 13em; }
+.term-from, .term-not { color: var(--muted); }
+.term-not { font-size: 13.5px; }
+.term-status { display: inline-block; font-size: 11.5px; line-height: 1.5; padding: 0 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+.term-status.is-new { color: var(--ok); border-color: color-mix(in oklab, var(--ok) 45%, transparent); }
+.term-status.is-adopted { color: var(--accent); border-color: color-mix(in oklab, var(--accent) 45%, transparent); }
+.term-status.is-renamed, .term-status.is-changed { color: var(--warn); border-color: color-mix(in oklab, var(--warn) 45%, transparent); }
+
+/* A section's lead line: what it is and how to read it. */
+.lede-line { color: var(--muted); font-size: 14.5px; margin: -2px 0 14px; max-width: var(--measure); }
+h3 + .lede-line { margin-top: -4px; }
+.term-legend { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 4px 24px; margin: 6px 0 4px; font-size: 13.5px; color: var(--muted); }
+.term-legend div { display: grid; grid-template-columns: 6.5em 1fr; gap: 8px; align-items: baseline; }
+.term-legend dd { margin: 0; }
+.term-about { color: var(--muted); font-size: 14px; margin: -2px 0 8px; max-width: var(--measure); }
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="toc" aria-label="Plan sections">
+  <p class="toc-title">Event-sourcing engine, sign-up and sign-in</p>
+  <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="13" aria-valuenow="0"><span style="width:0%"></span></div>
+  <p class="progress-label">0 of 13 checks done</p>
+  <ol><li><a href="#summary">Summary</a></li><li><a href="#current">Where we are</a></li><li><a href="#end">Where we end up</a></li><li><a href="#not">Not doing</a></li><li><a href="#approach">Approach</a></li><li><a href="#decisions">Decisions</a></li><li><a href="#design">Design language</a></li><li><a href="#engine">1. Engine: event store, one Sql port, stories</a><span class="toc-count">0/4</span></li><li><a href="#accounts">2. Account context: sign up, sign in, sign out</a><span class="toc-count">0/3</span></li><li><a href="#edge">3. HTTP, seeds and pages: sign up in the browser</a><span class="toc-count">0/6</span></li><li><a href="#references">References</a></li><li><a href="#versions">Versions · v5</a></li></ol>
+</nav>
+<main>
+  <header class="plan-head">
+    <h1>Event-sourcing engine, sign-up and sign-in</h1>
+    <p class="byline"><b>cp-03</b> · 2026-10-28 · <span class="pill pill-final">final</span> · pratos with Claude Code · 4 min read · built from <code>docs/plans/stages/cp-03-engine-identity.plan.json</code></p>
+  </header>
+  <section id="summary" class="lede"><p>People can sign up, sign in and sign out, and each of those is an event in the engine every later context will use. The engine stays small: optimistic appends, projections in the same transaction, one Sql port over four databases, and stories as tests.</p>
+</section>
+  <section id="current"><h2>Where we are</h2><p>cp-02 has the words and the design: <code>docs/DOMAIN-VOCABULARY.md</code> with Identity&#39;s Account and Sign-in, <code>packages/schema</code>, the vocabulary check, the plan room map and the event design. There is no engine, no domain package and no table yet.</p>
+<ul class="discoveries"><li>The Workers runtime caps PBKDF2 at 100,000 iterations; Web Crypto runs the same hashing in the Worker, in bun tests and in <code>just user-add</code>.</li><li>D1 has no interactive transactions, but a <code>batch</code> is atomic, which is all an append with its projection rows needs.</li><li>One stream per email (<code>account-&lt;email&gt;</code>), so two sign-ups racing for one email meet at the stream&#39;s version and the second is refused.</li><li>An unknown email is verified against a decoy hash, so it takes as long as a wrong password and gets the same answer.</li><li>D1 tables come from migrations, not <code>setup()</code>; a test checks that <code>0002_accounts.sql</code> holds exactly the DDL the engine and projection declare.</li></ul></section>
+  <section id="end"><h2>Where we end up</h2><p>Sign up at localhost:3000/signup and land signed in, your name in the header. <code>sign-up.snap.txt</code> reads as a story. A 21st sign-in in a minute from one address gets 429. <code>just agent-ready</code> reports one gap, the admin API, which cp-04 adds.</p>
+</section>
+  
+  <section id="not"><h2>Not doing</h2><p class="lede-line">Out of scope for this plan, each with the reason in the same line.</p><ul><li>An admin API or page; it arrives with the flags in cp-04.</li><li>Password reset, email confirmation or OAuth; the workshop needs none of them.</li><li>The Thread and Session deciders; the engine is ready for them, later stages add them.</li><li>Rate limiting sign-in; Cloudflare&#39;s rate-limiting rules can do it outside this code.</li></ul></section>
+  <section id="approach"><h2>Approach</h2><p>Engine first, with its own tests, because every context will run on it. Then the account context as stories. Then the HTTP edge, seeds and pages, which only map onto it.</p>
+</section>
+  <section id="decisions"><h2>Decisions</h2><p class="lede-line">Each real choice in this plan, with the options compared side by side. A decided one is locked on its choice; open “Compare the options” to see why.</p><article class="decision" id="decision-auth">
+    <h3>Sign-in: a library or our own?</h3>
+    <p class="chosen">Chosen: <b>Our own, Rails 8 style</b> · pratos · 2026-10-28</p>
+    <p>Two tables and one hash function are small enough to read in one sitting. Ours runs on the engine like every other context, so a sign-up is an event with a story.</p>
+
+    <details class="report"><summary>Compare the 2 options</summary><iframe class="viz" title="Sign-in: a library or our own?" allow="fullscreen" allowfullscreen srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+&lt;meta charset=&quot;utf-8&quot;&gt;
+&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+&lt;title&gt;Sign-in: a library or our own?&lt;/title&gt;
+&lt;script src=&quot;https://cdn.jsdelivr.net/npm/pele@1.12.0/dist/pele.global.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;https://cdnjs.cloudflare.com/ajax/libs/animejs/4.5.0/anime.umd.min.js&quot;&gt;&lt;/script&gt;
+&lt;style&gt;
+  :root {
+    --bg: #fffcf0; --fg: #100f0f; --muted: #6f6e69; --line: #cecdc3; --surface: #f2f0e5;
+    --surface-alt: #e6e4d9; --accent: #205ea6; --accent-ink: #ffffff; --ok: #66800b; --warn: #ad8301;
+    --font: ui-sans-serif, system-ui, -apple-system, &quot;Inter&quot;, sans-serif;
+    --mono: ui-monospace, &quot;JetBrains Mono&quot;, &quot;SF Mono&quot;, Menlo, monospace;
+    --radius: 6px; --gutter: 16px;
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1); --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme=&quot;light&quot;]) {
+      --bg: #100f0f; --fg: #cecdc3; --muted: #878580; --line: #403e3c; --surface: #1c1b1a;
+      --surface-alt: #282726; --accent: #4385be; --accent-ink: #100f0f; --ok: #879a39; --warn: #d0a215;
+    }
+  }
+  :root[data-theme=&quot;dark&quot;] {
+    --bg: #100f0f; --fg: #cecdc3; --muted: #878580; --line: #403e3c; --surface: #1c1b1a;
+    --surface-alt: #282726; --accent: #4385be; --accent-ink: #100f0f; --ok: #879a39; --warn: #d0a215;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 var(--font); }
+  body { min-height: 100vh; display: flex; flex-direction: column; }
+  header, main, footer { padding: 0 var(--gutter); max-width: 1480px; width: 100%; margin: 0 auto; }
+  header { padding-top: 32px; padding-bottom: 4px; }
+  h1 { margin: 0; font-size: clamp(24px, 2.6vw, 34px); line-height: 1.15; letter-spacing: -.02em; font-weight: 650; text-wrap: balance; max-width: 30ch; }
+  .byline { margin: 10px 0 0; font-size: 13.5px; color: var(--muted); display: flex; gap: 14px; flex-wrap: wrap; }
+  .byline b { color: var(--fg); font-weight: 550; }
+  ::selection { background: color-mix(in oklab, var(--accent) 28%, transparent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+  * { scrollbar-color: var(--line) transparent; scrollbar-width: thin; }
+  .tabs { display: flex; gap: 6px; margin: 18px 0 0; flex-wrap: wrap; }
+  .tabs button { font: inherit; font-size: 14px; padding: 6px 12px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 999px; cursor: pointer; }
+  .tabs button[aria-selected=&quot;true&quot;] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  main { display: grid; grid-template-columns: 1fr; gap: 18px; padding-top: 20px; padding-bottom: 28px; flex: 1; align-content: start; }
+  .stage { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; height: min(62vh, 760px); min-height: 340px; overflow: hidden; transition: height .24s var(--ease-out); }
+  .stage-controls { position: absolute; right: 10px; top: 10px; display: flex; gap: 6px; }
+  .stage-controls button { font: inherit; font-size: 12.5px; padding: 5px 10px; border: 1px solid var(--line); background: var(--bg); color: var(--muted); border-radius: 999px; cursor: pointer; transition: color .15s ease, border-color .15s ease; }
+  @media (hover: hover) and (pointer: fine) { .stage-controls button:hover { color: var(--fg); } }
+  .stage-controls button[aria-pressed=&quot;true&quot;] { color: var(--fg); border-color: var(--fg); }
+  .stage-controls button:disabled { opacity: .4; cursor: default; }
+  #diagram { width: 100%; height: 100%; }
+  #diagram svg { width: 100%; height: 100%; display: block; }
+  .rail { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px 40px; align-items: start; }
+  @media (max-width: 760px) { .rail { grid-template-columns: 1fr; } }
+  .rail-text { max-width: 64ch; }
+  .pele { --pele-bg: transparent; --pele-fg: var(--fg); --pele-muted: var(--muted); --pele-line: var(--fg);
+          --pele-surface: var(--bg); --pele-surface-alt: var(--surface-alt); --pele-border: var(--line);
+          --pele-accent: var(--accent); --pele-font: var(--font); --pele-font-mono: var(--mono); --pele-radius: 4px; }
+  .pele-node, .pele-cluster, .pele-edge, .pele-edge-label { transition: opacity .18s var(--ease-out); }
+  .pele-node.is-focus &gt; :is(rect, path, polygon, ellipse, circle) { stroke: var(--accent); stroke-width: 2.25px; }
+  .pele-cluster.is-focus &gt; rect { stroke: var(--accent); stroke-width: 1.75px; }
+  .pele-edge.is-focus path { stroke: var(--accent); stroke-width: 2px; }
+  .pele-edge.is-focus .pele-marker, .pele-edge.is-focus marker path { fill: var(--accent); stroke: var(--accent); }
+  .step-label { font-size: 12.5px; color: var(--muted); margin: 0 0 6px; font-variant-numeric: tabular-nums; }
+  .caption { margin: 0; font-size: clamp(18px, 1.6vw, 22px); line-height: 1.35; font-weight: 500; text-wrap: pretty; }
+  .evidence { list-style: none; margin: 10px 0 0; padding: 0; font: 13px/1.7 var(--mono); color: var(--muted); }
+  .evidence li::before { content: &quot;› &quot;; }
+  .controls { display: flex; align-items: center; gap: 10px; padding-top: 4px; }
+  .controls button { font: inherit; font-size: 14px; width: 40px; height: 36px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: var(--radius); cursor: pointer; transition: background-color .15s ease, border-color .15s ease; }
+  @media (hover: hover) and (pointer: fine) { .controls button:not(:disabled):hover { border-color: var(--fg); } }
+  .controls button:disabled { opacity: .4; cursor: default; }
+  .dots { display: flex; gap: 6px; padding: 0 6px; }
+  .dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--line); display: block; }
+  .dots i.on { background: var(--fg); }
+  .compare { }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-top: 1px solid var(--line); }
+  th { font-weight: 600; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  td:first-child { color: var(--muted); white-space: nowrap; }
+  .decide { border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; background: var(--surface); }
+  .decide h2 { margin: 0 0 10px; font-size: 14px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 600; }
+  .options { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+  .option { border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; background: var(--bg); display: flex; flex-direction: column; gap: 8px; }
+  .option h3 { margin: 0; font-size: 16px; font-weight: 600; }
+  .option p { margin: 0; font-size: 14px; color: var(--muted); }
+  .option .tried { font: 12.5px/1.5 var(--mono); }
+  .option .tried a { color: var(--accent); }
+  .option .tried.no { color: var(--warn); }
+  .option button { align-self: flex-start; font: inherit; font-size: 14px; padding: 7px 14px; border: 0; border-radius: var(--radius); background: var(--accent); color: var(--accent-ink); cursor: pointer; margin-top: 4px; }
+  .option button:disabled { background: var(--surface-alt); color: var(--muted); cursor: not-allowed; }
+  .option.chosen { border-color: var(--ok); }
+  .who { display: none; gap: 8px; align-items: center; margin-top: 12px; font-size: 14px; }
+  .who input { font: inherit; padding: 6px 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); color: var(--fg); }
+  .lock { margin: 12px 0 0; font-size: 14px; color: var(--ok); }
+  .propose { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 14px; color: var(--muted); }
+  .propose input { font: inherit; font-size: 14px; padding: 6px 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--fg); width: 150px; }
+  .propose button { font: inherit; font-size: 14px; padding: 7px 12px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: var(--radius); cursor: pointer; }
+  footer { padding-bottom: 20px; font-size: 12.5px; color: var(--muted); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  [hidden] { display: none !important; }
+  .embedded body { min-height: 0; }
+  .is-full body { min-height: 100vh; }
+  .is-full header, .is-full main, .is-full footer { max-width: none; }
+  .embedded header { padding-top: 22px; }
+&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;header&gt;
+  &lt;h1 id=&quot;question&quot;&gt;&lt;/h1&gt;
+  &lt;p class=&quot;byline&quot;&gt;&lt;span id=&quot;kind&quot;&gt;&lt;/span&gt;&lt;span&gt;built by &lt;b id=&quot;by&quot;&gt;&lt;/b&gt;&lt;/span&gt;&lt;span id=&quot;at&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+  &lt;nav class=&quot;tabs&quot; id=&quot;tabs&quot; role=&quot;tablist&quot; hidden&gt;&lt;/nav&gt;
+&lt;/header&gt;
+&lt;main&gt;
+  &lt;section class=&quot;stage&quot;&gt;&lt;div id=&quot;diagram&quot;&gt;&lt;/div&gt;&lt;div class=&quot;stage-controls&quot;&gt;&lt;button id=&quot;reset&quot; title=&quot;r&quot; aria-label=&quot;Reset to the first step&quot;&gt;reset&lt;/button&gt;&lt;button id=&quot;fit&quot; aria-pressed=&quot;false&quot; title=&quot;f&quot;&gt;fit all&lt;/button&gt;&lt;button id=&quot;full&quot; aria-pressed=&quot;false&quot; title=&quot;Shift+F&quot;&gt;full screen&lt;/button&gt;&lt;/div&gt;&lt;/section&gt;
+  &lt;section class=&quot;rail&quot;&gt;
+    &lt;div class=&quot;rail-text&quot;&gt;
+      &lt;p class=&quot;step-label&quot; id=&quot;stepLabel&quot;&gt;&lt;/p&gt;
+      &lt;p class=&quot;caption&quot; id=&quot;caption&quot;&gt;&lt;/p&gt;
+      &lt;ul class=&quot;evidence&quot; id=&quot;evidence&quot;&gt;&lt;/ul&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;controls&quot;&gt;
+      &lt;button id=&quot;prev&quot; aria-label=&quot;Previous step&quot;&gt;←&lt;/button&gt;
+      &lt;div class=&quot;dots&quot; id=&quot;dots&quot;&gt;&lt;/div&gt;
+      &lt;button id=&quot;next&quot; aria-label=&quot;Next step&quot;&gt;→&lt;/button&gt;
+    &lt;/div&gt;
+  &lt;/section&gt;
+  &lt;section class=&quot;compare&quot; id=&quot;compare&quot; hidden&gt;&lt;/section&gt;
+  &lt;section class=&quot;decide&quot; id=&quot;decide&quot; hidden&gt;
+    &lt;h2&gt;Decision&lt;/h2&gt;
+    &lt;div class=&quot;options&quot; id=&quot;options&quot;&gt;&lt;/div&gt;
+    &lt;div class=&quot;who&quot; id=&quot;who&quot;&gt;&lt;span&gt;Recorded as&lt;/span&gt;&lt;input id=&quot;whoName&quot; placeholder=&quot;your name&quot;&gt;&lt;button id=&quot;whoOk&quot;&gt;Confirm&lt;/button&gt;&lt;/div&gt;
+    &lt;p class=&quot;lock&quot; id=&quot;lock&quot; hidden&gt;&lt;/p&gt;
+  &lt;/section&gt;
+  &lt;section class=&quot;propose&quot; id=&quot;propose&quot; hidden&gt;
+    &lt;span&gt;Missing a transition?&lt;/span&gt;
+    &lt;input id=&quot;pFrom&quot; placeholder=&quot;from state&quot;&gt;&lt;input id=&quot;pTo&quot; placeholder=&quot;to state&quot;&gt;&lt;input id=&quot;pCmd&quot; placeholder=&quot;Command name&quot;&gt;
+    &lt;button id=&quot;pSend&quot;&gt;Propose&lt;/button&gt;
+  &lt;/section&gt;
+&lt;/main&gt;
+&lt;footer&gt;&lt;span id=&quot;hint&quot;&gt;← → to step · f to fit all · ⇧F full screen · r to reset&lt;/span&gt;&lt;span id=&quot;status&quot;&gt;standalone&lt;/span&gt;&lt;/footer&gt;
+
+&lt;script type=&quot;application/json&quot; id=&quot;spec&quot;&gt;
+{&quot;kind&quot;:&quot;decision-report&quot;,&quot;question&quot;:&quot;Sign-in: a library or our own?&quot;,&quot;meta&quot;:{&quot;builtBy&quot;:&quot;create-plan&quot;,&quot;builtAt&quot;:&quot;2026-10-28&quot;,&quot;source&quot;:&quot;cp-03 plan&quot;},&quot;axes&quot;:[{&quot;key&quot;:&quot;tables&quot;,&quot;label&quot;:&quot;Tables it needs&quot;},{&quot;key&quot;:&quot;events&quot;,&quot;label&quot;:&quot;Is a sign-up an event&quot;},{&quot;key&quot;:&quot;words&quot;,&quot;label&quot;:&quot;Matches our vocabulary&quot;},{&quot;key&quot;:&quot;code&quot;,&quot;label&quot;:&quot;Code we read and own&quot;}],&quot;options&quot;:[{&quot;id&quot;:&quot;own&quot;,&quot;label&quot;:&quot;Our own, Rails 8 style&quot;,&quot;summary&quot;:&quot;Two tables, one hash function, and the account as an event stream.&quot;,&quot;diagram&quot;:&quot;sequenceDiagram\n  participant B as Browser\n  participant A as API\n  participant E as Engine\n  participant D as D1\n  B-&gt;&gt;A: POST /auth/sign-in\n  A-&gt;&gt;E: SignIn on account-sam\n  E-&gt;&gt;D: SignedIn and a sign_ins row, one batch\n  A--&gt;&gt;B: token in an HttpOnly cookie&quot;,&quot;tried&quot;:{&quot;kind&quot;:&quot;branch&quot;,&quot;ref&quot;:&quot;main&quot;,&quot;summary&quot;:&quot;sign-up and sign-in stories pass on bun:sqlite; D1 through the same port&quot;},&quot;axes&quot;:{&quot;tables&quot;:&quot;Two: accounts and sign_ins&quot;,&quot;events&quot;:&quot;Yes: AccountOpened, SignedIn, SignedOut&quot;,&quot;words&quot;:&quot;Yes&quot;,&quot;code&quot;:&quot;About 300 lines&quot;}},{&quot;id&quot;:&quot;library&quot;,&quot;label&quot;:&quot;An auth library&quot;,&quot;summary&quot;:&quot;A library owns the handlers and its own user and session tables.&quot;,&quot;diagram&quot;:&quot;sequenceDiagram\n  participant B as Browser\n  participant A as API\n  participant L as Auth library\n  participant D as D1\n  B-&gt;&gt;A: POST a sign-in\n  A-&gt;&gt;L: its handler\n  L-&gt;&gt;D: its user and session rows\n  A--&gt;&gt;B: its cookie&quot;,&quot;tried&quot;:null,&quot;axes&quot;:{&quot;tables&quot;:&quot;Its schema, four or more&quot;,&quot;events&quot;:&quot;No, rows outside the event log&quot;,&quot;words&quot;:&quot;No: it says user and session&quot;,&quot;code&quot;:&quot;A config file; the rest is theirs&quot;}}],&quot;steps&quot;:[{&quot;id&quot;:&quot;ask&quot;,&quot;option&quot;:&quot;own&quot;,&quot;caption&quot;:&quot;The browser posts an email and password to the API.&quot;,&quot;focus&quot;:[&quot;B&quot;,&quot;A&quot;],&quot;edges&quot;:[&quot;i0&quot;]},{&quot;id&quot;:&quot;decide&quot;,&quot;option&quot;:&quot;own&quot;,&quot;caption&quot;:&quot;The API runs SignIn on the account&#39;s own stream in the engine.&quot;,&quot;focus&quot;:[&quot;A&quot;,&quot;E&quot;],&quot;edges&quot;:[&quot;i1&quot;]},{&quot;id&quot;:&quot;write&quot;,&quot;option&quot;:&quot;own&quot;,&quot;caption&quot;:&quot;The event and its projection row land in D1 together.&quot;,&quot;focus&quot;:[&quot;E&quot;,&quot;D&quot;],&quot;edges&quot;:[&quot;i2&quot;]},{&quot;id&quot;:&quot;cookie&quot;,&quot;option&quot;:&quot;own&quot;,&quot;caption&quot;:&quot;The browser keeps the token in a cookie scripts cannot read.&quot;,&quot;focus&quot;:[&quot;B&quot;],&quot;edges&quot;:[&quot;i3&quot;]},{&quot;id&quot;:&quot;ask&quot;,&quot;option&quot;:&quot;library&quot;,&quot;caption&quot;:&quot;The library takes the request and answers it with its own handler.&quot;,&quot;focus&quot;:[&quot;A&quot;,&quot;L&quot;],&quot;edges&quot;:[&quot;i0&quot;,&quot;i1&quot;]},{&quot;id&quot;:&quot;write&quot;,&quot;option&quot;:&quot;library&quot;,&quot;caption&quot;:&quot;It writes its own rows outside the event log, and calls a sign-in a session.&quot;,&quot;focus&quot;:[&quot;L&quot;,&quot;D&quot;],&quot;edges&quot;:[&quot;i2&quot;,&quot;i3&quot;]}],&quot;decision&quot;:{&quot;optionId&quot;:&quot;own&quot;,&quot;label&quot;:&quot;Our own, Rails 8 style&quot;,&quot;by&quot;:{&quot;name&quot;:&quot;pratos&quot;},&quot;at&quot;:&quot;2026-10-28&quot;}}
+&lt;/script&gt;
+
+&lt;script&gt;
+(() =&gt; {
+  const spec = JSON.parse(document.getElementById(&#39;spec&#39;).textContent);
+  // Embedded in a plan or a doc: size against a fixed reference instead of the frame (which grows to fit us), and report our height.
+  const embedded = window.parent !== window;
+  if (embedded) document.documentElement.classList.add(&#39;embedded&#39;);
+  // Full means real full screen, or the host page expanding our frame to the window when the browser refuses full screen.
+  let expanded = false;
+  const isFull = () =&gt; !!document.fullscreenElement || expanded;
+  const viewH = () =&gt; embedded &amp;&amp; !isFull() ? 760 : innerHeight;
+  const $ = id =&gt; document.getElementById(id);
+  const reduced = matchMedia(&#39;(prefers-reduced-motion: reduce)&#39;).matches;
+  const D = reduced ? 0 : 1;
+  const KIND = { &#39;architecture-map&#39;: &#39;Architecture map&#39;, &#39;state-explorer&#39;: &#39;State explorer&#39;, &#39;event-stream&#39;: &#39;Event stream&#39;, &#39;decision-report&#39;: &#39;Decision report&#39;, &#39;trace-view&#39;: &#39;Trace view&#39; };
+
+  let host = null, participant = null, decision = spec.decision || null;
+  let optionId = spec.options?.[0]?.id ?? null;
+  let stepIndex = 0, mounted = null, svg = null, running = null, camera = null, fitAll = false, full = null;
+
+  const post = msg =&gt; { const m = { ...msg, artifactId: host?.artifactId, blockId: host?.blockId, planId: host?.planId }; if (host &amp;&amp; window.parent !== window) window.parent.postMessage(m, &#39;*&#39;); else console.log(&#39;[viz-explainer]&#39;, m); };
+
+  document.title = spec.question;
+  $(&#39;question&#39;).textContent = spec.question;
+  $(&#39;kind&#39;).textContent = KIND[spec.kind] || spec.kind;
+  $(&#39;by&#39;).textContent = spec.meta?.builtBy || &#39;agent&#39;;
+  $(&#39;at&#39;).textContent = spec.meta?.builtAt || &#39;&#39;;
+
+  const steps = () =&gt; (spec.steps || []).filter(s =&gt; !s.option || s.option === optionId);
+  const diagramText = () =&gt; spec.options ? spec.options.find(o =&gt; o.id === optionId)?.diagram : spec.diagram;
+
+  function mount() {
+    const el = $(&#39;diagram&#39;);
+    mounted?.destroy();
+    el.innerHTML = &#39;&#39;;
+    mounted = pele.mount(el, diagramText(), {
+      idPrefix: (optionId || &#39;d&#39;) + &#39;-&#39;,
+      zoom: false,
+      responsive: false,
+      fontSize: 17,
+      padding: 24,
+      onRender: (r) =&gt; {
+        svg = el.querySelector(&#39;svg&#39;);
+        // The page owns the viewBox from here: Pele lays out at natural size, the camera decides what is on screen.
+        full = [0, 0, r.width, r.height];
+        svg.removeAttribute(&#39;width&#39;); svg.removeAttribute(&#39;height&#39;);
+        svg.setAttribute(&#39;preserveAspectRatio&#39;, &#39;xMidYMid meet&#39;);
+        Object.assign(view, { x: 0, y: 0, w: r.width, h: r.height }); writeView();
+        fitStage();
+        $(&#39;fit&#39;).hidden = fitsWhole();
+        applyStep(stepIndex, false);
+        updateReset();
+      },
+      onError: e =&gt; console.error(&#39;[viz-explainer] diagram error&#39;, e),
+    });
+  }
+
+  function clearFocus() { svg?.querySelectorAll(&#39;.is-focus&#39;).forEach(n =&gt; n.classList.remove(&#39;is-focus&#39;)); }
+
+  // Camera: the union of the focused elements&#39; boxes, in SVG units, with room around it. Never zoom past 1:1 by much,
+  // never tighter than a third of the map, so a single small node does not become a wall of text.
+  function boxOf(elements) {
+    const m = svg.getScreenCTM()?.inverse(); if (!m || !elements.length) return null;
+    let x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity;
+    for (const el of elements) {
+      const r = el.getBoundingClientRect();
+      for (const [cx, cy] of [[r.left, r.top], [r.right, r.bottom]]) { const p = new DOMPoint(cx, cy).matrixTransform(m); x1 = Math.min(x1, p.x); y1 = Math.min(y1, p.y); x2 = Math.max(x2, p.x); y2 = Math.max(y2, p.y); }
+    }
+    const stage = $(&#39;diagram&#39;).getBoundingClientRect(); const aspect = stage.width / Math.max(1, stage.height);
+    const pad = 64; let w = x2 - x1 + pad * 2, h = y2 - y1 + pad * 2;
+    // Never zoom past 1.1:1, so labels stay readable instead of billboard-sized.
+    const minW = Math.min(full[2], stage.width / 1.1);
+    if (w &lt; minW) w = minW;
+    if (h &lt; w / aspect) h = w / aspect; else w = h * aspect;
+    const cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
+    // Keep the frame inside the map: a node at the edge shows its neighbours, not empty stage.
+    const clamp = (v, size, total) =&gt; size &gt;= total ? (total - size) / 2 : Math.min(Math.max(v, 0), total - size);
+    const box = [clamp(cx - w / 2, w, full[2]), clamp(cy - h / 2, h, full[3]), w, h];
+    box.raw = Math.max(x2 - x1, (y2 - y1) * aspect);
+    return box;
+  }
+  // The stage takes its height from the diagram&#39;s proportions, with headroom for the camera, so a wide map is not letterboxed.
+  function fitStage() {
+    if (!full) return;
+    const stage = document.querySelector(&#39;.stage&#39;);
+    // Full screen: the stage takes every pixel the heading, caption and controls leave.
+    if (isFull()) { const rest = [&#39;header&#39;, &#39;.rail&#39;, &#39;footer&#39;].reduce((n, q) =&gt; n + (document.querySelector(q)?.offsetHeight ?? 0), 0) + 96; stage.style.height = `${Math.max(320, innerHeight - rest)}px`; return; }
+    // A diagram that fits at natural size gets a stage its own height and no camera. A wider one gets most of the viewport.
+    const h = fitsWhole() ? full[3] + 32 : Math.max(viewH() * 0.56, 420, stage.clientWidth * (full[3] / full[2]));
+    stage.style.height = `${Math.round(Math.min(viewH() * 0.64, Math.max(300, h)))}px`;
+  }
+
+  function fitsWhole() { const stage = document.querySelector(&#39;.stage&#39;); return !!full &amp;&amp; full[2] &lt;= stage.clientWidth * 1.05; }
+
+  // Tween a plain object and write the viewBox each frame: anime does not interpolate a four-number attribute string.
+  const view = { x: 0, y: 0, w: 1, h: 1 };
+  const writeView = () =&gt; svg?.setAttribute(&#39;viewBox&#39;, `${view.x} ${view.y} ${view.w} ${view.h}`);
+  function moveCamera(box, animated) {
+    if (!svg || !box) return;
+    camera?.pause?.();
+    const [x, y, w, h] = box;
+    if (!animated || !D) { Object.assign(view, { x, y, w, h }); writeView(); return; }
+    camera = anime.animate(view, { x, y, w, h, duration: 480, ease: &#39;inOutQuart&#39;, onUpdate: writeView });
+  }
+  $(&#39;fit&#39;).onclick = () =&gt; { fitAll = !fitAll; $(&#39;fit&#39;).setAttribute(&#39;aria-pressed&#39;, String(fitAll)); applyStep(stepIndex, true); updateReset(); };
+
+  // Reset the view, not the record: step 1, first option, the step&#39;s own frame. A recorded decision is an event and stays.
+  function reset() {
+    fitAll = false; $(&#39;fit&#39;).setAttribute(&#39;aria-pressed&#39;, &#39;false&#39;);
+    const first = spec.options?.[0]?.id ?? null;
+    if (first &amp;&amp; optionId !== first) {
+      optionId = first; stepIndex = 0;
+      [...$(&#39;tabs&#39;).children].forEach(t =&gt; t.setAttribute(&#39;aria-selected&#39;, String(t.dataset.id === first)));
+      mount();
+    } else go(0);
+    history.replaceState(null, &#39;&#39;, location.pathname + location.search);
+    updateReset();
+  }
+  function updateReset() { $(&#39;reset&#39;).disabled = stepIndex === 0 &amp;&amp; !fitAll &amp;&amp; (!spec.options || optionId === spec.options[0].id); }
+  $(&#39;reset&#39;).onclick = reset;
+
+  // Full screen the whole artifact, not just the drawing, so the caption and step controls stay with it.
+  if (!document.fullscreenEnabled &amp;&amp; !embedded) $(&#39;full&#39;).hidden = true;
+  const onFullChange = () =&gt; {
+    document.documentElement.classList.toggle(&#39;is-full&#39;, isFull());
+    $(&#39;full&#39;).setAttribute(&#39;aria-pressed&#39;, String(isFull()));
+    $(&#39;full&#39;).textContent = isFull() ? &#39;exit full screen&#39; : &#39;full screen&#39;;
+    requestAnimationFrame(() =&gt; { fitStage(); applyStep(stepIndex, false); });
+  };
+  $(&#39;full&#39;).onclick = () =&gt; {
+    if (document.fullscreenElement) return document.exitFullscreen();
+    if (expanded) return parent.postMessage({ fullscreen: &#39;exit&#39; }, &#39;*&#39;);
+    // Some browsers and embeds refuse full screen; then ask the host page to expand our frame instead.
+    document.documentElement.requestFullscreen().catch(() =&gt; { if (embedded) parent.postMessage({ fullscreen: &#39;expand&#39; }, &#39;*&#39;); });
+  };
+  document.addEventListener(&#39;fullscreenchange&#39;, onFullChange);
+  addEventListener(&#39;message&#39;, (e) =&gt; { if (e.data &amp;&amp; typeof e.data.expanded === &#39;boolean&#39;) { expanded = e.data.expanded; onFullChange(); } });
+
+  function applyStep(i, animated) {
+    const list = steps();
+    const step = list[i];
+    $(&#39;stepLabel&#39;).textContent = list.length ? `Step ${i + 1} of ${list.length}` : &#39;&#39;;
+    $(&#39;caption&#39;).textContent = step?.caption || &#39;&#39;;
+    $(&#39;evidence&#39;).innerHTML = (step?.evidence || []).map(e =&gt; `&lt;li&gt;${esc(e)}&lt;/li&gt;`).join(&#39;&#39;);
+    $(&#39;prev&#39;).disabled = i &lt;= 0; $(&#39;next&#39;).disabled = i &gt;= list.length - 1;
+    $(&#39;dots&#39;).innerHTML = list.map((_, k) =&gt; `&lt;i class=&quot;${k === i ? &#39;on&#39; : &#39;&#39;}&quot;&gt;&lt;/i&gt;`).join(&#39;&#39;);
+    if (!svg || !step) return;
+    running?.complete?.();
+    clearFocus();
+    const nodes = svg.querySelectorAll(&#39;.pele-node, .pele-cluster&#39;);
+    const edges = svg.querySelectorAll(&#39;.pele-edge, .pele-edge-label&#39;);
+    const focusIds = step.focus || [], edgeIds = step.edges || [];
+    const on = focusIds.map(id =&gt; svg.querySelector(`.pele-node[data-id=&quot;${id}&quot;], .pele-cluster[data-id=&quot;${id}&quot;]`)).filter(Boolean);
+    const onEdges = edgeIds.map(id =&gt; svg.querySelector(`.pele-edge[data-id=&quot;${id}&quot;]`)).filter(Boolean);
+    // Frame the focus and both ends of every focused edge, so an arrow never points off screen.
+    const ends = edgeIds.flatMap(id =&gt; (/^L_(.+)_(.+)_\d+$/.exec(id) ?? []).slice(1))
+      .map(n =&gt; svg.querySelector(`.pele-node[data-id=&quot;${n}&quot;]`)).filter(Boolean);
+    // Frame what is highlighted. Pull out to an edge&#39;s far end only when that costs little zoom;
+    // otherwise the edge leaves the frame pointing where it goes, and the highlight stays readable.
+    const tight = on.length ? boxOf(on) : null;
+    const wide = boxOf([...on, ...onEdges, ...ends]);
+    const roomy = tight &amp;&amp; wide &amp;&amp; wide.raw &lt;= Math.max(tight.raw * 1.6, ($(&#39;diagram&#39;).clientWidth / 1.1) * 0.9);
+    moveCamera(fitAll || fitsWhole() || !(on.length || onEdges.length) ? full : (tight &amp;&amp; !roomy ? tight : wide), animated);
+    const dim = focusIds.length || edgeIds.length ? 0.3 : 1;
+    const dur = animated ? 180 * D : 0;
+    anime.animate(nodes, { opacity: dim, duration: dur, ease: &#39;outQuad&#39; });
+    anime.animate(edges, { opacity: dim, duration: dur, ease: &#39;outQuad&#39; });
+    anime.animate(on, { opacity: 1, duration: dur, ease: &#39;outQuad&#39; });
+    on.forEach(n =&gt; n.classList.add(&#39;is-focus&#39;));
+    onEdges.forEach((g, k) =&gt; {
+      g.classList.add(&#39;is-focus&#39;);
+      anime.animate(g, { opacity: 1, duration: dur, ease: &#39;outQuad&#39; });
+      const label = svg.querySelector(`.pele-edge-label[data-id=&quot;${g.dataset.id}&quot;]`); if (label) anime.animate(label, { opacity: 1, duration: dur });
+      const path = g.querySelector(&#39;path&#39;);
+      if (path &amp;&amp; animated &amp;&amp; D) {
+        const [drawable] = anime.svg.createDrawable(path);
+        running = anime.animate(drawable, { draw: [&#39;0 0&#39;, &#39;0 1&#39;], duration: 420, delay: k * 120, ease: &#39;inOutQuad&#39; });
+      }
+    });
+    post({ type: &#39;greenhouse:step&#39;, index: i, id: step.id });
+  }
+
+  function go(i) {
+    const n = steps().length; stepIndex = Math.max(0, Math.min(n - 1, i)); applyStep(stepIndex, true); updateReset();
+    const id = steps()[stepIndex]?.id; if (id) history.replaceState(null, &#39;&#39;, `#${id}`);
+  }
+  // Deep link: index.html#share opens on the step with that id.
+  const fromHash = () =&gt; { const i = steps().findIndex(s =&gt; s.id === decodeURIComponent(location.hash.slice(1))); return i &lt; 0 ? 0 : i; };
+  stepIndex = fromHash();
+  addEventListener(&#39;hashchange&#39;, () =&gt; go(fromHash()));
+  $(&#39;prev&#39;).onclick = () =&gt; go(stepIndex - 1);
+  $(&#39;next&#39;).onclick = () =&gt; go(stepIndex + 1);
+  addEventListener(&#39;keydown&#39;, e =&gt; { if (e.target.tagName === &#39;INPUT&#39;) return; if (e.key === &#39;ArrowRight&#39;) go(stepIndex + 1); if (e.key === &#39;ArrowLeft&#39;) go(stepIndex - 1); if (e.key === &#39;f&#39;) $(&#39;fit&#39;).click(); if (e.key === &#39;F&#39;) $(&#39;full&#39;).click(); if (e.key === &#39;Escape&#39; &amp;&amp; expanded) parent.postMessage({ fullscreen: &#39;exit&#39; }, &#39;*&#39;); if (e.key === &#39;r&#39; || e.key === &#39;Home&#39;) reset(); });
+  addEventListener(&#39;resize&#39;, () =&gt; { fitStage(); applyStep(stepIndex, false); });
+
+  // Options: tabs, comparison, decision
+  if (spec.options?.length) {
+    const tabs = $(&#39;tabs&#39;); tabs.hidden = false;
+    tabs.innerHTML = spec.options.map(o =&gt; `&lt;button role=&quot;tab&quot; data-id=&quot;${esc(o.id)}&quot; aria-selected=&quot;${o.id === optionId}&quot;&gt;${esc(o.label)}&lt;/button&gt;`).join(&#39;&#39;);
+    tabs.onclick = e =&gt; { const b = e.target.closest(&#39;button&#39;); if (!b) return; optionId = b.dataset.id; stepIndex = 0; [...tabs.children].forEach(t =&gt; t.setAttribute(&#39;aria-selected&#39;, t === b)); mount(); updateReset(); };
+
+    // The comparison rows are the questions that matter for this decision: `spec.axes` = [{ key, label }], `option.axes[key]` = a short answer.
+    // Without `spec.axes`, the code-change defaults apply.
+    const axes = spec.axes
+      ? spec.axes.map(a =&gt; [esc(a.label), o =&gt; esc(o.axes?.[a.key] ?? &#39;&#39;)])
+      : [[&#39;Call sites touched&#39;, o =&gt; o.axes?.callSites ? `${o.axes.callSites.count}${o.axes.callSites.list?.length ? &#39; · &#39; + o.axes.callSites.list.map(esc).join(&#39;, &#39;) : &#39;&#39;}` : &#39;&#39;], [&#39;Mechanical vs judgement&#39;, o =&gt; esc(o.axes?.mechanical || &#39;&#39;)], [&#39;Silent behaviour changes&#39;, o =&gt; esc(o.axes?.silent || &#39;&#39;)], [&#39;Invariant at risk&#39;, o =&gt; esc(o.axes?.invariant || &#39;&#39;)]];
+    if (spec.options.some(o =&gt; o.axes)) {
+      $(&#39;compare&#39;).hidden = false;
+      $(&#39;compare&#39;).innerHTML = `&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;&lt;/th&gt;${spec.options.map(o =&gt; `&lt;th&gt;${esc(o.label)}&lt;/th&gt;`).join(&#39;&#39;)}&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;${axes.map(([name, f]) =&gt; `&lt;tr&gt;&lt;td&gt;${name}&lt;/td&gt;${spec.options.map(o =&gt; `&lt;td&gt;${f(o)}&lt;/td&gt;`).join(&#39;&#39;)}&lt;/tr&gt;`).join(&#39;&#39;)}&lt;/tbody&gt;&lt;/table&gt;`;
+    }
+
+    if (spec.kind === &#39;decision-report&#39;) {
+      $(&#39;decide&#39;).hidden = false;
+      renderOptions();
+    }
+  }
+
+  function renderOptions() {
+    $(&#39;options&#39;).innerHTML = spec.options.map(o =&gt; {
+      const tried = o.tried ? `&lt;span class=&quot;tried&quot;&gt;tried · ${esc(o.tried.kind)} ${o.tried.ref ? (o.tried.href ? `&lt;a href=&quot;${esc(o.tried.href)}&quot;&gt;${esc(o.tried.ref)}&lt;/a&gt;` : esc(o.tried.ref)) : &#39;&#39;}${o.tried.summary ? &#39; · &#39; + esc(o.tried.summary) : &#39;&#39;}&lt;/span&gt;` : `&lt;span class=&quot;tried no&quot;&gt;not explored yet · cannot be chosen&lt;/span&gt;`;
+      const chosen = decision?.optionId === o.id;
+      return `&lt;div class=&quot;option ${chosen ? &#39;chosen&#39; : &#39;&#39;}&quot; data-id=&quot;${esc(o.id)}&quot;&gt;&lt;h3&gt;${esc(o.label)}&lt;/h3&gt;&lt;p&gt;${esc(o.summary || &#39;&#39;)}&lt;/p&gt;${tried}&lt;button ${(!o.tried || decision) ? &#39;disabled&#39; : &#39;&#39;} data-choose=&quot;${esc(o.id)}&quot;&gt;${chosen ? &#39;Chosen&#39; : &#39;Choose&#39;}&lt;/button&gt;&lt;/div&gt;`;
+    }).join(&#39;&#39;);
+    if (decision) { $(&#39;lock&#39;).hidden = false; $(&#39;lock&#39;).textContent = `Decided by ${decision.by?.name || &#39;unknown&#39;} · ${fmt(decision.at)} · ${spec.options.find(o =&gt; o.id === decision.optionId)?.label || decision.optionId}`; }
+  }
+  let pending = null;
+  $(&#39;options&#39;).onclick = e =&gt; {
+    const b = e.target.closest(&#39;button[data-choose]&#39;); if (!b || b.disabled) return;
+    pending = b.dataset.choose;
+    if (participant) return commit();
+    $(&#39;who&#39;).style.display = &#39;flex&#39;; $(&#39;whoName&#39;).focus();
+  };
+  $(&#39;whoOk&#39;).onclick = () =&gt; { const n = $(&#39;whoName&#39;).value.trim(); if (!n) return; participant = { id: null, name: n, kind: &#39;person&#39; }; $(&#39;who&#39;).style.display = &#39;none&#39;; commit(); };
+  function commit() {
+    const o = spec.options.find(x =&gt; x.id === pending); if (!o) return;
+    decision = { optionId: o.id, label: o.label, by: participant, at: new Date().toISOString(), tried: o.tried ? { kind: o.tried.kind, ref: o.tried.ref } : null };
+    post({ type: &#39;greenhouse:decision&#39;, ...decision });
+    renderOptions();
+    $(&#39;status&#39;).textContent = host ? &#39;recorded in plan&#39; : &#39;recorded locally (no host)&#39;;
+  }
+
+  // State-explorer proposals
+  if (spec.proposals) {
+    $(&#39;propose&#39;).hidden = false;
+    $(&#39;pSend&#39;).onclick = () =&gt; { const m = { type: &#39;greenhouse:proposal&#39;, from: $(&#39;pFrom&#39;).value.trim(), to: $(&#39;pTo&#39;).value.trim(), command: $(&#39;pCmd&#39;).value.trim() }; if (!m.from || !m.to || !m.command) return; post(m); $(&#39;pSend&#39;).textContent = &#39;Proposed&#39;; setTimeout(() =&gt; $(&#39;pSend&#39;).textContent = &#39;Propose&#39;, 1500); };
+  }
+
+  // Host protocol
+  addEventListener(&#39;message&#39;, e =&gt; {
+    const m = e.data; if (!m || m.type !== &#39;greenhouse:init&#39;) return;
+    host = m; participant = m.participant || null;
+    if (m.theme) for (const [k, v] of Object.entries(m.theme)) document.documentElement.style.setProperty(k, v);
+    if (m.decision) { decision = m.decision; if (spec.options) renderOptions(); }
+    $(&#39;status&#39;).textContent = `in plan · ${participant?.name || &#39;anonymous&#39;}`;
+  });
+  post({ type: &#39;greenhouse:ready&#39;, kind: spec.kind, question: spec.question });
+  if (embedded) new ResizeObserver(() =&gt; parent.postMessage({ frameHeight: Math.ceil(document.body.getBoundingClientRect().height) }, &#39;*&#39;)).observe(document.body);
+
+  function esc(s) { return String(s).replace(/[&amp;&lt;&gt;&quot;&#39;]/g, c =&gt; ({ &#39;&amp;&#39;: &#39;&amp;amp;&#39;, &#39;&lt;&#39;: &#39;&amp;lt;&#39;, &#39;&gt;&#39;: &#39;&amp;gt;&#39;, &#39;&quot;&#39;: &#39;&amp;quot;&#39;, &quot;&#39;&quot;: &#39;&amp;#39;&#39; }[c])); }
+  // A plain date stays a plain date; only a full timestamp gets a time, so a date never turns into a timezone artifact.
+  function fmt(iso) { if (/^\d{4}-\d{2}-\d{2}$/.test(String(iso))) return iso; try { return new Date(iso).toLocaleString(undefined, { dateStyle: &#39;medium&#39;, timeStyle: &#39;short&#39; }); } catch { return iso; } }
+
+  mount();
+})();
+&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+"></iframe></details>
+  </article></section>
+  <section id="design"><h2>Design language</h2><p class="lede-line">The look this plan’s screens use: tokens first, then each component rendered live in every state it can be in.</p><p>Sign-in and sign-up are quiet, single-column pages met once a week. One dark action, refusals in a sentence, the product&#39;s own words.</p>
+
+    <h3>Colour</h3><div class="swatches"><div class="swatch"><span style="background:#e7f3ec"></span><b>bg</b><code>#e7f3ec</code></div><div class="swatch"><span style="background:#173a40"></span><b>fg</b><code>#173a40</code></div><div class="swatch"><span style="background:#416166"></span><b>muted</b><code>#416166</code></div><div class="swatch"><span style="background:rgba(23, 58, 64, 0.14)"></span><b>line</b><code>rgba(23, 58, 64, 0.14)</code></div><div class="swatch"><span style="background:#f3faf5"></span><b>surface</b><code>#f3faf5</code></div><div class="swatch"><span style="background:#328f97"></span><b>accent</b><code>#328f97</code></div><div class="swatch"><span style="background:#2f6a4a"></span><b>ok</b><code>#2f6a4a</code></div><div class="swatch"><span style="background:#b91c1c"></span><b>warn</b><code>#b91c1c</code></div></div>
+    <h3>Type</h3><div class="type"><div class="type-row"><span class="type-meta">title · 24/1.2 · 600</span><span style="font-family:Manrope, ui-sans-serif, system-ui, sans-serif;font-size:24px;font-weight:600;line-height:1.2">Sign up for Greenhouse</span></div><div class="type-row"><span class="type-meta">body · 14/1.5 · 400</span><span style="font-family:Manrope, ui-sans-serif, system-ui, sans-serif;font-size:14px;font-weight:400;line-height:1.5">A planning room for people and an agent.</span></div></div>
+    <h3>Space</h3><div class="space"><div class="space-row"><span class="bar" style="width:8px"></span><code>4px</code></div><div class="space-row"><span class="bar" style="width:16px"></span><code>8px</code></div><div class="space-row"><span class="bar" style="width:24px"></span><code>12px</code></div><div class="space-row"><span class="bar" style="width:32px"></span><code>16px</code></div><div class="space-row"><span class="bar" style="width:48px"></span><code>24px</code></div><div class="space-row"><span class="bar" style="width:64px"></span><code>32px</code></div></div>
+    <h3>Radius</h3><div class="radii"><div class="radius"><span style="border-radius:4px"></span><code>md 4</code></div><div class="radius"><span style="border-radius:10px"></span><code>lg 10</code></div></div>
+    
+  </section>
+  <section class="phase" id="engine">
+    <header class="phase-head"><h2><span class="phase-num">Phase 1</span> Engine: event store, one Sql port, stories</h2><span class="pill pill-not-started">not started · 0/4</span></header>
+    <p><code>packages/engine</code> appends against an expected version, writes projections in the same transaction, and runs unchanged on bun:sqlite, a Durable Object, D1 and Postgres.</p>
+
+    
+    <h3>Changes</h3><p class="lede-line">Each file this phase touches and what must be true of it afterwards. Code appears only as a contract other code depends on.</p><ul class="changes"><li class="change"><code class="file">packages/engine/src/kernel.ts</code><div class="intent">Messages, deciders, <code>defineCommand</code> and <code>defineEvent</code>, rejections, and the given-when-then expect harness.</div><div class="contract"><figure class="codeblock"><figcaption><span class="lang">TypeScript</span></figcaption><pre><code class="lang-ts"><span class="tok-kw">export</span> <span class="tok-kw">type</span> <span class="tok-type">Message</span>&lt;<span class="tok-type">T</span> <span class="tok-kw">extends</span> string = string, <span class="tok-type">D</span> = unknown&gt; = { <span class="tok-kw">type</span>: <span class="tok-type">T</span>; data: <span class="tok-type">D</span> };
+<span class="tok-kw">export</span> <span class="tok-kw">type</span> <span class="tok-type">Ctx</span> = { <span class="tok-fn">newId</span>(): string; <span class="tok-fn">now</span>(): <span class="tok-type">Date</span>; <span class="tok-fn">flag</span>(name: string): boolean };
+<span class="tok-kw">export</span> <span class="tok-kw">interface</span> <span class="tok-type">Decider</span>&lt;<span class="tok-type">State</span>, <span class="tok-type">C</span> <span class="tok-kw">extends</span> <span class="tok-type">Message</span>, <span class="tok-type">E</span> <span class="tok-kw">extends</span> <span class="tok-type">Message</span>&gt; {
+  initial: <span class="tok-type">State</span>;
+  <span class="tok-fn">evolve</span>(state: <span class="tok-type">State</span>, event: <span class="tok-type">E</span>): <span class="tok-type">State</span>;                 <span class="tok-com">// no rules</span>
+  <span class="tok-fn">decide</span>(state: <span class="tok-type">State</span>, command: <span class="tok-type">C</span>, ctx: <span class="tok-type">Ctx</span>): <span class="tok-type">E</span>[] | <span class="tok-type">Rejection</span>; <span class="tok-com">// the only function with rules</span>
+}
+<span class="tok-kw">export</span> <span class="tok-kw">const</span> defineCommand = (<span class="tok-kw">type</span>, fields) =&gt; (data) =&gt; <span class="tok-type">Message</span>;   <span class="tok-com">// Schema-validated at the boundary</span>
+<span class="tok-kw">export</span> <span class="tok-kw">const</span> defineEvent   = (<span class="tok-kw">type</span>, fields) =&gt; (data) =&gt; <span class="tok-type">Message</span>;</code></pre></figure></div></li><li class="change"><code class="file">packages/engine/src/sql.ts</code><div class="intent">The one port every database implements; a unique-key violation becomes a WriteConflict.</div><div class="contract"><figure class="codeblock"><figcaption><span class="lang">TypeScript</span></figcaption><pre><code class="lang-ts"><span class="tok-kw">export</span> <span class="tok-kw">type</span> <span class="tok-type">Statement</span> = { <span class="tok-kw">readonly</span> sql: string; <span class="tok-kw">readonly</span> params: <span class="tok-type">ReadonlyArray</span>&lt;unknown&gt; };
+<span class="tok-kw">export</span> <span class="tok-kw">class</span> <span class="tok-type">WriteConflict</span> <span class="tok-kw">extends</span> <span class="tok-type">Schema</span>.<span class="tok-type">TaggedError</span>&lt;<span class="tok-type">WriteConflict</span>&gt;()(<span class="tok-str">&#39;WriteConflict&#39;</span>, { message: <span class="tok-type">Schema</span>.<span class="tok-type">String</span> }) {}
+<span class="tok-kw">export</span> <span class="tok-kw">class</span> <span class="tok-type">Sql</span> <span class="tok-kw">extends</span> <span class="tok-type">Context</span>.<span class="tok-type">Service</span>&lt;<span class="tok-type">Sql</span>, {
+  <span class="tok-kw">readonly</span> dialect: <span class="tok-str">&#39;sqlite&#39;</span> | <span class="tok-str">&#39;postgres&#39;</span>;
+  query&lt;<span class="tok-type">R</span>&gt;(sql: string, params?: <span class="tok-type">ReadonlyArray</span>&lt;unknown&gt;): <span class="tok-type">Effect</span>.<span class="tok-type">Effect</span>&lt;<span class="tok-type">R</span>[]&gt;;
+  <span class="tok-fn">atomically</span>(statements: <span class="tok-type">ReadonlyArray</span>&lt;<span class="tok-type">Statement</span>&gt;): <span class="tok-type">Effect</span>.<span class="tok-type">Effect</span>&lt;<span class="tok-kw">void</span>, <span class="tok-type">WriteConflict</span>&gt;; <span class="tok-com">// all or none</span>
+}&gt;()(<span class="tok-str">&#39;greenhouse/engine/Sql&#39;</span>) {}</code></pre></figure></div></li><li class="change"><code class="file">packages/engine/src/store.ts</code><div class="intent">One <code>stream_events</code> table, keyed by stream and version; <code>execute</code> retries a conflict three times.</div><div class="contract"><figure class="codeblock"><figcaption><span class="lang">TypeScript</span></figcaption><pre><code class="lang-ts"><span class="tok-kw">export</span> <span class="tok-kw">type</span> <span class="tok-type">Projection</span> = { name: string; tables: <span class="tok-type">ReadonlyArray</span>&lt;string&gt;; <span class="tok-fn">on</span>(event: <span class="tok-type">Recorded</span>): <span class="tok-type">ReadonlyArray</span>&lt;<span class="tok-type">Statement</span>&gt; };
+<span class="tok-kw">class</span> <span class="tok-type">EventStore</span> <span class="tok-kw">extends</span> <span class="tok-type">Context</span>.<span class="tok-type">Service</span>&lt;<span class="tok-type">EventStore</span>, {
+  <span class="tok-fn">setup</span>(): <span class="tok-type">Effect</span>&lt;<span class="tok-kw">void</span>&gt;;
+  <span class="tok-fn">read</span>(stream: string): <span class="tok-type">Effect</span>&lt;<span class="tok-type">Recorded</span>[]&gt;;
+  <span class="tok-fn">append</span>(stream, expected: number, events, meta: { by; at }): <span class="tok-type">Effect</span>&lt;<span class="tok-type">Recorded</span>[], <span class="tok-type">WriteConflict</span>&gt;;
+  <span class="tok-fn">execute</span>(decider, stream, command, ctx, by): <span class="tok-type">Effect</span>&lt;<span class="tok-type">Recorded</span>[] | <span class="tok-type">Rejection</span>, <span class="tok-type">WriteConflict</span>&gt;; <span class="tok-com">// read, decide, append</span>
+}&gt; { <span class="tok-kw">static</span> <span class="tok-fn">layer</span>(projections: <span class="tok-type">ReadonlyArray</span>&lt;<span class="tok-type">Projection</span>&gt;): <span class="tok-type">Layer</span>&lt;<span class="tok-type">EventStore</span>, never, <span class="tok-type">Sql</span>&gt; }</code></pre></figure></div></li><li class="change"><code class="file">packages/engine/src/adapters/</code><div class="intent"><code>bunSqlite</code>, <code>durableObject</code>, <code>d1</code> (one atomic batch) and <code>postgres</code> layers for the Sql port.</div></li><li class="change"><code class="file">packages/engine/src/story.ts</code><div class="intent"><code>story(layer, dir)</code> runs steps on real SQL; each <code>then</code> lists exactly what that step appended.</div></li><li class="change"><code class="file">packages/engine/test/store.test.ts</code><div class="intent">On bun:sqlite and PGlite: same-write projections, stale appends conflict, failed projections roll back.</div></li></ul>
+    
+    <h3>Done when</h3><p class="lede-line">The phase is done when every box is ticked. Automated checks are commands; by-hand checks are things a person confirms by looking.</p>
+    <div class="verify"><div><h4>Automated</h4><ul class="checks"><li class="check "><input type="checkbox" disabled  aria-label="not done"><span><code>bun test packages/engine</code></span></li><li class="check "><input type="checkbox" disabled  aria-label="not done"><span><code>just lint</code></span></li><li class="check "><input type="checkbox" disabled  aria-label="not done"><span><code>just arch-check</code></span></li></ul></div>
+    <div><h4>By hand</h4><ul class="checks"><li class="check "><input type="checkbox" disabled  aria-label="not done"><span>Read the example at the top of <code>story.ts</code>; it reads as what happened.</span></li></ul></div></div>
+    
+  </section><section class="phase" id="accounts">
+    <header class="phase-head"><h2><span class="phase-num">Phase 2</span> Account context: sign up, sign in, sign out</h2><span class="pill pill-not-started">not started · 0/3</span></header>
+    <p>The account decider turns the four commands into AccountOpened, SignedIn and SignedOut. Both stories pass and read as prose.</p>
+
+    <iframe class="viz" title="How does an account move from nothing to signed in and out?" allow="fullscreen" allowfullscreen srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+&lt;meta charset=&quot;utf-8&quot;&gt;
+&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+&lt;title&gt;How does an account move from nothing to signed in and out?&lt;/title&gt;
+&lt;script src=&quot;https://cdn.jsdelivr.net/npm/pele@1.12.0/dist/pele.global.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;https://cdnjs.cloudflare.com/ajax/libs/animejs/4.5.0/anime.umd.min.js&quot;&gt;&lt;/script&gt;
+&lt;style&gt;
+  :root {
+    --bg: #fffcf0; --fg: #100f0f; --muted: #6f6e69; --line: #cecdc3; --surface: #f2f0e5;
+    --surface-alt: #e6e4d9; --accent: #205ea6; --accent-ink: #ffffff; --ok: #66800b; --warn: #ad8301;
+    --font: ui-sans-serif, system-ui, -apple-system, &quot;Inter&quot;, sans-serif;
+    --mono: ui-monospace, &quot;JetBrains Mono&quot;, &quot;SF Mono&quot;, Menlo, monospace;
+    --radius: 6px; --gutter: 16px;
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1); --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme=&quot;light&quot;]) {
+      --bg: #100f0f; --fg: #cecdc3; --muted: #878580; --line: #403e3c; --surface: #1c1b1a;
+      --surface-alt: #282726; --accent: #4385be; --accent-ink: #100f0f; --ok: #879a39; --warn: #d0a215;
+    }
+  }
+  :root[data-theme=&quot;dark&quot;] {
+    --bg: #100f0f; --fg: #cecdc3; --muted: #878580; --line: #403e3c; --surface: #1c1b1a;
+    --surface-alt: #282726; --accent: #4385be; --accent-ink: #100f0f; --ok: #879a39; --warn: #d0a215;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 var(--font); }
+  body { min-height: 100vh; display: flex; flex-direction: column; }
+  header, main, footer { padding: 0 var(--gutter); max-width: 1480px; width: 100%; margin: 0 auto; }
+  header { padding-top: 32px; padding-bottom: 4px; }
+  h1 { margin: 0; font-size: clamp(24px, 2.6vw, 34px); line-height: 1.15; letter-spacing: -.02em; font-weight: 650; text-wrap: balance; max-width: 30ch; }
+  .byline { margin: 10px 0 0; font-size: 13.5px; color: var(--muted); display: flex; gap: 14px; flex-wrap: wrap; }
+  .byline b { color: var(--fg); font-weight: 550; }
+  ::selection { background: color-mix(in oklab, var(--accent) 28%, transparent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+  * { scrollbar-color: var(--line) transparent; scrollbar-width: thin; }
+  .tabs { display: flex; gap: 6px; margin: 18px 0 0; flex-wrap: wrap; }
+  .tabs button { font: inherit; font-size: 14px; padding: 6px 12px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 999px; cursor: pointer; }
+  .tabs button[aria-selected=&quot;true&quot;] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  main { display: grid; grid-template-columns: 1fr; gap: 18px; padding-top: 20px; padding-bottom: 28px; flex: 1; align-content: start; }
+  .stage { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; height: min(62vh, 760px); min-height: 340px; overflow: hidden; transition: height .24s var(--ease-out); }
+  .stage-controls { position: absolute; right: 10px; top: 10px; display: flex; gap: 6px; }
+  .stage-controls button { font: inherit; font-size: 12.5px; padding: 5px 10px; border: 1px solid var(--line); background: var(--bg); color: var(--muted); border-radius: 999px; cursor: pointer; transition: color .15s ease, border-color .15s ease; }
+  @media (hover: hover) and (pointer: fine) { .stage-controls button:hover { color: var(--fg); } }
+  .stage-controls button[aria-pressed=&quot;true&quot;] { color: var(--fg); border-color: var(--fg); }
+  .stage-controls button:disabled { opacity: .4; cursor: default; }
+  #diagram { width: 100%; height: 100%; }
+  #diagram svg { width: 100%; height: 100%; display: block; }
+  .rail { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px 40px; align-items: start; }
+  @media (max-width: 760px) { .rail { grid-template-columns: 1fr; } }
+  .rail-text { max-width: 64ch; }
+  .pele { --pele-bg: transparent; --pele-fg: var(--fg); --pele-muted: var(--muted); --pele-line: var(--fg);
+          --pele-surface: var(--bg); --pele-surface-alt: var(--surface-alt); --pele-border: var(--line);
+          --pele-accent: var(--accent); --pele-font: var(--font); --pele-font-mono: var(--mono); --pele-radius: 4px; }
+  .pele-node, .pele-cluster, .pele-edge, .pele-edge-label { transition: opacity .18s var(--ease-out); }
+  .pele-node.is-focus &gt; :is(rect, path, polygon, ellipse, circle) { stroke: var(--accent); stroke-width: 2.25px; }
+  .pele-cluster.is-focus &gt; rect { stroke: var(--accent); stroke-width: 1.75px; }
+  .pele-edge.is-focus path { stroke: var(--accent); stroke-width: 2px; }
+  .pele-edge.is-focus .pele-marker, .pele-edge.is-focus marker path { fill: var(--accent); stroke: var(--accent); }
+  .step-label { font-size: 12.5px; color: var(--muted); margin: 0 0 6px; font-variant-numeric: tabular-nums; }
+  .caption { margin: 0; font-size: clamp(18px, 1.6vw, 22px); line-height: 1.35; font-weight: 500; text-wrap: pretty; }
+  .evidence { list-style: none; margin: 10px 0 0; padding: 0; font: 13px/1.7 var(--mono); color: var(--muted); }
+  .evidence li::before { content: &quot;› &quot;; }
+  .controls { display: flex; align-items: center; gap: 10px; padding-top: 4px; }
+  .controls button { font: inherit; font-size: 14px; width: 40px; height: 36px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: var(--radius); cursor: pointer; transition: background-color .15s ease, border-color .15s ease; }
+  @media (hover: hover) and (pointer: fine) { .controls button:not(:disabled):hover { border-color: var(--fg); } }
+  .controls button:disabled { opacity: .4; cursor: default; }
+  .dots { display: flex; gap: 6px; padding: 0 6px; }
+  .dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--line); display: block; }
+  .dots i.on { background: var(--fg); }
+  .compare { }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-top: 1px solid var(--line); }
+  th { font-weight: 600; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  td:first-child { color: var(--muted); white-space: nowrap; }
+  .decide { border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; background: var(--surface); }
+  .decide h2 { margin: 0 0 10px; font-size: 14px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 600; }
+  .options { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+  .option { border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; background: var(--bg); display: flex; flex-direction: column; gap: 8px; }
+  .option h3 { margin: 0; font-size: 16px; font-weight: 600; }
+  .option p { margin: 0; font-size: 14px; color: var(--muted); }
+  .option .tried { font: 12.5px/1.5 var(--mono); }
+  .option .tried a { color: var(--accent); }
+  .option .tried.no { color: var(--warn); }
+  .option button { align-self: flex-start; font: inherit; font-size: 14px; padding: 7px 14px; border: 0; border-radius: var(--radius); background: var(--accent); color: var(--accent-ink); cursor: pointer; margin-top: 4px; }
+  .option button:disabled { background: var(--surface-alt); color: var(--muted); cursor: not-allowed; }
+  .option.chosen { border-color: var(--ok); }
+  .who { display: none; gap: 8px; align-items: center; margin-top: 12px; font-size: 14px; }
+  .who input { font: inherit; padding: 6px 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); color: var(--fg); }
+  .lock { margin: 12px 0 0; font-size: 14px; color: var(--ok); }
+  .propose { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 14px; color: var(--muted); }
+  .propose input { font: inherit; font-size: 14px; padding: 6px 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--fg); width: 150px; }
+  .propose button { font: inherit; font-size: 14px; padding: 7px 12px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: var(--radius); cursor: pointer; }
+  footer { padding-bottom: 20px; font-size: 12.5px; color: var(--muted); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  [hidden] { display: none !important; }
+  .embedded body { min-height: 0; }
+  .is-full body { min-height: 100vh; }
+  .is-full header, .is-full main, .is-full footer { max-width: none; }
+  .embedded header { padding-top: 22px; }
+&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;header&gt;
+  &lt;h1 id=&quot;question&quot;&gt;&lt;/h1&gt;
+  &lt;p class=&quot;byline&quot;&gt;&lt;span id=&quot;kind&quot;&gt;&lt;/span&gt;&lt;span&gt;built by &lt;b id=&quot;by&quot;&gt;&lt;/b&gt;&lt;/span&gt;&lt;span id=&quot;at&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+  &lt;nav class=&quot;tabs&quot; id=&quot;tabs&quot; role=&quot;tablist&quot; hidden&gt;&lt;/nav&gt;
+&lt;/header&gt;
+&lt;main&gt;
+  &lt;section class=&quot;stage&quot;&gt;&lt;div id=&quot;diagram&quot;&gt;&lt;/div&gt;&lt;div class=&quot;stage-controls&quot;&gt;&lt;button id=&quot;reset&quot; title=&quot;r&quot; aria-label=&quot;Reset to the first step&quot;&gt;reset&lt;/button&gt;&lt;button id=&quot;fit&quot; aria-pressed=&quot;false&quot; title=&quot;f&quot;&gt;fit all&lt;/button&gt;&lt;button id=&quot;full&quot; aria-pressed=&quot;false&quot; title=&quot;Shift+F&quot;&gt;full screen&lt;/button&gt;&lt;/div&gt;&lt;/section&gt;
+  &lt;section class=&quot;rail&quot;&gt;
+    &lt;div class=&quot;rail-text&quot;&gt;
+      &lt;p class=&quot;step-label&quot; id=&quot;stepLabel&quot;&gt;&lt;/p&gt;
+      &lt;p class=&quot;caption&quot; id=&quot;caption&quot;&gt;&lt;/p&gt;
+      &lt;ul class=&quot;evidence&quot; id=&quot;evidence&quot;&gt;&lt;/ul&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;controls&quot;&gt;
+      &lt;button id=&quot;prev&quot; aria-label=&quot;Previous step&quot;&gt;←&lt;/button&gt;
+      &lt;div class=&quot;dots&quot; id=&quot;dots&quot;&gt;&lt;/div&gt;
+      &lt;button id=&quot;next&quot; aria-label=&quot;Next step&quot;&gt;→&lt;/button&gt;
+    &lt;/div&gt;
+  &lt;/section&gt;
+  &lt;section class=&quot;compare&quot; id=&quot;compare&quot; hidden&gt;&lt;/section&gt;
+  &lt;section class=&quot;decide&quot; id=&quot;decide&quot; hidden&gt;
+    &lt;h2&gt;Decision&lt;/h2&gt;
+    &lt;div class=&quot;options&quot; id=&quot;options&quot;&gt;&lt;/div&gt;
+    &lt;div class=&quot;who&quot; id=&quot;who&quot;&gt;&lt;span&gt;Recorded as&lt;/span&gt;&lt;input id=&quot;whoName&quot; placeholder=&quot;your name&quot;&gt;&lt;button id=&quot;whoOk&quot;&gt;Confirm&lt;/button&gt;&lt;/div&gt;
+    &lt;p class=&quot;lock&quot; id=&quot;lock&quot; hidden&gt;&lt;/p&gt;
+  &lt;/section&gt;
+  &lt;section class=&quot;propose&quot; id=&quot;propose&quot; hidden&gt;
+    &lt;span&gt;Missing a transition?&lt;/span&gt;
+    &lt;input id=&quot;pFrom&quot; placeholder=&quot;from state&quot;&gt;&lt;input id=&quot;pTo&quot; placeholder=&quot;to state&quot;&gt;&lt;input id=&quot;pCmd&quot; placeholder=&quot;Command name&quot;&gt;
+    &lt;button id=&quot;pSend&quot;&gt;Propose&lt;/button&gt;
+  &lt;/section&gt;
+&lt;/main&gt;
+&lt;footer&gt;&lt;span id=&quot;hint&quot;&gt;← → to step · f to fit all · ⇧F full screen · r to reset&lt;/span&gt;&lt;span id=&quot;status&quot;&gt;standalone&lt;/span&gt;&lt;/footer&gt;
+
+&lt;script type=&quot;application/json&quot; id=&quot;spec&quot;&gt;
+{&quot;kind&quot;:&quot;state-explorer&quot;,&quot;question&quot;:&quot;How does an account move from nothing to signed in and out?&quot;,&quot;meta&quot;:{&quot;builtBy&quot;:&quot;create-plan&quot;,&quot;builtAt&quot;:&quot;2026-10-28&quot;,&quot;source&quot;:&quot;packages/domain/src/account/decider.ts&quot;},&quot;diagram&quot;:&quot;stateDiagram-v2\n  [*] --&gt; Open: SignUp\n  [*] --&gt; Open: OpenAccount\n  Open --&gt; Open: SignIn\n  Open --&gt; Open: SignOut\n  note right of Open: AccountOpened, SignedIn, SignedOut&quot;,&quot;steps&quot;:[{&quot;id&quot;:&quot;signup&quot;,&quot;caption&quot;:&quot;SignUp opens the account and records AccountOpened, never as an admin.&quot;,&quot;focus&quot;:[&quot;Open&quot;],&quot;edges&quot;:[&quot;edge0&quot;]},{&quot;id&quot;:&quot;open&quot;,&quot;caption&quot;:&quot;OpenAccount does the same for seeds and `just user-add`, and may set admin.&quot;,&quot;focus&quot;:[&quot;Open&quot;],&quot;edges&quot;:[&quot;edge1&quot;]},{&quot;id&quot;:&quot;signin&quot;,&quot;caption&quot;:&quot;SignIn with a matching password records SignedIn for one device.&quot;,&quot;focus&quot;:[&quot;Open&quot;],&quot;edges&quot;:[&quot;edge2&quot;]},{&quot;id&quot;:&quot;signout&quot;,&quot;caption&quot;:&quot;SignOut ends that device only; a second sign-out records nothing.&quot;,&quot;focus&quot;:[&quot;Open&quot;],&quot;edges&quot;:[&quot;edge3&quot;]}]}
+&lt;/script&gt;
+
+&lt;script&gt;
+(() =&gt; {
+  const spec = JSON.parse(document.getElementById(&#39;spec&#39;).textContent);
+  // Embedded in a plan or a doc: size against a fixed reference instead of the frame (which grows to fit us), and report our height.
+  const embedded = window.parent !== window;
+  if (embedded) document.documentElement.classList.add(&#39;embedded&#39;);
+  // Full means real full screen, or the host page expanding our frame to the window when the browser refuses full screen.
+  let expanded = false;
+  const isFull = () =&gt; !!document.fullscreenElement || expanded;
+  const viewH = () =&gt; embedded &amp;&amp; !isFull() ? 760 : innerHeight;
+  const $ = id =&gt; document.getElementById(id);
+  const reduced = matchMedia(&#39;(prefers-reduced-motion: reduce)&#39;).matches;
+  const D = reduced ? 0 : 1;
+  const KIND = { &#39;architecture-map&#39;: &#39;Architecture map&#39;, &#39;state-explorer&#39;: &#39;State explorer&#39;, &#39;event-stream&#39;: &#39;Event stream&#39;, &#39;decision-report&#39;: &#39;Decision report&#39;, &#39;trace-view&#39;: &#39;Trace view&#39; };
+
+  let host = null, participant = null, decision = spec.decision || null;
+  let optionId = spec.options?.[0]?.id ?? null;
+  let stepIndex = 0, mounted = null, svg = null, running = null, camera = null, fitAll = false, full = null;
+
+  const post = msg =&gt; { const m = { ...msg, artifactId: host?.artifactId, blockId: host?.blockId, planId: host?.planId }; if (host &amp;&amp; window.parent !== window) window.parent.postMessage(m, &#39;*&#39;); else console.log(&#39;[viz-explainer]&#39;, m); };
+
+  document.title = spec.question;
+  $(&#39;question&#39;).textContent = spec.question;
+  $(&#39;kind&#39;).textContent = KIND[spec.kind] || spec.kind;
+  $(&#39;by&#39;).textContent = spec.meta?.builtBy || &#39;agent&#39;;
+  $(&#39;at&#39;).textContent = spec.meta?.builtAt || &#39;&#39;;
+
+  const steps = () =&gt; (spec.steps || []).filter(s =&gt; !s.option || s.option === optionId);
+  const diagramText = () =&gt; spec.options ? spec.options.find(o =&gt; o.id === optionId)?.diagram : spec.diagram;
+
+  function mount() {
+    const el = $(&#39;diagram&#39;);
+    mounted?.destroy();
+    el.innerHTML = &#39;&#39;;
+    mounted = pele.mount(el, diagramText(), {
+      idPrefix: (optionId || &#39;d&#39;) + &#39;-&#39;,
+      zoom: false,
+      responsive: false,
+      fontSize: 17,
+      padding: 24,
+      onRender: (r) =&gt; {
+        svg = el.querySelector(&#39;svg&#39;);
+        // The page owns the viewBox from here: Pele lays out at natural size, the camera decides what is on screen.
+        full = [0, 0, r.width, r.height];
+        svg.removeAttribute(&#39;width&#39;); svg.removeAttribute(&#39;height&#39;);
+        svg.setAttribute(&#39;preserveAspectRatio&#39;, &#39;xMidYMid meet&#39;);
+        Object.assign(view, { x: 0, y: 0, w: r.width, h: r.height }); writeView();
+        fitStage();
+        $(&#39;fit&#39;).hidden = fitsWhole();
+        applyStep(stepIndex, false);
+        updateReset();
+      },
+      onError: e =&gt; console.error(&#39;[viz-explainer] diagram error&#39;, e),
+    });
+  }
+
+  function clearFocus() { svg?.querySelectorAll(&#39;.is-focus&#39;).forEach(n =&gt; n.classList.remove(&#39;is-focus&#39;)); }
+
+  // Camera: the union of the focused elements&#39; boxes, in SVG units, with room around it. Never zoom past 1:1 by much,
+  // never tighter than a third of the map, so a single small node does not become a wall of text.
+  function boxOf(elements) {
+    const m = svg.getScreenCTM()?.inverse(); if (!m || !elements.length) return null;
+    let x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity;
+    for (const el of elements) {
+      const r = el.getBoundingClientRect();
+      for (const [cx, cy] of [[r.left, r.top], [r.right, r.bottom]]) { const p = new DOMPoint(cx, cy).matrixTransform(m); x1 = Math.min(x1, p.x); y1 = Math.min(y1, p.y); x2 = Math.max(x2, p.x); y2 = Math.max(y2, p.y); }
+    }
+    const stage = $(&#39;diagram&#39;).getBoundingClientRect(); const aspect = stage.width / Math.max(1, stage.height);
+    const pad = 64; let w = x2 - x1 + pad * 2, h = y2 - y1 + pad * 2;
+    // Never zoom past 1.1:1, so labels stay readable instead of billboard-sized.
+    const minW = Math.min(full[2], stage.width / 1.1);
+    if (w &lt; minW) w = minW;
+    if (h &lt; w / aspect) h = w / aspect; else w = h * aspect;
+    const cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
+    // Keep the frame inside the map: a node at the edge shows its neighbours, not empty stage.
+    const clamp = (v, size, total) =&gt; size &gt;= total ? (total - size) / 2 : Math.min(Math.max(v, 0), total - size);
+    const box = [clamp(cx - w / 2, w, full[2]), clamp(cy - h / 2, h, full[3]), w, h];
+    box.raw = Math.max(x2 - x1, (y2 - y1) * aspect);
+    return box;
+  }
+  // The stage takes its height from the diagram&#39;s proportions, with headroom for the camera, so a wide map is not letterboxed.
+  function fitStage() {
+    if (!full) return;
+    const stage = document.querySelector(&#39;.stage&#39;);
+    // Full screen: the stage takes every pixel the heading, caption and controls leave.
+    if (isFull()) { const rest = [&#39;header&#39;, &#39;.rail&#39;, &#39;footer&#39;].reduce((n, q) =&gt; n + (document.querySelector(q)?.offsetHeight ?? 0), 0) + 96; stage.style.height = `${Math.max(320, innerHeight - rest)}px`; return; }
+    // A diagram that fits at natural size gets a stage its own height and no camera. A wider one gets most of the viewport.
+    const h = fitsWhole() ? full[3] + 32 : Math.max(viewH() * 0.56, 420, stage.clientWidth * (full[3] / full[2]));
+    stage.style.height = `${Math.round(Math.min(viewH() * 0.64, Math.max(300, h)))}px`;
+  }
+
+  function fitsWhole() { const stage = document.querySelector(&#39;.stage&#39;); return !!full &amp;&amp; full[2] &lt;= stage.clientWidth * 1.05; }
+
+  // Tween a plain object and write the viewBox each frame: anime does not interpolate a four-number attribute string.
+  const view = { x: 0, y: 0, w: 1, h: 1 };
+  const writeView = () =&gt; svg?.setAttribute(&#39;viewBox&#39;, `${view.x} ${view.y} ${view.w} ${view.h}`);
+  function moveCamera(box, animated) {
+    if (!svg || !box) return;
+    camera?.pause?.();
+    const [x, y, w, h] = box;
+    if (!animated || !D) { Object.assign(view, { x, y, w, h }); writeView(); return; }
+    camera = anime.animate(view, { x, y, w, h, duration: 480, ease: &#39;inOutQuart&#39;, onUpdate: writeView });
+  }
+  $(&#39;fit&#39;).onclick = () =&gt; { fitAll = !fitAll; $(&#39;fit&#39;).setAttribute(&#39;aria-pressed&#39;, String(fitAll)); applyStep(stepIndex, true); updateReset(); };
+
+  // Reset the view, not the record: step 1, first option, the step&#39;s own frame. A recorded decision is an event and stays.
+  function reset() {
+    fitAll = false; $(&#39;fit&#39;).setAttribute(&#39;aria-pressed&#39;, &#39;false&#39;);
+    const first = spec.options?.[0]?.id ?? null;
+    if (first &amp;&amp; optionId !== first) {
+      optionId = first; stepIndex = 0;
+      [...$(&#39;tabs&#39;).children].forEach(t =&gt; t.setAttribute(&#39;aria-selected&#39;, String(t.dataset.id === first)));
+      mount();
+    } else go(0);
+    history.replaceState(null, &#39;&#39;, location.pathname + location.search);
+    updateReset();
+  }
+  function updateReset() { $(&#39;reset&#39;).disabled = stepIndex === 0 &amp;&amp; !fitAll &amp;&amp; (!spec.options || optionId === spec.options[0].id); }
+  $(&#39;reset&#39;).onclick = reset;
+
+  // Full screen the whole artifact, not just the drawing, so the caption and step controls stay with it.
+  if (!document.fullscreenEnabled &amp;&amp; !embedded) $(&#39;full&#39;).hidden = true;
+  const onFullChange = () =&gt; {
+    document.documentElement.classList.toggle(&#39;is-full&#39;, isFull());
+    $(&#39;full&#39;).setAttribute(&#39;aria-pressed&#39;, String(isFull()));
+    $(&#39;full&#39;).textContent = isFull() ? &#39;exit full screen&#39; : &#39;full screen&#39;;
+    requestAnimationFrame(() =&gt; { fitStage(); applyStep(stepIndex, false); });
+  };
+  $(&#39;full&#39;).onclick = () =&gt; {
+    if (document.fullscreenElement) return document.exitFullscreen();
+    if (expanded) return parent.postMessage({ fullscreen: &#39;exit&#39; }, &#39;*&#39;);
+    // Some browsers and embeds refuse full screen; then ask the host page to expand our frame instead.
+    document.documentElement.requestFullscreen().catch(() =&gt; { if (embedded) parent.postMessage({ fullscreen: &#39;expand&#39; }, &#39;*&#39;); });
+  };
+  document.addEventListener(&#39;fullscreenchange&#39;, onFullChange);
+  addEventListener(&#39;message&#39;, (e) =&gt; { if (e.data &amp;&amp; typeof e.data.expanded === &#39;boolean&#39;) { expanded = e.data.expanded; onFullChange(); } });
+
+  function applyStep(i, animated) {
+    const list = steps();
+    const step = list[i];
+    $(&#39;stepLabel&#39;).textContent = list.length ? `Step ${i + 1} of ${list.length}` : &#39;&#39;;
+    $(&#39;caption&#39;).textContent = step?.caption || &#39;&#39;;
+    $(&#39;evidence&#39;).innerHTML = (step?.evidence || []).map(e =&gt; `&lt;li&gt;${esc(e)}&lt;/li&gt;`).join(&#39;&#39;);
+    $(&#39;prev&#39;).disabled = i &lt;= 0; $(&#39;next&#39;).disabled = i &gt;= list.length - 1;
+    $(&#39;dots&#39;).innerHTML = list.map((_, k) =&gt; `&lt;i class=&quot;${k === i ? &#39;on&#39; : &#39;&#39;}&quot;&gt;&lt;/i&gt;`).join(&#39;&#39;);
+    if (!svg || !step) return;
+    running?.complete?.();
+    clearFocus();
+    const nodes = svg.querySelectorAll(&#39;.pele-node, .pele-cluster&#39;);
+    const edges = svg.querySelectorAll(&#39;.pele-edge, .pele-edge-label&#39;);
+    const focusIds = step.focus || [], edgeIds = step.edges || [];
+    const on = focusIds.map(id =&gt; svg.querySelector(`.pele-node[data-id=&quot;${id}&quot;], .pele-cluster[data-id=&quot;${id}&quot;]`)).filter(Boolean);
+    const onEdges = edgeIds.map(id =&gt; svg.querySelector(`.pele-edge[data-id=&quot;${id}&quot;]`)).filter(Boolean);
+    // Frame the focus and both ends of every focused edge, so an arrow never points off screen.
+    const ends = edgeIds.flatMap(id =&gt; (/^L_(.+)_(.+)_\d+$/.exec(id) ?? []).slice(1))
+      .map(n =&gt; svg.querySelector(`.pele-node[data-id=&quot;${n}&quot;]`)).filter(Boolean);
+    // Frame what is highlighted. Pull out to an edge&#39;s far end only when that costs little zoom;
+    // otherwise the edge leaves the frame pointing where it goes, and the highlight stays readable.
+    const tight = on.length ? boxOf(on) : null;
+    const wide = boxOf([...on, ...onEdges, ...ends]);
+    const roomy = tight &amp;&amp; wide &amp;&amp; wide.raw &lt;= Math.max(tight.raw * 1.6, ($(&#39;diagram&#39;).clientWidth / 1.1) * 0.9);
+    moveCamera(fitAll || fitsWhole() || !(on.length || onEdges.length) ? full : (tight &amp;&amp; !roomy ? tight : wide), animated);
+    const dim = focusIds.length || edgeIds.length ? 0.3 : 1;
+    const dur = animated ? 180 * D : 0;
+    anime.animate(nodes, { opacity: dim, duration: dur, ease: &#39;outQuad&#39; });
+    anime.animate(edges, { opacity: dim, duration: dur, ease: &#39;outQuad&#39; });
+    anime.animate(on, { opacity: 1, duration: dur, ease: &#39;outQuad&#39; });
+    on.forEach(n =&gt; n.classList.add(&#39;is-focus&#39;));
+    onEdges.forEach((g, k) =&gt; {
+      g.classList.add(&#39;is-focus&#39;);
+      anime.animate(g, { opacity: 1, duration: dur, ease: &#39;outQuad&#39; });
+      const label = svg.querySelector(`.pele-edge-label[data-id=&quot;${g.dataset.id}&quot;]`); if (label) anime.animate(label, { opacity: 1, duration: dur });
+      const path = g.querySelector(&#39;path&#39;);
+      if (path &amp;&amp; animated &amp;&amp; D) {
+        const [drawable] = anime.svg.createDrawable(path);
+        running = anime.animate(drawable, { draw: [&#39;0 0&#39;, &#39;0 1&#39;], duration: 420, delay: k * 120, ease: &#39;inOutQuad&#39; });
+      }
+    });
+    post({ type: &#39;greenhouse:step&#39;, index: i, id: step.id });
+  }
+
+  function go(i) {
+    const n = steps().length; stepIndex = Math.max(0, Math.min(n - 1, i)); applyStep(stepIndex, true); updateReset();
+    const id = steps()[stepIndex]?.id; if (id) history.replaceState(null, &#39;&#39;, `#${id}`);
+  }
+  // Deep link: index.html#share opens on the step with that id.
+  const fromHash = () =&gt; { const i = steps().findIndex(s =&gt; s.id === decodeURIComponent(location.hash.slice(1))); return i &lt; 0 ? 0 : i; };
+  stepIndex = fromHash();
+  addEventListener(&#39;hashchange&#39;, () =&gt; go(fromHash()));
+  $(&#39;prev&#39;).onclick = () =&gt; go(stepIndex - 1);
+  $(&#39;next&#39;).onclick = () =&gt; go(stepIndex + 1);
+  addEventListener(&#39;keydown&#39;, e =&gt; { if (e.target.tagName === &#39;INPUT&#39;) return; if (e.key === &#39;ArrowRight&#39;) go(stepIndex + 1); if (e.key === &#39;ArrowLeft&#39;) go(stepIndex - 1); if (e.key === &#39;f&#39;) $(&#39;fit&#39;).click(); if (e.key === &#39;F&#39;) $(&#39;full&#39;).click(); if (e.key === &#39;Escape&#39; &amp;&amp; expanded) parent.postMessage({ fullscreen: &#39;exit&#39; }, &#39;*&#39;); if (e.key === &#39;r&#39; || e.key === &#39;Home&#39;) reset(); });
+  addEventListener(&#39;resize&#39;, () =&gt; { fitStage(); applyStep(stepIndex, false); });
+
+  // Options: tabs, comparison, decision
+  if (spec.options?.length) {
+    const tabs = $(&#39;tabs&#39;); tabs.hidden = false;
+    tabs.innerHTML = spec.options.map(o =&gt; `&lt;button role=&quot;tab&quot; data-id=&quot;${esc(o.id)}&quot; aria-selected=&quot;${o.id === optionId}&quot;&gt;${esc(o.label)}&lt;/button&gt;`).join(&#39;&#39;);
+    tabs.onclick = e =&gt; { const b = e.target.closest(&#39;button&#39;); if (!b) return; optionId = b.dataset.id; stepIndex = 0; [...tabs.children].forEach(t =&gt; t.setAttribute(&#39;aria-selected&#39;, t === b)); mount(); updateReset(); };
+
+    // The comparison rows are the questions that matter for this decision: `spec.axes` = [{ key, label }], `option.axes[key]` = a short answer.
+    // Without `spec.axes`, the code-change defaults apply.
+    const axes = spec.axes
+      ? spec.axes.map(a =&gt; [esc(a.label), o =&gt; esc(o.axes?.[a.key] ?? &#39;&#39;)])
+      : [[&#39;Call sites touched&#39;, o =&gt; o.axes?.callSites ? `${o.axes.callSites.count}${o.axes.callSites.list?.length ? &#39; · &#39; + o.axes.callSites.list.map(esc).join(&#39;, &#39;) : &#39;&#39;}` : &#39;&#39;], [&#39;Mechanical vs judgement&#39;, o =&gt; esc(o.axes?.mechanical || &#39;&#39;)], [&#39;Silent behaviour changes&#39;, o =&gt; esc(o.axes?.silent || &#39;&#39;)], [&#39;Invariant at risk&#39;, o =&gt; esc(o.axes?.invariant || &#39;&#39;)]];
+    if (spec.options.some(o =&gt; o.axes)) {
+      $(&#39;compare&#39;).hidden = false;
+      $(&#39;compare&#39;).innerHTML = `&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;&lt;/th&gt;${spec.options.map(o =&gt; `&lt;th&gt;${esc(o.label)}&lt;/th&gt;`).join(&#39;&#39;)}&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;${axes.map(([name, f]) =&gt; `&lt;tr&gt;&lt;td&gt;${name}&lt;/td&gt;${spec.options.map(o =&gt; `&lt;td&gt;${f(o)}&lt;/td&gt;`).join(&#39;&#39;)}&lt;/tr&gt;`).join(&#39;&#39;)}&lt;/tbody&gt;&lt;/table&gt;`;
+    }
+
+    if (spec.kind === &#39;decision-report&#39;) {
+      $(&#39;decide&#39;).hidden = false;
+      renderOptions();
+    }
+  }
+
+  function renderOptions() {
+    $(&#39;options&#39;).innerHTML = spec.options.map(o =&gt; {
+      const tried = o.tried ? `&lt;span class=&quot;tried&quot;&gt;tried · ${esc(o.tried.kind)} ${o.tried.ref ? (o.tried.href ? `&lt;a href=&quot;${esc(o.tried.href)}&quot;&gt;${esc(o.tried.ref)}&lt;/a&gt;` : esc(o.tried.ref)) : &#39;&#39;}${o.tried.summary ? &#39; · &#39; + esc(o.tried.summary) : &#39;&#39;}&lt;/span&gt;` : `&lt;span class=&quot;tried no&quot;&gt;not explored yet · cannot be chosen&lt;/span&gt;`;
+      const chosen = decision?.optionId === o.id;
+      return `&lt;div class=&quot;option ${chosen ? &#39;chosen&#39; : &#39;&#39;}&quot; data-id=&quot;${esc(o.id)}&quot;&gt;&lt;h3&gt;${esc(o.label)}&lt;/h3&gt;&lt;p&gt;${esc(o.summary || &#39;&#39;)}&lt;/p&gt;${tried}&lt;button ${(!o.tried || decision) ? &#39;disabled&#39; : &#39;&#39;} data-choose=&quot;${esc(o.id)}&quot;&gt;${chosen ? &#39;Chosen&#39; : &#39;Choose&#39;}&lt;/button&gt;&lt;/div&gt;`;
+    }).join(&#39;&#39;);
+    if (decision) { $(&#39;lock&#39;).hidden = false; $(&#39;lock&#39;).textContent = `Decided by ${decision.by?.name || &#39;unknown&#39;} · ${fmt(decision.at)} · ${spec.options.find(o =&gt; o.id === decision.optionId)?.label || decision.optionId}`; }
+  }
+  let pending = null;
+  $(&#39;options&#39;).onclick = e =&gt; {
+    const b = e.target.closest(&#39;button[data-choose]&#39;); if (!b || b.disabled) return;
+    pending = b.dataset.choose;
+    if (participant) return commit();
+    $(&#39;who&#39;).style.display = &#39;flex&#39;; $(&#39;whoName&#39;).focus();
+  };
+  $(&#39;whoOk&#39;).onclick = () =&gt; { const n = $(&#39;whoName&#39;).value.trim(); if (!n) return; participant = { id: null, name: n, kind: &#39;person&#39; }; $(&#39;who&#39;).style.display = &#39;none&#39;; commit(); };
+  function commit() {
+    const o = spec.options.find(x =&gt; x.id === pending); if (!o) return;
+    decision = { optionId: o.id, label: o.label, by: participant, at: new Date().toISOString(), tried: o.tried ? { kind: o.tried.kind, ref: o.tried.ref } : null };
+    post({ type: &#39;greenhouse:decision&#39;, ...decision });
+    renderOptions();
+    $(&#39;status&#39;).textContent = host ? &#39;recorded in plan&#39; : &#39;recorded locally (no host)&#39;;
+  }
+
+  // State-explorer proposals
+  if (spec.proposals) {
+    $(&#39;propose&#39;).hidden = false;
+    $(&#39;pSend&#39;).onclick = () =&gt; { const m = { type: &#39;greenhouse:proposal&#39;, from: $(&#39;pFrom&#39;).value.trim(), to: $(&#39;pTo&#39;).value.trim(), command: $(&#39;pCmd&#39;).value.trim() }; if (!m.from || !m.to || !m.command) return; post(m); $(&#39;pSend&#39;).textContent = &#39;Proposed&#39;; setTimeout(() =&gt; $(&#39;pSend&#39;).textContent = &#39;Propose&#39;, 1500); };
+  }
+
+  // Host protocol
+  addEventListener(&#39;message&#39;, e =&gt; {
+    const m = e.data; if (!m || m.type !== &#39;greenhouse:init&#39;) return;
+    host = m; participant = m.participant || null;
+    if (m.theme) for (const [k, v] of Object.entries(m.theme)) document.documentElement.style.setProperty(k, v);
+    if (m.decision) { decision = m.decision; if (spec.options) renderOptions(); }
+    $(&#39;status&#39;).textContent = `in plan · ${participant?.name || &#39;anonymous&#39;}`;
+  });
+  post({ type: &#39;greenhouse:ready&#39;, kind: spec.kind, question: spec.question });
+  if (embedded) new ResizeObserver(() =&gt; parent.postMessage({ frameHeight: Math.ceil(document.body.getBoundingClientRect().height) }, &#39;*&#39;)).observe(document.body);
+
+  function esc(s) { return String(s).replace(/[&amp;&lt;&gt;&quot;&#39;]/g, c =&gt; ({ &#39;&amp;&#39;: &#39;&amp;amp;&#39;, &#39;&lt;&#39;: &#39;&amp;lt;&#39;, &#39;&gt;&#39;: &#39;&amp;gt;&#39;, &#39;&quot;&#39;: &#39;&amp;quot;&#39;, &quot;&#39;&quot;: &#39;&amp;#39;&#39; }[c])); }
+  // A plain date stays a plain date; only a full timestamp gets a time, so a date never turns into a timezone artifact.
+  function fmt(iso) { if (/^\d{4}-\d{2}-\d{2}$/.test(String(iso))) return iso; try { return new Date(iso).toLocaleString(undefined, { dateStyle: &#39;medium&#39;, timeStyle: &#39;short&#39; }); } catch { return iso; } }
+
+  mount();
+})();
+&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+"></iframe>
+    <h3>Changes</h3><p class="lede-line">Each file this phase touches and what must be true of it afterwards. Code appears only as a contract other code depends on.</p><ul class="changes"><li class="change"><code class="file">packages/domain/src/account/decider.ts</code><div class="intent">RenameAccount records AccountRenamed; the same name again records nothing.</div><div class="contract"><figure class="codeblock"><figcaption><span class="lang">TypeScript</span></figcaption><pre><code class="lang-ts"><span class="tok-type">SignUp</span>        = <span class="tok-fn">defineCommand</span>(<span class="tok-str">&#39;SignUp&#39;</span>,        { accountId, email, name, passwordHash })
+<span class="tok-type">OpenAccount</span>   = <span class="tok-fn">defineCommand</span>(<span class="tok-str">&#39;OpenAccount&#39;</span>,   { accountId, email, name, admin, passwordHash }) <span class="tok-com">// seeds, just user-add</span>
+<span class="tok-type">SignIn</span>        = <span class="tok-fn">defineCommand</span>(<span class="tok-str">&#39;SignIn&#39;</span>,        { accountId, passwordMatched, tokenHash, expiresAt })
+<span class="tok-type">SignOut</span>       = <span class="tok-fn">defineCommand</span>(<span class="tok-str">&#39;SignOut&#39;</span>,       { accountId, tokenHash })
+<span class="tok-type">AccountOpened</span> = <span class="tok-fn">defineEvent</span>(<span class="tok-str">&#39;AccountOpened&#39;</span>,   { accountId, email, name, admin, passwordHash })
+<span class="tok-type">SignedIn</span>      = <span class="tok-fn">defineEvent</span>(<span class="tok-str">&#39;SignedIn&#39;</span>,        { accountId, tokenHash, expiresAt })
+<span class="tok-type">SignedOut</span>     = <span class="tok-fn">defineEvent</span>(<span class="tok-str">&#39;SignedOut&#39;</span>,       { accountId, tokenHash })
+<span class="tok-kw">type</span> <span class="tok-type">AccountState</span> = { kind: <span class="tok-str">&#39;none&#39;</span> } | { kind: <span class="tok-str">&#39;open&#39;</span>; accountId; passwordHash; signIns: string[] }
+accountStream = (email) =&gt; <span class="tok-str">`account-${email.trim().toLowerCase()}`</span></code></pre></figure></div></li><li class="change"><code class="file">packages/domain/src/account/password.ts</code><div class="intent">PBKDF2-SHA256 with Web Crypto and a constant-time compare; tokens stored only as SHA-256.</div><div class="contract"><figure class="codeblock"><figcaption><span class="lang">TypeScript</span></figcaption><pre><code class="lang-ts"><span class="tok-fn">hashPassword</span>(password: string): <span class="tok-type">Promise</span>&lt;string&gt;;            <span class="tok-com">// pbkdf2$100000$&lt;salt&gt;$&lt;hash&gt;</span>
+<span class="tok-fn">verifyPassword</span>(password: string, stored: string): <span class="tok-type">Promise</span>&lt;boolean&gt;;
+<span class="tok-fn">newToken</span>(): string;  <span class="tok-fn">tokenHash</span>(token: string): <span class="tok-type">Promise</span>&lt;string&gt;;
+<span class="tok-type">DECOY</span>: string;  <span class="tok-com">// verified against when the email is unknown</span></code></pre></figure></div></li><li class="change"><code class="file">packages/domain/src/account/view.ts</code><div class="intent"><code>accountsView</code>: the two tables, written in the same transaction as each event.</div><div class="contract"><figure class="codeblock"><figcaption><span class="lang">SQL</span></figcaption><pre><code class="lang-sql"><span class="tok-kw">CREATE</span> <span class="tok-kw">TABLE</span> <span class="tok-kw">IF</span> <span class="tok-kw">NOT</span> <span class="tok-kw">EXISTS</span> <span class="tok-fn">accounts</span> (account_id <span class="tok-kw">TEXT</span> <span class="tok-kw">PRIMARY</span> <span class="tok-kw">KEY</span>, email <span class="tok-kw">TEXT</span> <span class="tok-kw">NOT</span> <span class="tok-kw">NULL</span> <span class="tok-kw">UNIQUE</span>, name <span class="tok-kw">TEXT</span> <span class="tok-kw">NOT</span> <span class="tok-kw">NULL</span>,
+  admin <span class="tok-kw">INTEGER</span> <span class="tok-kw">NOT</span> <span class="tok-kw">NULL</span> <span class="tok-kw">DEFAULT</span> <span class="tok-num">0</span>, password_hash <span class="tok-kw">TEXT</span> <span class="tok-kw">NOT</span> <span class="tok-kw">NULL</span>, opened_at <span class="tok-kw">TEXT</span> <span class="tok-kw">NOT</span> <span class="tok-kw">NULL</span>);
+<span class="tok-kw">CREATE</span> <span class="tok-kw">TABLE</span> <span class="tok-kw">IF</span> <span class="tok-kw">NOT</span> <span class="tok-kw">EXISTS</span> <span class="tok-fn">sign_ins</span> (token_hash <span class="tok-kw">TEXT</span> <span class="tok-kw">PRIMARY</span> <span class="tok-kw">KEY</span>, account_id <span class="tok-kw">TEXT</span> <span class="tok-kw">NOT</span> <span class="tok-kw">NULL</span>,
+  signed_in_at <span class="tok-kw">TEXT</span> <span class="tok-kw">NOT</span> <span class="tok-kw">NULL</span>, expires_at <span class="tok-kw">TEXT</span> <span class="tok-kw">NOT</span> <span class="tok-kw">NULL</span>);</code></pre></figure></div></li><li class="change"><code class="file">packages/domain/src/account/accounts.ts</code><div class="intent">Sign-up takes a username as the participant id; a taken name is refused.</div><div class="contract"><figure class="codeblock"><figcaption><span class="lang">TypeScript</span></figcaption><pre><code class="lang-ts"><span class="tok-kw">class</span> <span class="tok-type">Accounts</span> <span class="tok-kw">extends</span> <span class="tok-type">Context</span>.<span class="tok-type">Service</span>&lt;<span class="tok-type">Accounts</span>, {
+  <span class="tok-fn">signUp</span>(body: unknown): <span class="tok-type">Effect</span>&lt;<span class="tok-type">Account</span>, <span class="tok-type">SignUpRefused</span>&gt;;        <span class="tok-com">// password of at least 12 characters</span>
+  <span class="tok-fn">open</span>(input: { email; name; password; admin }): <span class="tok-type">Effect</span>&lt;<span class="tok-type">Account</span>, <span class="tok-type">SignUpRefused</span>&gt;;
+  <span class="tok-fn">signIn</span>(body: unknown): <span class="tok-type">Effect</span>&lt;{ token: string; account: <span class="tok-type">Account</span> }, <span class="tok-type">SignInFailed</span>&gt;;  <span class="tok-com">// 30 days</span>
+  <span class="tok-fn">accountFor</span>(token: string): <span class="tok-type">Effect</span>&lt;<span class="tok-type">Account</span> | <span class="tok-kw">undefined</span>&gt;;
+  <span class="tok-fn">signOut</span>(token: string): <span class="tok-type">Effect</span>&lt;<span class="tok-kw">void</span>&gt;;
+}&gt;</code></pre></figure></div></li><li class="change"><code class="file">packages/domain/src/account/account.expect.test.ts</code><div class="intent">Two stories through the real engine on in-memory bun:sqlite, with a fixed clock.</div></li><li class="change"><code class="file">packages/domain/src/account/__expect__/sign-up.snap.txt</code><div class="intent">The sign-up story, every hash printed as •••.</div><div class="contract"><figure class="codeblock"><figcaption><span class="lang">Text</span></figcaption><pre><code class="lang-text">when   Sam signs up as sam@greenhouse.test
+then   AccountOpened      sam by sam email=&quot;sam@greenhouse.test&quot; name=&quot;Sam&quot; admin=false passwordHash=•••
+when   someone signs up again with SAM@greenhouse.test
+then   rejected           an account with this email exists
+when   Ana signs up with a short password
+then   rejected           an email, a name, and a password of at least 12 characters</code></pre></figure></div></li><li class="change"><code class="file">packages/domain/src/account/__expect__/sign-in.snap.txt</code><div class="intent">Wrong password and unknown email read alike; a second sign-out records nothing.</div></li><li class="change"><code class="file">packages/domain/src/account/rename.expect.test.ts</code><div class="intent">Stories: rename the agent, the same name again, no such account.</div></li></ul>
+    
+    <h3>Done when</h3><p class="lede-line">The phase is done when every box is ticked. Automated checks are commands; by-hand checks are things a person confirms by looking.</p>
+    <div class="verify"><div><h4>Automated</h4><ul class="checks"><li class="check "><input type="checkbox" disabled  aria-label="not done"><span><code>just test</code></span></li><li class="check "><input type="checkbox" disabled  aria-label="not done"><span><code>just domain-vocabulary-check</code></span></li></ul></div>
+    <div><h4>By hand</h4><ul class="checks"><li class="check "><input type="checkbox" disabled  aria-label="not done"><span>Read <code>sign-up.snap.txt</code> aloud; it sounds like what happened.</span></li></ul></div></div>
+    
+  </section><section class="phase" id="edge">
+    <header class="phase-head"><h2><span class="phase-num">Phase 3</span> HTTP, seeds and pages: sign up in the browser</h2><span class="pill pill-not-started">not started · 0/6</span></header>
+    <p>The API serves <code>/auth/*</code> by bearer token or HttpOnly cookie; local D1 is migrated and seeded through the engine; the web app signs people in.</p>
+
+    
+    <h3>Changes</h3><p class="lede-line">Each file this phase touches and what must be true of it afterwards. Code appears only as a contract other code depends on.</p><ul class="changes"><li class="change"><code class="file">apps/api/migrations/0002_accounts.sql</code><div class="intent"><code>stream_events</code>, <code>accounts</code> and <code>sign_ins</code>, with the exact DDL the engine and projection declare.</div></li><li class="change"><code class="file">apps/api/test/migrations.test.ts</code><div class="intent">Fails when the migration and the code&#39;s DDL drift apart.</div></li><li class="change"><code class="file">apps/api/src/auth.ts</code><div class="intent">HTTP onto <code>Accounts</code>; sign-up and sign-in limited to 20 a minute per IP.</div><div class="contract"><figure class="codeblock"><figcaption><span class="lang">TypeScript</span></figcaption><pre><code class="lang-ts"><span class="tok-com">// POST /auth/sign-up  { email, name, password }  → 201 { account } | 409 { rejected }</span>
+<span class="tok-com">// POST /auth/sign-in  { email, password }        → 200 { account, token } + gh_session cookie | 401 { rejected }</span>
+<span class="tok-com">// POST /auth/sign-out                            → 200 { ok: true }; ends this sign-in only</span>
+<span class="tok-com">// GET  /auth/me                                  → 200 { account } | 401 { rejected: &#39;not signed in&#39; }</span>
+<span class="tok-kw">export</span> <span class="tok-kw">const</span> tokenOf: (authorization?: string, cookie?: string) =&gt; string | <span class="tok-kw">undefined</span>; <span class="tok-com">// Bearer first</span>
+<span class="tok-kw">export</span> <span class="tok-kw">const</span> requireSignIn: <span class="tok-type">MiddlewareHandler</span>; <span class="tok-com">// 401 without a live sign-in; sets c.var.account</span></code></pre></figure></div></li><li class="change"><code class="file">apps/api/src/index.ts</code><div class="intent">Mount <code>/auth</code>; <code>/readyz</code> reports the account count, or that 0002 is not applied.</div></li><li class="change"><code class="file">packages/db/seed.ts</code><div class="intent">Opens admin, Sam and the agent through the real engine; prints the rows as SQL.</div></li><li class="change"><code class="file">.dev.vars.example</code><div class="intent">Local-only ADMIN_, USER_ and AGENT_ emails and passwords, read by the seed.</div></li><li class="change"><code class="file">scripts/user-add.sh</code><div class="intent">Asks for the password without echoing it, records AccountOpened; <code>GH_REMOTE=1</code> for prod.</div></li><li class="change"><code class="file">justfile</code><div class="intent">Adds <code>seed</code> and <code>user-add</code>; <code>up</code> and <code>reset</code> now seed; <code>test</code> covers engine, domain and api.</div></li><li class="change"><code class="file">apps/web/src/lib/session.ts</code><div class="intent">Server functions for sign-up, sign-in, sign-out and the current account; cookie on the web origin.</div></li><li class="change"><code class="file">apps/web/src/routes/signup.tsx</code><div class="intent">A Username field: how others see you and @mention you.</div></li><li class="change"><code class="file">apps/web/src/routes/login.tsx</code><div class="intent">Email and password; a refusal shows as a sentence, the fields keep their text.</div></li><li class="change"><code class="file">apps/web/src/components/Header.tsx</code><div class="intent">Your name and Sign out, or Sign in and Sign up; rechecks on navigation.</div></li><li class="change"><code class="file">apps/api/wrangler.jsonc</code><div class="intent">ratelimits: AUTH_LIMIT and WRITE_LIMIT, top level and env.demo; account_id pinned.</div></li><li class="change"><code class="file">apps/web/src/lib/next.ts</code><div class="intent">Sign-in and sign-up return to the shared link that brought you.</div></li></ul>
+    <h3>Components</h3><figure class="component-block">
+    <figcaption><b>Sign up</b> · One column, one action. The refusal is the API&#39;s own sentence, in an alert.</figcaption>
+    <div class="states"><div class="state"><div class="state-label"><span>empty</span><button type="button" class="full" aria-label="Show empty full screen">full screen</button></div><iframe class="component" data-frame="c1" sandbox="allow-scripts" style="height:360px" srcdoc="&lt;!doctype html&gt;&lt;html&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;style&gt;:root{--bg: #e7f3ec; --fg: #173a40; --muted: #416166; --line: rgba(23, 58, 64, 0.14); --surface: #f3faf5; --accent: #328f97; --ok: #2f6a4a; --warn: #b91c1c; --radius-md: 4px; --radius-lg: 10px; --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px; --font: Manrope, ui-sans-serif, system-ui, sans-serif; --mono: ui-monospace, SF Mono, Menlo, monospace;} *{box-sizing:border-box} html,body{overflow:hidden} body{margin:0;padding:20px;font:15px/1.5 var(--font, ui-sans-serif, system-ui, sans-serif);background:var(--bg, #fffcf0);color:var(--fg, #100f0f)} main { max-width: 360px; padding: 24px 16px; font-family: var(--font); color: var(--fg); }
+h1 { font-size: 24px; font-weight: 600; margin: 0; }
+.lede { margin: 8px 0 24px; font-size: 14px; color: var(--muted); }
+form { display: flex; flex-direction: column; gap: 12px; }
+label { font-size: 14px; }
+input { display: block; width: 100%; box-sizing: border-box; margin-top: 4px; padding: 8px 12px; font: inherit; border: 1px solid var(--line); border-radius: var(--radius-md); background: #fff; color: var(--fg); }
+button { margin-top: 8px; padding: 8px 12px; font: inherit; border: 0; border-radius: var(--radius-md); background: var(--fg); color: #fff; }
+button[disabled] { opacity: 0.6; }
+.alert { margin: 0; font-size: 14px; color: var(--warn); }
+.alt { margin-top: 24px; font-size: 14px; color: var(--muted); }&lt;/style&gt;&lt;/head&gt;&lt;body&gt;&lt;main&gt;&lt;h1&gt;Sign up for Greenhouse&lt;/h1&gt;&lt;p class=&quot;lede&quot;&gt;A planning room for people and an agent.&lt;/p&gt;&lt;form&gt;&lt;label&gt;Name&lt;input name=&quot;name&quot;&gt;&lt;/label&gt;&lt;label&gt;Email&lt;input name=&quot;email&quot; type=&quot;email&quot;&gt;&lt;/label&gt;&lt;label&gt;Password&lt;input name=&quot;password&quot; type=&quot;password&quot;&gt;&lt;/label&gt;&lt;button type=&quot;button&quot;&gt;Sign up&lt;/button&gt;&lt;/form&gt;&lt;p class=&quot;alt&quot;&gt;Already have an account? &lt;u&gt;Sign in&lt;/u&gt;&lt;/p&gt;&lt;/main&gt;&lt;script&gt;new ResizeObserver(()=&gt;parent.postMessage({frameHeight:Math.ceil(document.body.getBoundingClientRect().height)},&#39;*&#39;)).observe(document.body)&lt;/script&gt;&lt;/body&gt;&lt;/html&gt;"></iframe></div><div class="state"><div class="state-label"><span>busy</span><button type="button" class="full" aria-label="Show busy full screen">full screen</button></div><iframe class="component" data-frame="c2" sandbox="allow-scripts" style="height:360px" srcdoc="&lt;!doctype html&gt;&lt;html&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;style&gt;:root{--bg: #e7f3ec; --fg: #173a40; --muted: #416166; --line: rgba(23, 58, 64, 0.14); --surface: #f3faf5; --accent: #328f97; --ok: #2f6a4a; --warn: #b91c1c; --radius-md: 4px; --radius-lg: 10px; --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px; --font: Manrope, ui-sans-serif, system-ui, sans-serif; --mono: ui-monospace, SF Mono, Menlo, monospace;} *{box-sizing:border-box} html,body{overflow:hidden} body{margin:0;padding:20px;font:15px/1.5 var(--font, ui-sans-serif, system-ui, sans-serif);background:var(--bg, #fffcf0);color:var(--fg, #100f0f)} main { max-width: 360px; padding: 24px 16px; font-family: var(--font); color: var(--fg); }
+h1 { font-size: 24px; font-weight: 600; margin: 0; }
+.lede { margin: 8px 0 24px; font-size: 14px; color: var(--muted); }
+form { display: flex; flex-direction: column; gap: 12px; }
+label { font-size: 14px; }
+input { display: block; width: 100%; box-sizing: border-box; margin-top: 4px; padding: 8px 12px; font: inherit; border: 1px solid var(--line); border-radius: var(--radius-md); background: #fff; color: var(--fg); }
+button { margin-top: 8px; padding: 8px 12px; font: inherit; border: 0; border-radius: var(--radius-md); background: var(--fg); color: #fff; }
+button[disabled] { opacity: 0.6; }
+.alert { margin: 0; font-size: 14px; color: var(--warn); }
+.alt { margin-top: 24px; font-size: 14px; color: var(--muted); }&lt;/style&gt;&lt;/head&gt;&lt;body&gt;&lt;main&gt;&lt;h1&gt;Sign up for Greenhouse&lt;/h1&gt;&lt;p class=&quot;lede&quot;&gt;A planning room for people and an agent.&lt;/p&gt;&lt;form&gt;&lt;label&gt;Name&lt;input name=&quot;name&quot; value=&quot;Ana&quot;&gt;&lt;/label&gt;&lt;label&gt;Email&lt;input name=&quot;email&quot; type=&quot;email&quot; value=&quot;ana@greenhouse.test&quot;&gt;&lt;/label&gt;&lt;label&gt;Password&lt;input name=&quot;password&quot; type=&quot;password&quot; value=&quot;a long enough password&quot;&gt;&lt;/label&gt;&lt;button type=&quot;button&quot; disabled&gt;Creating your account…&lt;/button&gt;&lt;/form&gt;&lt;/main&gt;&lt;script&gt;new ResizeObserver(()=&gt;parent.postMessage({frameHeight:Math.ceil(document.body.getBoundingClientRect().height)},&#39;*&#39;)).observe(document.body)&lt;/script&gt;&lt;/body&gt;&lt;/html&gt;"></iframe></div><div class="state"><div class="state-label"><span>short password</span><button type="button" class="full" aria-label="Show short password full screen">full screen</button></div><iframe class="component" data-frame="c3" sandbox="allow-scripts" style="height:360px" srcdoc="&lt;!doctype html&gt;&lt;html&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;style&gt;:root{--bg: #e7f3ec; --fg: #173a40; --muted: #416166; --line: rgba(23, 58, 64, 0.14); --surface: #f3faf5; --accent: #328f97; --ok: #2f6a4a; --warn: #b91c1c; --radius-md: 4px; --radius-lg: 10px; --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px; --font: Manrope, ui-sans-serif, system-ui, sans-serif; --mono: ui-monospace, SF Mono, Menlo, monospace;} *{box-sizing:border-box} html,body{overflow:hidden} body{margin:0;padding:20px;font:15px/1.5 var(--font, ui-sans-serif, system-ui, sans-serif);background:var(--bg, #fffcf0);color:var(--fg, #100f0f)} main { max-width: 360px; padding: 24px 16px; font-family: var(--font); color: var(--fg); }
+h1 { font-size: 24px; font-weight: 600; margin: 0; }
+.lede { margin: 8px 0 24px; font-size: 14px; color: var(--muted); }
+form { display: flex; flex-direction: column; gap: 12px; }
+label { font-size: 14px; }
+input { display: block; width: 100%; box-sizing: border-box; margin-top: 4px; padding: 8px 12px; font: inherit; border: 1px solid var(--line); border-radius: var(--radius-md); background: #fff; color: var(--fg); }
+button { margin-top: 8px; padding: 8px 12px; font: inherit; border: 0; border-radius: var(--radius-md); background: var(--fg); color: #fff; }
+button[disabled] { opacity: 0.6; }
+.alert { margin: 0; font-size: 14px; color: var(--warn); }
+.alt { margin-top: 24px; font-size: 14px; color: var(--muted); }&lt;/style&gt;&lt;/head&gt;&lt;body&gt;&lt;main&gt;&lt;h1&gt;Sign up for Greenhouse&lt;/h1&gt;&lt;p class=&quot;lede&quot;&gt;A planning room for people and an agent.&lt;/p&gt;&lt;form&gt;&lt;label&gt;Name&lt;input name=&quot;name&quot; value=&quot;Ana&quot;&gt;&lt;/label&gt;&lt;label&gt;Email&lt;input name=&quot;email&quot; type=&quot;email&quot; value=&quot;ana@greenhouse.test&quot;&gt;&lt;/label&gt;&lt;label&gt;Password&lt;input name=&quot;password&quot; type=&quot;password&quot; value=&quot;short&quot;&gt;&lt;/label&gt;&lt;p class=&quot;alert&quot; role=&quot;alert&quot;&gt;an email, a name, and a password of at least 12 characters&lt;/p&gt;&lt;button type=&quot;button&quot;&gt;Sign up&lt;/button&gt;&lt;/form&gt;&lt;/main&gt;&lt;script&gt;new ResizeObserver(()=&gt;parent.postMessage({frameHeight:Math.ceil(document.body.getBoundingClientRect().height)},&#39;*&#39;)).observe(document.body)&lt;/script&gt;&lt;/body&gt;&lt;/html&gt;"></iframe></div><div class="state"><div class="state-label"><span>email taken</span><button type="button" class="full" aria-label="Show email taken full screen">full screen</button></div><iframe class="component" data-frame="c4" sandbox="allow-scripts" style="height:360px" srcdoc="&lt;!doctype html&gt;&lt;html&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;style&gt;:root{--bg: #e7f3ec; --fg: #173a40; --muted: #416166; --line: rgba(23, 58, 64, 0.14); --surface: #f3faf5; --accent: #328f97; --ok: #2f6a4a; --warn: #b91c1c; --radius-md: 4px; --radius-lg: 10px; --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px; --font: Manrope, ui-sans-serif, system-ui, sans-serif; --mono: ui-monospace, SF Mono, Menlo, monospace;} *{box-sizing:border-box} html,body{overflow:hidden} body{margin:0;padding:20px;font:15px/1.5 var(--font, ui-sans-serif, system-ui, sans-serif);background:var(--bg, #fffcf0);color:var(--fg, #100f0f)} main { max-width: 360px; padding: 24px 16px; font-family: var(--font); color: var(--fg); }
+h1 { font-size: 24px; font-weight: 600; margin: 0; }
+.lede { margin: 8px 0 24px; font-size: 14px; color: var(--muted); }
+form { display: flex; flex-direction: column; gap: 12px; }
+label { font-size: 14px; }
+input { display: block; width: 100%; box-sizing: border-box; margin-top: 4px; padding: 8px 12px; font: inherit; border: 1px solid var(--line); border-radius: var(--radius-md); background: #fff; color: var(--fg); }
+button { margin-top: 8px; padding: 8px 12px; font: inherit; border: 0; border-radius: var(--radius-md); background: var(--fg); color: #fff; }
+button[disabled] { opacity: 0.6; }
+.alert { margin: 0; font-size: 14px; color: var(--warn); }
+.alt { margin-top: 24px; font-size: 14px; color: var(--muted); }&lt;/style&gt;&lt;/head&gt;&lt;body&gt;&lt;main&gt;&lt;h1&gt;Sign up for Greenhouse&lt;/h1&gt;&lt;p class=&quot;lede&quot;&gt;A planning room for people and an agent.&lt;/p&gt;&lt;form&gt;&lt;label&gt;Name&lt;input name=&quot;name&quot; value=&quot;Sam&quot;&gt;&lt;/label&gt;&lt;label&gt;Email&lt;input name=&quot;email&quot; type=&quot;email&quot; value=&quot;sam@greenhouse.test&quot;&gt;&lt;/label&gt;&lt;label&gt;Password&lt;input name=&quot;password&quot; type=&quot;password&quot; value=&quot;correct horse battery&quot;&gt;&lt;/label&gt;&lt;p class=&quot;alert&quot; role=&quot;alert&quot;&gt;an account with this email exists&lt;/p&gt;&lt;button type=&quot;button&quot;&gt;Sign up&lt;/button&gt;&lt;/form&gt;&lt;/main&gt;&lt;script&gt;new ResizeObserver(()=&gt;parent.postMessage({frameHeight:Math.ceil(document.body.getBoundingClientRect().height)},&#39;*&#39;)).observe(document.body)&lt;/script&gt;&lt;/body&gt;&lt;/html&gt;"></iframe></div></div>
+    <details><summary>markup</summary><pre><code>&lt;!-- empty --&gt;
+&lt;main&gt;&lt;h1&gt;Sign up for Greenhouse&lt;/h1&gt;&lt;p class=&quot;lede&quot;&gt;A planning room for people and an agent.&lt;/p&gt;&lt;form&gt;&lt;label&gt;Name&lt;input name=&quot;name&quot;&gt;&lt;/label&gt;&lt;label&gt;Email&lt;input name=&quot;email&quot; type=&quot;email&quot;&gt;&lt;/label&gt;&lt;label&gt;Password&lt;input name=&quot;password&quot; type=&quot;password&quot;&gt;&lt;/label&gt;&lt;button type=&quot;button&quot;&gt;Sign up&lt;/button&gt;&lt;/form&gt;&lt;p class=&quot;alt&quot;&gt;Already have an account? &lt;u&gt;Sign in&lt;/u&gt;&lt;/p&gt;&lt;/main&gt;
+
+&lt;!-- busy --&gt;
+&lt;main&gt;&lt;h1&gt;Sign up for Greenhouse&lt;/h1&gt;&lt;p class=&quot;lede&quot;&gt;A planning room for people and an agent.&lt;/p&gt;&lt;form&gt;&lt;label&gt;Name&lt;input name=&quot;name&quot; value=&quot;Ana&quot;&gt;&lt;/label&gt;&lt;label&gt;Email&lt;input name=&quot;email&quot; type=&quot;email&quot; value=&quot;ana@greenhouse.test&quot;&gt;&lt;/label&gt;&lt;label&gt;Password&lt;input name=&quot;password&quot; type=&quot;password&quot; value=&quot;a long enough password&quot;&gt;&lt;/label&gt;&lt;button type=&quot;button&quot; disabled&gt;Creating your account…&lt;/button&gt;&lt;/form&gt;&lt;/main&gt;
+
+&lt;!-- short password --&gt;
+&lt;main&gt;&lt;h1&gt;Sign up for Greenhouse&lt;/h1&gt;&lt;p class=&quot;lede&quot;&gt;A planning room for people and an agent.&lt;/p&gt;&lt;form&gt;&lt;label&gt;Name&lt;input name=&quot;name&quot; value=&quot;Ana&quot;&gt;&lt;/label&gt;&lt;label&gt;Email&lt;input name=&quot;email&quot; type=&quot;email&quot; value=&quot;ana@greenhouse.test&quot;&gt;&lt;/label&gt;&lt;label&gt;Password&lt;input name=&quot;password&quot; type=&quot;password&quot; value=&quot;short&quot;&gt;&lt;/label&gt;&lt;p class=&quot;alert&quot; role=&quot;alert&quot;&gt;an email, a name, and a password of at least 12 characters&lt;/p&gt;&lt;button type=&quot;button&quot;&gt;Sign up&lt;/button&gt;&lt;/form&gt;&lt;/main&gt;
+
+&lt;!-- email taken --&gt;
+&lt;main&gt;&lt;h1&gt;Sign up for Greenhouse&lt;/h1&gt;&lt;p class=&quot;lede&quot;&gt;A planning room for people and an agent.&lt;/p&gt;&lt;form&gt;&lt;label&gt;Name&lt;input name=&quot;name&quot; value=&quot;Sam&quot;&gt;&lt;/label&gt;&lt;label&gt;Email&lt;input name=&quot;email&quot; type=&quot;email&quot; value=&quot;sam@greenhouse.test&quot;&gt;&lt;/label&gt;&lt;label&gt;Password&lt;input name=&quot;password&quot; type=&quot;password&quot; value=&quot;correct horse battery&quot;&gt;&lt;/label&gt;&lt;p class=&quot;alert&quot; role=&quot;alert&quot;&gt;an account with this email exists&lt;/p&gt;&lt;button type=&quot;button&quot;&gt;Sign up&lt;/button&gt;&lt;/form&gt;&lt;/main&gt;
+
+/* css */
+main { max-width: 360px; padding: 24px 16px; font-family: var(--font); color: var(--fg); }
+h1 { font-size: 24px; font-weight: 600; margin: 0; }
+.lede { margin: 8px 0 24px; font-size: 14px; color: var(--muted); }
+form { display: flex; flex-direction: column; gap: 12px; }
+label { font-size: 14px; }
+input { display: block; width: 100%; box-sizing: border-box; margin-top: 4px; padding: 8px 12px; font: inherit; border: 1px solid var(--line); border-radius: var(--radius-md); background: #fff; color: var(--fg); }
+button { margin-top: 8px; padding: 8px 12px; font: inherit; border: 0; border-radius: var(--radius-md); background: var(--fg); color: #fff; }
+button[disabled] { opacity: 0.6; }
+.alert { margin: 0; font-size: 14px; color: var(--warn); }
+.alt { margin-top: 24px; font-size: 14px; color: var(--muted); }</code></pre></details>
+  </figure><figure class="component-block">
+    <figcaption><b>Sign in</b> · The same answer for an unknown email and a wrong password, so it reveals nobody.</figcaption>
+    <div class="states"><div class="state"><div class="state-label"><span>empty</span><button type="button" class="full" aria-label="Show empty full screen">full screen</button></div><iframe class="component" data-frame="c5" sandbox="allow-scripts" style="height:300px" srcdoc="&lt;!doctype html&gt;&lt;html&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;style&gt;:root{--bg: #e7f3ec; --fg: #173a40; --muted: #416166; --line: rgba(23, 58, 64, 0.14); --surface: #f3faf5; --accent: #328f97; --ok: #2f6a4a; --warn: #b91c1c; --radius-md: 4px; --radius-lg: 10px; --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px; --font: Manrope, ui-sans-serif, system-ui, sans-serif; --mono: ui-monospace, SF Mono, Menlo, monospace;} *{box-sizing:border-box} html,body{overflow:hidden} body{margin:0;padding:20px;font:15px/1.5 var(--font, ui-sans-serif, system-ui, sans-serif);background:var(--bg, #fffcf0);color:var(--fg, #100f0f)} main { max-width: 360px; padding: 24px 16px; font-family: var(--font); color: var(--fg); }
+h1 { font-size: 24px; font-weight: 600; margin: 0; }
+.lede { margin: 8px 0 24px; font-size: 14px; color: var(--muted); }
+form { display: flex; flex-direction: column; gap: 12px; }
+label { font-size: 14px; }
+input { display: block; width: 100%; box-sizing: border-box; margin-top: 4px; padding: 8px 12px; font: inherit; border: 1px solid var(--line); border-radius: var(--radius-md); background: #fff; color: var(--fg); }
+button { margin-top: 8px; padding: 8px 12px; font: inherit; border: 0; border-radius: var(--radius-md); background: var(--fg); color: #fff; }
+button[disabled] { opacity: 0.6; }
+.alert { margin: 0; font-size: 14px; color: var(--warn); }&lt;/style&gt;&lt;/head&gt;&lt;body&gt;&lt;main&gt;&lt;h1&gt;Sign in to Greenhouse&lt;/h1&gt;&lt;p class=&quot;lede&quot;&gt;A planning room for people and an agent.&lt;/p&gt;&lt;form&gt;&lt;label&gt;Email&lt;input name=&quot;email&quot; type=&quot;email&quot;&gt;&lt;/label&gt;&lt;label&gt;Password&lt;input name=&quot;password&quot; type=&quot;password&quot;&gt;&lt;/label&gt;&lt;button type=&quot;button&quot;&gt;Sign in&lt;/button&gt;&lt;/form&gt;&lt;/main&gt;&lt;script&gt;new ResizeObserver(()=&gt;parent.postMessage({frameHeight:Math.ceil(document.body.getBoundingClientRect().height)},&#39;*&#39;)).observe(document.body)&lt;/script&gt;&lt;/body&gt;&lt;/html&gt;"></iframe></div><div class="state"><div class="state-label"><span>busy</span><button type="button" class="full" aria-label="Show busy full screen">full screen</button></div><iframe class="component" data-frame="c6" sandbox="allow-scripts" style="height:300px" srcdoc="&lt;!doctype html&gt;&lt;html&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;style&gt;:root{--bg: #e7f3ec; --fg: #173a40; --muted: #416166; --line: rgba(23, 58, 64, 0.14); --surface: #f3faf5; --accent: #328f97; --ok: #2f6a4a; --warn: #b91c1c; --radius-md: 4px; --radius-lg: 10px; --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px; --font: Manrope, ui-sans-serif, system-ui, sans-serif; --mono: ui-monospace, SF Mono, Menlo, monospace;} *{box-sizing:border-box} html,body{overflow:hidden} body{margin:0;padding:20px;font:15px/1.5 var(--font, ui-sans-serif, system-ui, sans-serif);background:var(--bg, #fffcf0);color:var(--fg, #100f0f)} main { max-width: 360px; padding: 24px 16px; font-family: var(--font); color: var(--fg); }
+h1 { font-size: 24px; font-weight: 600; margin: 0; }
+.lede { margin: 8px 0 24px; font-size: 14px; color: var(--muted); }
+form { display: flex; flex-direction: column; gap: 12px; }
+label { font-size: 14px; }
+input { display: block; width: 100%; box-sizing: border-box; margin-top: 4px; padding: 8px 12px; font: inherit; border: 1px solid var(--line); border-radius: var(--radius-md); background: #fff; color: var(--fg); }
+button { margin-top: 8px; padding: 8px 12px; font: inherit; border: 0; border-radius: var(--radius-md); background: var(--fg); color: #fff; }
+button[disabled] { opacity: 0.6; }
+.alert { margin: 0; font-size: 14px; color: var(--warn); }&lt;/style&gt;&lt;/head&gt;&lt;body&gt;&lt;main&gt;&lt;h1&gt;Sign in to Greenhouse&lt;/h1&gt;&lt;p class=&quot;lede&quot;&gt;A planning room for people and an agent.&lt;/p&gt;&lt;form&gt;&lt;label&gt;Email&lt;input name=&quot;email&quot; type=&quot;email&quot; value=&quot;sam@greenhouse.test&quot;&gt;&lt;/label&gt;&lt;label&gt;Password&lt;input name=&quot;password&quot; type=&quot;password&quot; value=&quot;correct horse battery&quot;&gt;&lt;/label&gt;&lt;button type=&quot;button&quot; disabled&gt;Signing in…&lt;/button&gt;&lt;/form&gt;&lt;/main&gt;&lt;script&gt;new ResizeObserver(()=&gt;parent.postMessage({frameHeight:Math.ceil(document.body.getBoundingClientRect().height)},&#39;*&#39;)).observe(document.body)&lt;/script&gt;&lt;/body&gt;&lt;/html&gt;"></iframe></div><div class="state"><div class="state-label"><span>refused</span><button type="button" class="full" aria-label="Show refused full screen">full screen</button></div><iframe class="component" data-frame="c7" sandbox="allow-scripts" style="height:300px" srcdoc="&lt;!doctype html&gt;&lt;html&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;style&gt;:root{--bg: #e7f3ec; --fg: #173a40; --muted: #416166; --line: rgba(23, 58, 64, 0.14); --surface: #f3faf5; --accent: #328f97; --ok: #2f6a4a; --warn: #b91c1c; --radius-md: 4px; --radius-lg: 10px; --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px; --font: Manrope, ui-sans-serif, system-ui, sans-serif; --mono: ui-monospace, SF Mono, Menlo, monospace;} *{box-sizing:border-box} html,body{overflow:hidden} body{margin:0;padding:20px;font:15px/1.5 var(--font, ui-sans-serif, system-ui, sans-serif);background:var(--bg, #fffcf0);color:var(--fg, #100f0f)} main { max-width: 360px; padding: 24px 16px; font-family: var(--font); color: var(--fg); }
+h1 { font-size: 24px; font-weight: 600; margin: 0; }
+.lede { margin: 8px 0 24px; font-size: 14px; color: var(--muted); }
+form { display: flex; flex-direction: column; gap: 12px; }
+label { font-size: 14px; }
+input { display: block; width: 100%; box-sizing: border-box; margin-top: 4px; padding: 8px 12px; font: inherit; border: 1px solid var(--line); border-radius: var(--radius-md); background: #fff; color: var(--fg); }
+button { margin-top: 8px; padding: 8px 12px; font: inherit; border: 0; border-radius: var(--radius-md); background: var(--fg); color: #fff; }
+button[disabled] { opacity: 0.6; }
+.alert { margin: 0; font-size: 14px; color: var(--warn); }&lt;/style&gt;&lt;/head&gt;&lt;body&gt;&lt;main&gt;&lt;h1&gt;Sign in to Greenhouse&lt;/h1&gt;&lt;p class=&quot;lede&quot;&gt;A planning room for people and an agent.&lt;/p&gt;&lt;form&gt;&lt;label&gt;Email&lt;input name=&quot;email&quot; type=&quot;email&quot; value=&quot;sam@greenhouse.test&quot;&gt;&lt;/label&gt;&lt;label&gt;Password&lt;input name=&quot;password&quot; type=&quot;password&quot; value=&quot;correct horse&quot;&gt;&lt;/label&gt;&lt;p class=&quot;alert&quot; role=&quot;alert&quot;&gt;wrong email or password&lt;/p&gt;&lt;button type=&quot;button&quot;&gt;Sign in&lt;/button&gt;&lt;/form&gt;&lt;/main&gt;&lt;script&gt;new ResizeObserver(()=&gt;parent.postMessage({frameHeight:Math.ceil(document.body.getBoundingClientRect().height)},&#39;*&#39;)).observe(document.body)&lt;/script&gt;&lt;/body&gt;&lt;/html&gt;"></iframe></div></div>
+    <details><summary>markup</summary><pre><code>&lt;!-- empty --&gt;
+&lt;main&gt;&lt;h1&gt;Sign in to Greenhouse&lt;/h1&gt;&lt;p class=&quot;lede&quot;&gt;A planning room for people and an agent.&lt;/p&gt;&lt;form&gt;&lt;label&gt;Email&lt;input name=&quot;email&quot; type=&quot;email&quot;&gt;&lt;/label&gt;&lt;label&gt;Password&lt;input name=&quot;password&quot; type=&quot;password&quot;&gt;&lt;/label&gt;&lt;button type=&quot;button&quot;&gt;Sign in&lt;/button&gt;&lt;/form&gt;&lt;/main&gt;
+
+&lt;!-- busy --&gt;
+&lt;main&gt;&lt;h1&gt;Sign in to Greenhouse&lt;/h1&gt;&lt;p class=&quot;lede&quot;&gt;A planning room for people and an agent.&lt;/p&gt;&lt;form&gt;&lt;label&gt;Email&lt;input name=&quot;email&quot; type=&quot;email&quot; value=&quot;sam@greenhouse.test&quot;&gt;&lt;/label&gt;&lt;label&gt;Password&lt;input name=&quot;password&quot; type=&quot;password&quot; value=&quot;correct horse battery&quot;&gt;&lt;/label&gt;&lt;button type=&quot;button&quot; disabled&gt;Signing in…&lt;/button&gt;&lt;/form&gt;&lt;/main&gt;
+
+&lt;!-- refused --&gt;
+&lt;main&gt;&lt;h1&gt;Sign in to Greenhouse&lt;/h1&gt;&lt;p class=&quot;lede&quot;&gt;A planning room for people and an agent.&lt;/p&gt;&lt;form&gt;&lt;label&gt;Email&lt;input name=&quot;email&quot; type=&quot;email&quot; value=&quot;sam@greenhouse.test&quot;&gt;&lt;/label&gt;&lt;label&gt;Password&lt;input name=&quot;password&quot; type=&quot;password&quot; value=&quot;correct horse&quot;&gt;&lt;/label&gt;&lt;p class=&quot;alert&quot; role=&quot;alert&quot;&gt;wrong email or password&lt;/p&gt;&lt;button type=&quot;button&quot;&gt;Sign in&lt;/button&gt;&lt;/form&gt;&lt;/main&gt;
+
+/* css */
+main { max-width: 360px; padding: 24px 16px; font-family: var(--font); color: var(--fg); }
+h1 { font-size: 24px; font-weight: 600; margin: 0; }
+.lede { margin: 8px 0 24px; font-size: 14px; color: var(--muted); }
+form { display: flex; flex-direction: column; gap: 12px; }
+label { font-size: 14px; }
+input { display: block; width: 100%; box-sizing: border-box; margin-top: 4px; padding: 8px 12px; font: inherit; border: 1px solid var(--line); border-radius: var(--radius-md); background: #fff; color: var(--fg); }
+button { margin-top: 8px; padding: 8px 12px; font: inherit; border: 0; border-radius: var(--radius-md); background: var(--fg); color: #fff; }
+button[disabled] { opacity: 0.6; }
+.alert { margin: 0; font-size: 14px; color: var(--warn); }</code></pre></details>
+  </figure><figure class="component-block">
+    <figcaption><b>Header, signed out and in</b> · Says who you are on every page. Blank while it checks, so it never flashes the wrong state.</figcaption>
+    <div class="states"><div class="state"><div class="state-label"><span>checking</span><button type="button" class="full" aria-label="Show checking full screen">full screen</button></div><iframe class="component" data-frame="c8" sandbox="allow-scripts" style="height:60px" srcdoc="&lt;!doctype html&gt;&lt;html&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;style&gt;:root{--bg: #e7f3ec; --fg: #173a40; --muted: #416166; --line: rgba(23, 58, 64, 0.14); --surface: #f3faf5; --accent: #328f97; --ok: #2f6a4a; --warn: #b91c1c; --radius-md: 4px; --radius-lg: 10px; --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px; --font: Manrope, ui-sans-serif, system-ui, sans-serif; --mono: ui-monospace, SF Mono, Menlo, monospace;} *{box-sizing:border-box} html,body{overflow:hidden} body{margin:0;padding:20px;font:15px/1.5 var(--font, ui-sans-serif, system-ui, sans-serif);background:var(--bg, #fffcf0);color:var(--fg, #100f0f)} nav { display: flex; align-items: center; gap: 20px; padding: 12px 16px; font: 14px var(--font); color: var(--fg); border-bottom: 1px solid var(--line); }
+.brand { font-weight: 600; }
+.right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.muted { color: var(--muted); }
+.btn { padding: 4px 12px; border-radius: var(--radius-lg); background: var(--accent); color: var(--surface); font-weight: 600; }
+button { font: inherit; background: none; border: 0; color: var(--fg); padding: 0; }&lt;/style&gt;&lt;/head&gt;&lt;body&gt;&lt;nav aria-label=&quot;Main&quot;&gt;&lt;span class=&quot;brand&quot;&gt;Greenhouse&lt;/span&gt;&lt;span class=&quot;right&quot;&gt;&lt;/span&gt;&lt;/nav&gt;&lt;script&gt;new ResizeObserver(()=&gt;parent.postMessage({frameHeight:Math.ceil(document.body.getBoundingClientRect().height)},&#39;*&#39;)).observe(document.body)&lt;/script&gt;&lt;/body&gt;&lt;/html&gt;"></iframe></div><div class="state"><div class="state-label"><span>signed out</span><button type="button" class="full" aria-label="Show signed out full screen">full screen</button></div><iframe class="component" data-frame="c9" sandbox="allow-scripts" style="height:60px" srcdoc="&lt;!doctype html&gt;&lt;html&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;style&gt;:root{--bg: #e7f3ec; --fg: #173a40; --muted: #416166; --line: rgba(23, 58, 64, 0.14); --surface: #f3faf5; --accent: #328f97; --ok: #2f6a4a; --warn: #b91c1c; --radius-md: 4px; --radius-lg: 10px; --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px; --font: Manrope, ui-sans-serif, system-ui, sans-serif; --mono: ui-monospace, SF Mono, Menlo, monospace;} *{box-sizing:border-box} html,body{overflow:hidden} body{margin:0;padding:20px;font:15px/1.5 var(--font, ui-sans-serif, system-ui, sans-serif);background:var(--bg, #fffcf0);color:var(--fg, #100f0f)} nav { display: flex; align-items: center; gap: 20px; padding: 12px 16px; font: 14px var(--font); color: var(--fg); border-bottom: 1px solid var(--line); }
+.brand { font-weight: 600; }
+.right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.muted { color: var(--muted); }
+.btn { padding: 4px 12px; border-radius: var(--radius-lg); background: var(--accent); color: var(--surface); font-weight: 600; }
+button { font: inherit; background: none; border: 0; color: var(--fg); padding: 0; }&lt;/style&gt;&lt;/head&gt;&lt;body&gt;&lt;nav aria-label=&quot;Main&quot;&gt;&lt;span class=&quot;brand&quot;&gt;Greenhouse&lt;/span&gt;&lt;span class=&quot;right&quot;&gt;&lt;span&gt;Sign in&lt;/span&gt;&lt;span class=&quot;btn&quot;&gt;Sign up&lt;/span&gt;&lt;/span&gt;&lt;/nav&gt;&lt;script&gt;new ResizeObserver(()=&gt;parent.postMessage({frameHeight:Math.ceil(document.body.getBoundingClientRect().height)},&#39;*&#39;)).observe(document.body)&lt;/script&gt;&lt;/body&gt;&lt;/html&gt;"></iframe></div><div class="state"><div class="state-label"><span>signed in</span><button type="button" class="full" aria-label="Show signed in full screen">full screen</button></div><iframe class="component" data-frame="c10" sandbox="allow-scripts" style="height:60px" srcdoc="&lt;!doctype html&gt;&lt;html&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;style&gt;:root{--bg: #e7f3ec; --fg: #173a40; --muted: #416166; --line: rgba(23, 58, 64, 0.14); --surface: #f3faf5; --accent: #328f97; --ok: #2f6a4a; --warn: #b91c1c; --radius-md: 4px; --radius-lg: 10px; --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px; --font: Manrope, ui-sans-serif, system-ui, sans-serif; --mono: ui-monospace, SF Mono, Menlo, monospace;} *{box-sizing:border-box} html,body{overflow:hidden} body{margin:0;padding:20px;font:15px/1.5 var(--font, ui-sans-serif, system-ui, sans-serif);background:var(--bg, #fffcf0);color:var(--fg, #100f0f)} nav { display: flex; align-items: center; gap: 20px; padding: 12px 16px; font: 14px var(--font); color: var(--fg); border-bottom: 1px solid var(--line); }
+.brand { font-weight: 600; }
+.right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.muted { color: var(--muted); }
+.btn { padding: 4px 12px; border-radius: var(--radius-lg); background: var(--accent); color: var(--surface); font-weight: 600; }
+button { font: inherit; background: none; border: 0; color: var(--fg); padding: 0; }&lt;/style&gt;&lt;/head&gt;&lt;body&gt;&lt;nav aria-label=&quot;Main&quot;&gt;&lt;span class=&quot;brand&quot;&gt;Greenhouse&lt;/span&gt;&lt;span class=&quot;right&quot;&gt;&lt;span class=&quot;muted&quot;&gt;Sam&lt;/span&gt;&lt;button type=&quot;button&quot;&gt;Sign out&lt;/button&gt;&lt;/span&gt;&lt;/nav&gt;&lt;script&gt;new ResizeObserver(()=&gt;parent.postMessage({frameHeight:Math.ceil(document.body.getBoundingClientRect().height)},&#39;*&#39;)).observe(document.body)&lt;/script&gt;&lt;/body&gt;&lt;/html&gt;"></iframe></div></div>
+    <details><summary>markup</summary><pre><code>&lt;!-- checking --&gt;
+&lt;nav aria-label=&quot;Main&quot;&gt;&lt;span class=&quot;brand&quot;&gt;Greenhouse&lt;/span&gt;&lt;span class=&quot;right&quot;&gt;&lt;/span&gt;&lt;/nav&gt;
+
+&lt;!-- signed out --&gt;
+&lt;nav aria-label=&quot;Main&quot;&gt;&lt;span class=&quot;brand&quot;&gt;Greenhouse&lt;/span&gt;&lt;span class=&quot;right&quot;&gt;&lt;span&gt;Sign in&lt;/span&gt;&lt;span class=&quot;btn&quot;&gt;Sign up&lt;/span&gt;&lt;/span&gt;&lt;/nav&gt;
+
+&lt;!-- signed in --&gt;
+&lt;nav aria-label=&quot;Main&quot;&gt;&lt;span class=&quot;brand&quot;&gt;Greenhouse&lt;/span&gt;&lt;span class=&quot;right&quot;&gt;&lt;span class=&quot;muted&quot;&gt;Sam&lt;/span&gt;&lt;button type=&quot;button&quot;&gt;Sign out&lt;/button&gt;&lt;/span&gt;&lt;/nav&gt;
+
+/* css */
+nav { display: flex; align-items: center; gap: 20px; padding: 12px 16px; font: 14px var(--font); color: var(--fg); border-bottom: 1px solid var(--line); }
+.brand { font-weight: 600; }
+.right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.muted { color: var(--muted); }
+.btn { padding: 4px 12px; border-radius: var(--radius-lg); background: var(--accent); color: var(--surface); font-weight: 600; }
+button { font: inherit; background: none; border: 0; color: var(--fg); padding: 0; }</code></pre></details>
+  </figure>
+    <h3>Done when</h3><p class="lede-line">The phase is done when every box is ticked. Automated checks are commands; by-hand checks are things a person confirms by looking.</p>
+    <div class="verify"><div><h4>Automated</h4><ul class="checks"><li class="check "><input type="checkbox" disabled  aria-label="not done"><span><code>just reset</code></span></li><li class="check "><input type="checkbox" disabled  aria-label="not done"><span><code>just test</code></span></li><li class="check "><input type="checkbox" disabled  aria-label="not done"><span><code>curl -sf localhost:3000/readyz | jq -e &#39;.api.accounts | startswith(&quot;ok&quot;)&#39;</code> · with <code>just up</code> running; the seed opened three accounts</span></li></ul></div>
+    <div><h4>By hand</h4><ul class="checks"><li class="check "><input type="checkbox" disabled  aria-label="not done"><span>Sign up at localhost:3000/signup; you land home with your name in the header.</span></li><li class="check "><input type="checkbox" disabled  aria-label="not done"><span>Sign out, then sign in as Sam with the logins in <code>.dev.vars.example</code>.</span></li><li class="check "><input type="checkbox" disabled  aria-label="not done"><span><code>just agent-ready</code> reports one gap, the admin API, which cp-04 adds.</span></li></ul></div></div>
+    
+  </section>
+  <section id="references"><h2>References</h2><p class="lede-line">Where the facts in this plan come from.</p><ul><li><code>skills/event-sourcing/SKILL.md</code>, <code>docs/ARCHITECTURE.md</code> (Event design)</li><li><code>docs/DOMAIN-VOCABULARY.md</code>, Identity: Account and Sign-in</li></ul></section>
+  <section id="versions"><h2>Versions</h2><p class="v-how">Every change to this plan, newest first. <code>just plan-history FILE</code> lists them, <code>just plan-at FILE vN</code> rebuilds one, <code>just plan-diff FILE vA vB</code> says what changed.</p><ol class="versions" reversed><li class="version" id="v5">
+    <div class="v-head"><span class="v-num">v5</span><time datetime="2026-10-28T12:50:01.399Z">2026-10-28 12:50 UTC</time><span class="v-who">pratos · by hand</span></div>
+    <p class="v-intent">Usernames at sign-up, renames, and sign-in that returns to a shared link.</p>
+    <ul class="v-changes"><li>phase accounts: +packages/domain/src/account/rename.expect.test.ts</li><li>phase edge: +apps/web/src/lib/next.ts</li></ul>
+    
+  </li><li class="version" id="v4">
+    <div class="v-head"><span class="v-num">v4</span><time datetime="2026-10-28T12:20:04.737Z">2026-10-28 12:20 UTC</time><span class="v-who">pratos · by hand</span></div>
+    <p class="v-intent">Title, summary and end state match what the stage now builds.</p>
+    <ul class="v-changes"><li>endState rewritten (29 → 40 words)</li></ul>
+    
+  </li><li class="version" id="v3">
+    <div class="v-head"><span class="v-num">v3</span><time datetime="2026-10-28T12:08:58.650Z">2026-10-28 12:08 UTC</time><span class="v-who">pratos · by hand</span></div>
+    <p class="v-intent">Intents cut to the 15-word budget.</p>
+    <ul class="v-changes"><li>phase edge: edited</li></ul>
+    
+  </li><li class="version" id="v2">
+    <div class="v-head"><span class="v-num">v2</span><time datetime="2026-10-28T12:08:24.004Z">2026-10-28 12:08 UTC</time><span class="v-who">pratos · by hand</span></div>
+    <p class="v-intent">Sign-in and sign-up are rate-limited per IP.</p>
+    <ul class="v-changes"><li>phase edge: +apps/api/wrangler.jsonc</li></ul>
+    
+  </li><li class="version" id="v1">
+    <div class="v-head"><span class="v-num">v1</span><time datetime="2026-10-28T10:15:28.285Z">2026-10-28 10:15 UTC</time><span class="v-who">pratos · Claude Code</span></div>
+    <p class="v-intent">Write the cp-03 workshop stage plan: the event-sourcing engine, and sign-up and sign-in on it.</p>
+    <ul class="v-changes"><li>created: &quot;Event-sourcing engine, sign-up and sign-in&quot;, 3 phases, 1 decisions</li></ul>
+    <details class="v-origin"><summary>Session · session 17cb8246</summary><p class="v-session">session <code>17cb8246-9efc-45f0-9820-33ce52b0ada9</code></p></details>
+  </li></ol></section>
+  <footer>Edit <code>docs/plans/stages/cp-03-engine-identity.plan.json</code>, not this page. It is rebuilt from the JSON, and every change is a version in <code>docs/plans/stages/cp-03-engine-identity.plan.versions.jsonl</code>.</footer>
+</main>
+</div>
+<script type="application/json" id="plan">{"title":"Event-sourcing engine, sign-up and sign-in","ticket":"cp-03","date":"2026-10-28","status":"final","author":"pratos with Claude Code","summary":"People can sign up, sign in and sign out, and each of those is an event in the engine every later context will use. The engine stays small: optimistic appends, projections in the same transaction, one Sql port over four databases, and stories as tests.","current":"cp-02 has the words and the design: `docs/DOMAIN-VOCABULARY.md` with Identity's Account and Sign-in, `packages/schema`, the vocabulary check, the plan room map and the event design. There is no engine, no domain package and no table yet.","discoveries":["The Workers runtime caps PBKDF2 at 100,000 iterations; Web Crypto runs the same hashing in the Worker, in bun tests and in `just user-add`.","D1 has no interactive transactions, but a `batch` is atomic, which is all an append with its projection rows needs.","One stream per email (`account-\u003cemail>`), so two sign-ups racing for one email meet at the stream's version and the second is refused.","An unknown email is verified against a decoy hash, so it takes as long as a wrong password and gets the same answer.","D1 tables come from migrations, not `setup()`; a test checks that `0002_accounts.sql` holds exactly the DDL the engine and projection declare."],"endState":"Sign up at localhost:3000/signup and land signed in, your name in the header. `sign-up.snap.txt` reads as a story. A 21st sign-in in a minute from one address gets 429. `just agent-ready` reports one gap, the admin API, which cp-04 adds.","notDoing":["An admin API or page; it arrives with the flags in cp-04.","Password reset, email confirmation or OAuth; the workshop needs none of them.","The Thread and Session deciders; the engine is ready for them, later stages add them.","Rate limiting sign-in; Cloudflare's rate-limiting rules can do it outside this code."],"approach":"Engine first, with its own tests, because every context will run on it. Then the account context as stories. Then the HTTP edge, seeds and pages, which only map onto it.","diagrams":[{"id":"account","spec":{"kind":"state-explorer","question":"How does an account move from nothing to signed in and out?","meta":{"builtBy":"create-plan","builtAt":"2026-10-28","source":"packages/domain/src/account/decider.ts"},"diagram":"stateDiagram-v2\n  [*] --> Open: SignUp\n  [*] --> Open: OpenAccount\n  Open --> Open: SignIn\n  Open --> Open: SignOut\n  note right of Open: AccountOpened, SignedIn, SignedOut","steps":[{"id":"signup","caption":"SignUp opens the account and records AccountOpened, never as an admin.","focus":["Open"],"edges":["edge0"]},{"id":"open","caption":"OpenAccount does the same for seeds and `just user-add`, and may set admin.","focus":["Open"],"edges":["edge1"]},{"id":"signin","caption":"SignIn with a matching password records SignedIn for one device.","focus":["Open"],"edges":["edge2"]},{"id":"signout","caption":"SignOut ends that device only; a second sign-out records nothing.","focus":["Open"],"edges":["edge3"]}]}}],"decisions":[{"id":"auth","question":"Sign-in: a library or our own?","options":[{"id":"own","label":"Our own, Rails 8 style"},{"id":"library","label":"An auth library"}],"chosen":"own","by":"pratos","at":"2026-10-28","why":"Two tables and one hash function are small enough to read in one sitting. Ours runs on the engine like every other context, so a sign-up is an event with a story.","viz":{"kind":"decision-report","question":"Sign-in: a library or our own?","meta":{"builtBy":"create-plan","builtAt":"2026-10-28","source":"cp-03 plan"},"axes":[{"key":"tables","label":"Tables it needs"},{"key":"events","label":"Is a sign-up an event"},{"key":"words","label":"Matches our vocabulary"},{"key":"code","label":"Code we read and own"}],"options":[{"id":"own","label":"Our own, Rails 8 style","summary":"Two tables, one hash function, and the account as an event stream.","diagram":"sequenceDiagram\n  participant B as Browser\n  participant A as API\n  participant E as Engine\n  participant D as D1\n  B->>A: POST /auth/sign-in\n  A->>E: SignIn on account-sam\n  E->>D: SignedIn and a sign_ins row, one batch\n  A-->>B: token in an HttpOnly cookie","tried":{"kind":"branch","ref":"main","summary":"sign-up and sign-in stories pass on bun:sqlite; D1 through the same port"},"axes":{"tables":"Two: accounts and sign_ins","events":"Yes: AccountOpened, SignedIn, SignedOut","words":"Yes","code":"About 300 lines"}},{"id":"library","label":"An auth library","summary":"A library owns the handlers and its own user and session tables.","diagram":"sequenceDiagram\n  participant B as Browser\n  participant A as API\n  participant L as Auth library\n  participant D as D1\n  B->>A: POST a sign-in\n  A->>L: its handler\n  L->>D: its user and session rows\n  A-->>B: its cookie","tried":null,"axes":{"tables":"Its schema, four or more","events":"No, rows outside the event log","words":"No: it says user and session","code":"A config file; the rest is theirs"}}],"steps":[{"id":"ask","option":"own","caption":"The browser posts an email and password to the API.","focus":["B","A"],"edges":["i0"]},{"id":"decide","option":"own","caption":"The API runs SignIn on the account's own stream in the engine.","focus":["A","E"],"edges":["i1"]},{"id":"write","option":"own","caption":"The event and its projection row land in D1 together.","focus":["E","D"],"edges":["i2"]},{"id":"cookie","option":"own","caption":"The browser keeps the token in a cookie scripts cannot read.","focus":["B"],"edges":["i3"]},{"id":"ask","option":"library","caption":"The library takes the request and answers it with its own handler.","focus":["A","L"],"edges":["i0","i1"]},{"id":"write","option":"library","caption":"It writes its own rows outside the event log, and calls a sign-in a session.","focus":["L","D"],"edges":["i2","i3"]}]}}],"design":{"notes":"Sign-in and sign-up are quiet, single-column pages met once a week. One dark action, refusals in a sentence, the product's own words.","tokens":{"color":{"bg":"#e7f3ec","fg":"#173a40","muted":"#416166","line":"rgba(23, 58, 64, 0.14)","surface":"#f3faf5","accent":"#328f97","ok":"#2f6a4a","warn":"#b91c1c"},"type":[{"name":"title","size":24,"weight":600,"lineHeight":1.2,"sample":"Sign up for Greenhouse"},{"name":"body","size":14,"weight":400,"lineHeight":1.5,"sample":"A planning room for people and an agent."}],"space":[4,8,12,16,24,32],"radius":{"md":4,"lg":10},"font":{"sans":"Manrope, ui-sans-serif, system-ui, sans-serif","mono":"ui-monospace, SF Mono, Menlo, monospace"}}},"phases":[{"id":"engine","name":"Engine: event store, one Sql port, stories","goal":"`packages/engine` appends against an expected version, writes projections in the same transaction, and runs unchanged on bun:sqlite, a Durable Object, D1 and Postgres.","changes":[{"file":"packages/engine/src/kernel.ts","intent":"Messages, deciders, `defineCommand` and `defineEvent`, rejections, and the given-when-then expect harness.","contract":{"lang":"ts","code":"export type Message\u003cT extends string = string, D = unknown> = { type: T; data: D };\nexport type Ctx = { newId(): string; now(): Date; flag(name: string): boolean };\nexport interface Decider\u003cState, C extends Message, E extends Message> {\n  initial: State;\n  evolve(state: State, event: E): State;                 // no rules\n  decide(state: State, command: C, ctx: Ctx): E[] | Rejection; // the only function with rules\n}\nexport const defineCommand = (type, fields) => (data) => Message;   // Schema-validated at the boundary\nexport const defineEvent   = (type, fields) => (data) => Message;"}},{"file":"packages/engine/src/sql.ts","intent":"The one port every database implements; a unique-key violation becomes a WriteConflict.","contract":{"lang":"ts","code":"export type Statement = { readonly sql: string; readonly params: ReadonlyArray\u003cunknown> };\nexport class WriteConflict extends Schema.TaggedError\u003cWriteConflict>()('WriteConflict', { message: Schema.String }) {}\nexport class Sql extends Context.Service\u003cSql, {\n  readonly dialect: 'sqlite' | 'postgres';\n  query\u003cR>(sql: string, params?: ReadonlyArray\u003cunknown>): Effect.Effect\u003cR[]>;\n  atomically(statements: ReadonlyArray\u003cStatement>): Effect.Effect\u003cvoid, WriteConflict>; // all or none\n}>()('greenhouse/engine/Sql') {}"}},{"file":"packages/engine/src/store.ts","intent":"One `stream_events` table, keyed by stream and version; `execute` retries a conflict three times.","contract":{"lang":"ts","code":"export type Projection = { name: string; tables: ReadonlyArray\u003cstring>; on(event: Recorded): ReadonlyArray\u003cStatement> };\nclass EventStore extends Context.Service\u003cEventStore, {\n  setup(): Effect\u003cvoid>;\n  read(stream: string): Effect\u003cRecorded[]>;\n  append(stream, expected: number, events, meta: { by; at }): Effect\u003cRecorded[], WriteConflict>;\n  execute(decider, stream, command, ctx, by): Effect\u003cRecorded[] | Rejection, WriteConflict>; // read, decide, append\n}> { static layer(projections: ReadonlyArray\u003cProjection>): Layer\u003cEventStore, never, Sql> }"}},{"file":"packages/engine/src/adapters/","intent":"`bunSqlite`, `durableObject`, `d1` (one atomic batch) and `postgres` layers for the Sql port."},{"file":"packages/engine/src/story.ts","intent":"`story(layer, dir)` runs steps on real SQL; each `then` lists exactly what that step appended."},{"file":"packages/engine/test/store.test.ts","intent":"On bun:sqlite and PGlite: same-write projections, stale appends conflict, failed projections roll back."}],"verify":{"automated":[{"cmd":"bun test packages/engine","done":false},{"cmd":"just lint","done":false},{"cmd":"just arch-check","done":false}],"manual":[{"text":"Read the example at the top of `story.ts`; it reads as what happened.","done":false}]}},{"id":"accounts","name":"Account context: sign up, sign in, sign out","goal":"The account decider turns the four commands into AccountOpened, SignedIn and SignedOut. Both stories pass and read as prose.","diagram":"account","changes":[{"file":"packages/domain/src/account/decider.ts","intent":"RenameAccount records AccountRenamed; the same name again records nothing.","contract":{"lang":"ts","code":"SignUp        = defineCommand('SignUp',        { accountId, email, name, passwordHash })\nOpenAccount   = defineCommand('OpenAccount',   { accountId, email, name, admin, passwordHash }) // seeds, just user-add\nSignIn        = defineCommand('SignIn',        { accountId, passwordMatched, tokenHash, expiresAt })\nSignOut       = defineCommand('SignOut',       { accountId, tokenHash })\nAccountOpened = defineEvent('AccountOpened',   { accountId, email, name, admin, passwordHash })\nSignedIn      = defineEvent('SignedIn',        { accountId, tokenHash, expiresAt })\nSignedOut     = defineEvent('SignedOut',       { accountId, tokenHash })\ntype AccountState = { kind: 'none' } | { kind: 'open'; accountId; passwordHash; signIns: string[] }\naccountStream = (email) => `account-${email.trim().toLowerCase()}`"}},{"file":"packages/domain/src/account/password.ts","intent":"PBKDF2-SHA256 with Web Crypto and a constant-time compare; tokens stored only as SHA-256.","contract":{"lang":"ts","code":"hashPassword(password: string): Promise\u003cstring>;            // pbkdf2$100000$\u003csalt>$\u003chash>\nverifyPassword(password: string, stored: string): Promise\u003cboolean>;\nnewToken(): string;  tokenHash(token: string): Promise\u003cstring>;\nDECOY: string;  // verified against when the email is unknown"}},{"file":"packages/domain/src/account/view.ts","intent":"`accountsView`: the two tables, written in the same transaction as each event.","contract":{"lang":"sql","code":"CREATE TABLE IF NOT EXISTS accounts (account_id TEXT PRIMARY KEY, email TEXT NOT NULL UNIQUE, name TEXT NOT NULL,\n  admin INTEGER NOT NULL DEFAULT 0, password_hash TEXT NOT NULL, opened_at TEXT NOT NULL);\nCREATE TABLE IF NOT EXISTS sign_ins (token_hash TEXT PRIMARY KEY, account_id TEXT NOT NULL,\n  signed_in_at TEXT NOT NULL, expires_at TEXT NOT NULL);"}},{"file":"packages/domain/src/account/accounts.ts","intent":"Sign-up takes a username as the participant id; a taken name is refused.","contract":{"lang":"ts","code":"class Accounts extends Context.Service\u003cAccounts, {\n  signUp(body: unknown): Effect\u003cAccount, SignUpRefused>;        // password of at least 12 characters\n  open(input: { email; name; password; admin }): Effect\u003cAccount, SignUpRefused>;\n  signIn(body: unknown): Effect\u003c{ token: string; account: Account }, SignInFailed>;  // 30 days\n  accountFor(token: string): Effect\u003cAccount | undefined>;\n  signOut(token: string): Effect\u003cvoid>;\n}>"}},{"file":"packages/domain/src/account/account.expect.test.ts","intent":"Two stories through the real engine on in-memory bun:sqlite, with a fixed clock."},{"file":"packages/domain/src/account/__expect__/sign-up.snap.txt","intent":"The sign-up story, every hash printed as •••.","contract":{"lang":"text","code":"when   Sam signs up as sam@greenhouse.test\nthen   AccountOpened      sam by sam email=\"sam@greenhouse.test\" name=\"Sam\" admin=false passwordHash=•••\nwhen   someone signs up again with SAM@greenhouse.test\nthen   rejected           an account with this email exists\nwhen   Ana signs up with a short password\nthen   rejected           an email, a name, and a password of at least 12 characters"}},{"file":"packages/domain/src/account/__expect__/sign-in.snap.txt","intent":"Wrong password and unknown email read alike; a second sign-out records nothing."},{"file":"packages/domain/src/account/rename.expect.test.ts","intent":"Stories: rename the agent, the same name again, no such account."}],"verify":{"automated":[{"cmd":"just test","done":false},{"cmd":"just domain-vocabulary-check","done":false}],"manual":[{"text":"Read `sign-up.snap.txt` aloud; it sounds like what happened.","done":false}]}},{"id":"edge","name":"HTTP, seeds and pages: sign up in the browser","goal":"The API serves `/auth/*` by bearer token or HttpOnly cookie; local D1 is migrated and seeded through the engine; the web app signs people in.","changes":[{"file":"apps/api/migrations/0002_accounts.sql","intent":"`stream_events`, `accounts` and `sign_ins`, with the exact DDL the engine and projection declare."},{"file":"apps/api/test/migrations.test.ts","intent":"Fails when the migration and the code's DDL drift apart."},{"file":"apps/api/src/auth.ts","intent":"HTTP onto `Accounts`; sign-up and sign-in limited to 20 a minute per IP.","contract":{"lang":"ts","code":"// POST /auth/sign-up  { email, name, password }  → 201 { account } | 409 { rejected }\n// POST /auth/sign-in  { email, password }        → 200 { account, token } + gh_session cookie | 401 { rejected }\n// POST /auth/sign-out                            → 200 { ok: true }; ends this sign-in only\n// GET  /auth/me                                  → 200 { account } | 401 { rejected: 'not signed in' }\nexport const tokenOf: (authorization?: string, cookie?: string) => string | undefined; // Bearer first\nexport const requireSignIn: MiddlewareHandler; // 401 without a live sign-in; sets c.var.account"}},{"file":"apps/api/src/index.ts","intent":"Mount `/auth`; `/readyz` reports the account count, or that 0002 is not applied."},{"file":"packages/db/seed.ts","intent":"Opens admin, Sam and the agent through the real engine; prints the rows as SQL."},{"file":".dev.vars.example","intent":"Local-only ADMIN_, USER_ and AGENT_ emails and passwords, read by the seed."},{"file":"scripts/user-add.sh","intent":"Asks for the password without echoing it, records AccountOpened; `GH_REMOTE=1` for prod."},{"file":"justfile","intent":"Adds `seed` and `user-add`; `up` and `reset` now seed; `test` covers engine, domain and api."},{"file":"apps/web/src/lib/session.ts","intent":"Server functions for sign-up, sign-in, sign-out and the current account; cookie on the web origin."},{"file":"apps/web/src/routes/signup.tsx","intent":"A Username field: how others see you and @mention you."},{"file":"apps/web/src/routes/login.tsx","intent":"Email and password; a refusal shows as a sentence, the fields keep their text."},{"file":"apps/web/src/components/Header.tsx","intent":"Your name and Sign out, or Sign in and Sign up; rechecks on navigation."},{"file":"apps/api/wrangler.jsonc","intent":"ratelimits: AUTH_LIMIT and WRITE_LIMIT, top level and env.demo; account_id pinned."},{"file":"apps/web/src/lib/next.ts","intent":"Sign-in and sign-up return to the shared link that brought you."}],"components":[{"name":"Sign up","notes":"One column, one action. The refusal is the API's own sentence, in an alert.","height":360,"css":"main { max-width: 360px; padding: 24px 16px; font-family: var(--font); color: var(--fg); }\nh1 { font-size: 24px; font-weight: 600; margin: 0; }\n.lede { margin: 8px 0 24px; font-size: 14px; color: var(--muted); }\nform { display: flex; flex-direction: column; gap: 12px; }\nlabel { font-size: 14px; }\ninput { display: block; width: 100%; box-sizing: border-box; margin-top: 4px; padding: 8px 12px; font: inherit; border: 1px solid var(--line); border-radius: var(--radius-md); background: #fff; color: var(--fg); }\nbutton { margin-top: 8px; padding: 8px 12px; font: inherit; border: 0; border-radius: var(--radius-md); background: var(--fg); color: #fff; }\nbutton[disabled] { opacity: 0.6; }\n.alert { margin: 0; font-size: 14px; color: var(--warn); }\n.alt { margin-top: 24px; font-size: 14px; color: var(--muted); }","states":[{"label":"empty","html":"\u003cmain>\u003ch1>Sign up for Greenhouse\u003c/h1>\u003cp class=\"lede\">A planning room for people and an agent.\u003c/p>\u003cform>\u003clabel>Name\u003cinput name=\"name\">\u003c/label>\u003clabel>Email\u003cinput name=\"email\" type=\"email\">\u003c/label>\u003clabel>Password\u003cinput name=\"password\" type=\"password\">\u003c/label>\u003cbutton type=\"button\">Sign up\u003c/button>\u003c/form>\u003cp class=\"alt\">Already have an account? \u003cu>Sign in\u003c/u>\u003c/p>\u003c/main>"},{"label":"busy","html":"\u003cmain>\u003ch1>Sign up for Greenhouse\u003c/h1>\u003cp class=\"lede\">A planning room for people and an agent.\u003c/p>\u003cform>\u003clabel>Name\u003cinput name=\"name\" value=\"Ana\">\u003c/label>\u003clabel>Email\u003cinput name=\"email\" type=\"email\" value=\"ana@greenhouse.test\">\u003c/label>\u003clabel>Password\u003cinput name=\"password\" type=\"password\" value=\"a long enough password\">\u003c/label>\u003cbutton type=\"button\" disabled>Creating your account…\u003c/button>\u003c/form>\u003c/main>"},{"label":"short password","html":"\u003cmain>\u003ch1>Sign up for Greenhouse\u003c/h1>\u003cp class=\"lede\">A planning room for people and an agent.\u003c/p>\u003cform>\u003clabel>Name\u003cinput name=\"name\" value=\"Ana\">\u003c/label>\u003clabel>Email\u003cinput name=\"email\" type=\"email\" value=\"ana@greenhouse.test\">\u003c/label>\u003clabel>Password\u003cinput name=\"password\" type=\"password\" value=\"short\">\u003c/label>\u003cp class=\"alert\" role=\"alert\">an email, a name, and a password of at least 12 characters\u003c/p>\u003cbutton type=\"button\">Sign up\u003c/button>\u003c/form>\u003c/main>"},{"label":"email taken","html":"\u003cmain>\u003ch1>Sign up for Greenhouse\u003c/h1>\u003cp class=\"lede\">A planning room for people and an agent.\u003c/p>\u003cform>\u003clabel>Name\u003cinput name=\"name\" value=\"Sam\">\u003c/label>\u003clabel>Email\u003cinput name=\"email\" type=\"email\" value=\"sam@greenhouse.test\">\u003c/label>\u003clabel>Password\u003cinput name=\"password\" type=\"password\" value=\"correct horse battery\">\u003c/label>\u003cp class=\"alert\" role=\"alert\">an account with this email exists\u003c/p>\u003cbutton type=\"button\">Sign up\u003c/button>\u003c/form>\u003c/main>"}]},{"name":"Sign in","notes":"The same answer for an unknown email and a wrong password, so it reveals nobody.","height":300,"css":"main { max-width: 360px; padding: 24px 16px; font-family: var(--font); color: var(--fg); }\nh1 { font-size: 24px; font-weight: 600; margin: 0; }\n.lede { margin: 8px 0 24px; font-size: 14px; color: var(--muted); }\nform { display: flex; flex-direction: column; gap: 12px; }\nlabel { font-size: 14px; }\ninput { display: block; width: 100%; box-sizing: border-box; margin-top: 4px; padding: 8px 12px; font: inherit; border: 1px solid var(--line); border-radius: var(--radius-md); background: #fff; color: var(--fg); }\nbutton { margin-top: 8px; padding: 8px 12px; font: inherit; border: 0; border-radius: var(--radius-md); background: var(--fg); color: #fff; }\nbutton[disabled] { opacity: 0.6; }\n.alert { margin: 0; font-size: 14px; color: var(--warn); }","states":[{"label":"empty","html":"\u003cmain>\u003ch1>Sign in to Greenhouse\u003c/h1>\u003cp class=\"lede\">A planning room for people and an agent.\u003c/p>\u003cform>\u003clabel>Email\u003cinput name=\"email\" type=\"email\">\u003c/label>\u003clabel>Password\u003cinput name=\"password\" type=\"password\">\u003c/label>\u003cbutton type=\"button\">Sign in\u003c/button>\u003c/form>\u003c/main>"},{"label":"busy","html":"\u003cmain>\u003ch1>Sign in to Greenhouse\u003c/h1>\u003cp class=\"lede\">A planning room for people and an agent.\u003c/p>\u003cform>\u003clabel>Email\u003cinput name=\"email\" type=\"email\" value=\"sam@greenhouse.test\">\u003c/label>\u003clabel>Password\u003cinput name=\"password\" type=\"password\" value=\"correct horse battery\">\u003c/label>\u003cbutton type=\"button\" disabled>Signing in…\u003c/button>\u003c/form>\u003c/main>"},{"label":"refused","html":"\u003cmain>\u003ch1>Sign in to Greenhouse\u003c/h1>\u003cp class=\"lede\">A planning room for people and an agent.\u003c/p>\u003cform>\u003clabel>Email\u003cinput name=\"email\" type=\"email\" value=\"sam@greenhouse.test\">\u003c/label>\u003clabel>Password\u003cinput name=\"password\" type=\"password\" value=\"correct horse\">\u003c/label>\u003cp class=\"alert\" role=\"alert\">wrong email or password\u003c/p>\u003cbutton type=\"button\">Sign in\u003c/button>\u003c/form>\u003c/main>"}]},{"name":"Header, signed out and in","notes":"Says who you are on every page. Blank while it checks, so it never flashes the wrong state.","height":60,"css":"nav { display: flex; align-items: center; gap: 20px; padding: 12px 16px; font: 14px var(--font); color: var(--fg); border-bottom: 1px solid var(--line); }\n.brand { font-weight: 600; }\n.right { margin-left: auto; display: flex; align-items: center; gap: 12px; }\n.muted { color: var(--muted); }\n.btn { padding: 4px 12px; border-radius: var(--radius-lg); background: var(--accent); color: var(--surface); font-weight: 600; }\nbutton { font: inherit; background: none; border: 0; color: var(--fg); padding: 0; }","states":[{"label":"checking","html":"\u003cnav aria-label=\"Main\">\u003cspan class=\"brand\">Greenhouse\u003c/span>\u003cspan class=\"right\">\u003c/span>\u003c/nav>"},{"label":"signed out","html":"\u003cnav aria-label=\"Main\">\u003cspan class=\"brand\">Greenhouse\u003c/span>\u003cspan class=\"right\">\u003cspan>Sign in\u003c/span>\u003cspan class=\"btn\">Sign up\u003c/span>\u003c/span>\u003c/nav>"},{"label":"signed in","html":"\u003cnav aria-label=\"Main\">\u003cspan class=\"brand\">Greenhouse\u003c/span>\u003cspan class=\"right\">\u003cspan class=\"muted\">Sam\u003c/span>\u003cbutton type=\"button\">Sign out\u003c/button>\u003c/span>\u003c/nav>"}]}],"verify":{"automated":[{"cmd":"just reset","done":false},{"cmd":"just test","done":false},{"cmd":"curl -sf localhost:3000/readyz | jq -e '.api.accounts | startswith(\"ok\")'","text":"with `just up` running; the seed opened three accounts","done":false}],"manual":[{"text":"Sign up at localhost:3000/signup; you land home with your name in the header.","done":false},{"text":"Sign out, then sign in as Sam with the logins in `.dev.vars.example`.","done":false},{"text":"`just agent-ready` reports one gap, the admin API, which cp-04 adds.","done":false}]}}],"references":["`skills/event-sourcing/SKILL.md`, `docs/ARCHITECTURE.md` (Event design)","`docs/DOMAIN-VOCABULARY.md`, Identity: Account and Sign-in"],"change":{"intent":"Usernames at sign-up, renames, and sign-in that returns to a shared link."}}</script>
+<script>
+  // Full screen for a component state or a diagram. When the browser refuses (embeds, automation, some policies),
+  // the frame expands to fill the window instead; Esc or the close button returns it.
+  const close = Object.assign(document.createElement('button'), { className: 'expanded-close', textContent: 'Close · Esc', hidden: true });
+  document.body.append(close);
+  let open = null;
+  const expand = (f, on) => {
+    if (open && open !== f) expand(open, false);
+    f.classList.toggle('is-expanded', on); document.body.classList.toggle('has-expanded', on); close.hidden = !on; open = on ? f : null;
+    f.contentWindow?.postMessage({ expanded: on }, '*');
+  };
+  const goFull = (f) => document.fullscreenElement ? document.exitFullscreen() : f.requestFullscreen().catch(() => expand(f, true));
+  close.onclick = () => open && expand(open, false);
+  addEventListener('keydown', (e) => { if (e.key === 'Escape' && open) expand(open, false); });
+  document.addEventListener('click', (e) => { const b = e.target.closest('button.full'); if (b) goFull(b.closest('.state').querySelector('iframe')); });
+  addEventListener('message', (e) => {
+    const want = e.data && e.data.fullscreen; if (!want) return;
+    const f = [...document.querySelectorAll('iframe')].find((x) => x.contentWindow === e.source); if (!f) return;
+    if (want === 'expand') expand(f, true); else if (want === 'exit' && open === f) expand(f, false);
+  });
+  const links = [...document.querySelectorAll('.toc a')]; const targets = links.map((a) => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const io = new IntersectionObserver((es) => { for (const e of es) if (e.isIntersecting) links.forEach((a) => a.toggleAttribute('aria-current', a.getAttribute('href') === '#' + e.target.id)); }, { rootMargin: '-20% 0px -70% 0px' });
+  targets.forEach((t) => io.observe(t));
+</script>
+</body>
+</html>
