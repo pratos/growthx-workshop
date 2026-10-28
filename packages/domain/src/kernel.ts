@@ -45,8 +45,8 @@ export function describeMessage(m: Message): string {
   if (typeof d.threadId === 'string') parts.push(d.threadId);
   if (typeof d.blockId === 'string') parts.push(`on ${d.blockId}`);
   if (typeof d.by === 'string') parts.push(`by ${d.by}`);
-  const quoted = ['body', 'decision', 'rationale'].filter((k) => typeof d[k] === 'string').map((k) => `${k === 'body' ? '' : k + ' '}"${d[k]}"`);
-  const rest = Object.entries(d).filter(([k, v]) => !['threadId', 'blockId', 'by', 'body', 'decision', 'rationale'].includes(k) && v !== undefined).map(([k, v]) => `${k}=${JSON.stringify(v)}`);
+  const quoted = ['body', 'decision', 'rationale'].filter((k) => typeof d[k] === 'string').map((k) => `${k === 'body' ? '' : k + ' '}"${String(d[k])}"`);
+  const rest = Object.entries(d).filter(([k, v]) => !['threadId', 'blockId', 'by', 'body', 'decision', 'rationale'].includes(k) && v !== undefined).map(([k, v]) => `${k}=${JSON.stringify(v) ?? 'undefined'}`);
   return `${m.type.padEnd(18)} ${[...parts, ...quoted, ...rest].join(' ')}`.trimEnd();
 }
 
