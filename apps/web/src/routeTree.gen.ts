@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as HealthzRouteImport } from './routes/healthz'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as AdminFlagsRouteImport } from './routes/admin.flags'
 import { Route as PlansPlanIdRouteImport } from './routes/plans.$planId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -29,6 +30,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminFlagsRoute = AdminFlagsRouteImport.update({
+  id: '/admin/flags',
+  path: '/admin/flags',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlansPlanIdRoute = PlansPlanIdRouteImport.update({
   id: '/plans/$planId',
   path: '/plans/$planId',
@@ -39,12 +45,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/healthz': typeof HealthzRoute
   '/login': typeof LoginRoute
+  '/admin/flags': typeof AdminFlagsRoute
   '/plans/$planId': typeof PlansPlanIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/healthz': typeof HealthzRoute
   '/login': typeof LoginRoute
+  '/admin/flags': typeof AdminFlagsRoute
   '/plans/$planId': typeof PlansPlanIdRoute
 }
 export interface FileRoutesById {
@@ -52,20 +60,23 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/healthz': typeof HealthzRoute
   '/login': typeof LoginRoute
+  '/admin/flags': typeof AdminFlagsRoute
   '/plans/$planId': typeof PlansPlanIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/healthz' | '/login' | '/plans/$planId'
+  fullPaths: '/' | '/healthz' | '/login' | '/admin/flags' | '/plans/$planId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/healthz' | '/login' | '/plans/$planId'
-  id: '__root__' | '/' | '/healthz' | '/login' | '/plans/$planId'
+  to: '/' | '/healthz' | '/login' | '/admin/flags' | '/plans/$planId'
+  id:
+    '__root__' | '/' | '/healthz' | '/login' | '/admin/flags' | '/plans/$planId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   HealthzRoute: typeof HealthzRoute
   LoginRoute: typeof LoginRoute
+  AdminFlagsRoute: typeof AdminFlagsRoute
   PlansPlanIdRoute: typeof PlansPlanIdRoute
 }
 
@@ -92,6 +103,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/flags': {
+      id: '/admin/flags'
+      path: '/admin/flags'
+      fullPath: '/admin/flags'
+      preLoaderRoute: typeof AdminFlagsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/plans/$planId': {
       id: '/plans/$planId'
       path: '/plans/$planId'
@@ -106,6 +124,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   HealthzRoute: HealthzRoute,
   LoginRoute: LoginRoute,
+  AdminFlagsRoute: AdminFlagsRoute,
   PlansPlanIdRoute: PlansPlanIdRoute,
 }
 export const routeTree = rootRouteImport
