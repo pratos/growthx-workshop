@@ -67,7 +67,7 @@ main li { margin: 0.25em 0; }
 .change .file { justify-self: start; font-size: 13px; }
 .change .intent { max-width: var(--measure); }
 .change .intent p { margin: 0; }
-.contract { max-width: 760px; }
+.contract { max-width: 920px; }
 .verify { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px 32px; }
 .checks { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
 .check { display: grid; grid-template-columns: 20px 1fr; gap: 10px; align-items: start; }
