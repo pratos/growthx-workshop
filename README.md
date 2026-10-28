@@ -15,9 +15,9 @@ Read `AGENTS.md` first, then `docs/GLOSSARY.md` and `docs/ARCHITECTURE.md`. The 
 
 | Where | What |
 |---|---|
-| `apps/api` | Hono Worker: `/healthz`, `/readyz`, commands in, events out. `PlanRoom` Durable Object holds each plan's event log. |
+| `apps/api` | Hono at the edge, Effect behind it: Flags, PlanRooms, Commands and FlagsAdmin services. `PlanRoom` Durable Object holds each plan's event log and fans it out over WebSockets. |
 | `apps/checkin` | The workshop's anonymous check-in Worker (growthx-eng.tarp.sh). Separate deploy, same conventions. |
-| `apps/web` | TanStack Start Worker. Talks to the api over a service binding only. Agentation toolbar in dev. |
+| `apps/web` | TanStack Start Worker. Talks to the api over a service binding only, including the plan's WebSocket. `/admin/flags` panel. Agentation toolbar in dev. |
 | `packages/domain` | The decider: commands validate, events are facts, projections are pure. Expect tests read as a story. |
 | `packages/schema` | The vocabulary as types. |
 | `apps/*/wrangler.jsonc` | Each Worker's bindings as config. `just deploy` runs wrangler for api then web, passes a `git describe` label, and never runs migrations. |
