@@ -105,8 +105,10 @@ export function intoPlan(content: string, prompt: string, answer: string): strin
 }
 export type Answerer = { answer(sessionId: string, runId: string, asked: string, room?: Room): Promise<string> };
 
+export const ATTEMPTS = 3;
+
 // Starts the oldest queued run in each open session (or picks up one it was already running, after a restart),
-// answers it, and finishes it. If the brain cannot answer, the run stays running and the next pass tries again.
+// answers it, and finishes it. A run the brain cannot answer after ATTEMPTS tries is failed with the reason.
 export async function tick(planId: string, me: string, api: SessionsApi, brain: Answerer, log: (line: string) => void = () => {}): Promise<number> {
   let done = 0;
   for (const s of await api.list(planId)) {
@@ -124,30 +126,40 @@ export async function tick(planId: string, me: string, api: SessionsApi, brain: 
     } else {
       log(`resuming ${run.runId} in ${s.sessionId}`);
     }
-    try {
-      // The room for this Run (when the API offers it): what the agent's tools act through, and where the answer streams.
-      const prompt = run.asked.startsWith(WRITE_PREFIX) ? run.asked.slice(WRITE_PREFIX.length) : run.asked;
-      let wrote = false;
-      const room: Room | undefined = api.post && api.writeIntoPlan ? {
-        askedBy: run.askedBy,
-        partial: throttled((t) => api.partial?.(planId, s.sessionId, run!.runId, t)),
-        writeIntoPlan: async (markdown) => { const w = await api.writeIntoPlan!(planId, prompt, markdown); wrote ||= w.ok; return w.ok ? "written into the plan" : `not written: ${w.rejected}`; },
-        drawIntoPlan: async (title, mermaid) => { const w = await api.writeIntoPlan!(planId, prompt, `## ${title}\n\n\`\`\`mermaid\n${mermaid}\n\`\`\``); wrote ||= w.ok; return w.ok ? "drawn into the plan" : `not drawn: ${w.rejected}`; },
-        post: async (body) => { const p = await api.post!(planId, s.sessionId, body); return p.ok ? "posted to the session" : `not posted: ${p.rejected}`; },
-      } : undefined;
-      const framed = api.readPlan
-        ? `${run.asked}\n\n<you>Your name in this room is ${(await api.myName?.()) ?? "agent"}; people mention you as @agent.</you>\n<run>Asked by ${run.askedBy} in the Session "${s.title ?? s.sessionId}" on plan ${planId}.</run>\n<plan_text>\n${planText(await api.readPlan(planId))}\n</plan_text>`
-        : run.asked;
-      const result = await brain.answer(s.sessionId, run.runId, framed, room);
-      const finished = await api.command(planId, "FinishRun", { sessionId: s.sessionId, runId: run.runId, result });
-      log(finished.ok ? `finished ${run.runId}` : `could not finish ${run.runId}: ${finished.rejected}`);
-      if (finished.ok && run.asked.startsWith(WRITE_PREFIX) && api.writeIntoPlan && !wrote) {
-        const wrote = await api.writeIntoPlan(planId, run.asked.slice(WRITE_PREFIX.length), result);
-        log(wrote.ok ? `wrote ${run.runId} into ${planId}` : `could not write ${run.runId} into ${planId}: ${wrote.rejected}`);
+    let lastError = "";
+    for (let attempt = 1; attempt <= ATTEMPTS; attempt++) {
+      try {
+        // The room for this Run (when the API offers it): what the agent's tools act through, and where the answer streams.
+        const prompt = run.asked.startsWith(WRITE_PREFIX) ? run.asked.slice(WRITE_PREFIX.length) : run.asked;
+        let wrote = false;
+        const room: Room | undefined = api.post && api.writeIntoPlan ? {
+          askedBy: run.askedBy,
+          partial: throttled((t) => api.partial?.(planId, s.sessionId, run!.runId, t)),
+          writeIntoPlan: async (markdown) => { const w = await api.writeIntoPlan!(planId, prompt, markdown); wrote ||= w.ok; return w.ok ? "written into the plan" : `not written: ${w.rejected}`; },
+          drawIntoPlan: async (title, mermaid) => { const w = await api.writeIntoPlan!(planId, prompt, `## ${title}\n\n\`\`\`mermaid\n${mermaid}\n\`\`\``); wrote ||= w.ok; return w.ok ? "drawn into the plan" : `not drawn: ${w.rejected}`; },
+          post: async (body) => { const p = await api.post!(planId, s.sessionId, body); return p.ok ? "posted to the session" : `not posted: ${p.rejected}`; },
+        } : undefined;
+        const framed = api.readPlan
+          ? `${run.asked}\n\n<you>Your name in this room is ${(await api.myName?.()) ?? "agent"}; people mention you as @agent.</you>\n<run>Asked by ${run.askedBy} in the Session "${s.title ?? s.sessionId}" on plan ${planId}.</run>\n<plan_text>\n${planText(await api.readPlan(planId))}\n</plan_text>`
+          : run.asked;
+        const result = await brain.answer(s.sessionId, run.runId, framed, room);
+        const finished = await api.command(planId, "FinishRun", { sessionId: s.sessionId, runId: run.runId, result });
+        log(finished.ok ? `finished ${run.runId}` : `could not finish ${run.runId}: ${finished.rejected}`);
+        if (finished.ok && run.asked.startsWith(WRITE_PREFIX) && api.writeIntoPlan && !wrote) {
+          const wrote = await api.writeIntoPlan(planId, run.asked.slice(WRITE_PREFIX.length), result);
+          log(wrote.ok ? `wrote ${run.runId} into ${planId}` : `could not write ${run.runId} into ${planId}: ${wrote.rejected}`);
+        }
+        done += finished.ok ? 1 : 0;
+        lastError = "";
+        break;
+      } catch (e) {
+        lastError = e instanceof Error ? e.message : String(e);
+        log(`attempt ${attempt} for ${run.runId} failed: ${lastError}`);
       }
-      done += finished.ok ? 1 : 0;
-    } catch (e) {
-      log(`could not answer ${run.runId} yet: ${e instanceof Error ? e.message : String(e)}; trying again next pass`);
+    }
+    if (lastError) {
+      const failed = await api.command(planId, "FailRun", { sessionId: s.sessionId, runId: run.runId, reason: `could not answer after ${ATTEMPTS} tries: ${lastError}`.slice(0, 400) });
+      log(failed.ok ? `failed ${run.runId}` : `could not fail ${run.runId}: ${failed.rejected}`);
     }
   }
   return done;

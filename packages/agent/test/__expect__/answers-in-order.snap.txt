@@ -1,0 +1,22 @@
+when   Pratos starts a session and asks twice
+then   SessionStarted     s1 gh-12 by pratos title="retry policy"
+       RunQueued          s1 r1 by pratos asked="client or wrapper?"
+       RunQueued          s1 r2 by pratos asked="and the backoff?"
+when   one agent pass answers the first question only
+then   RunStarted         s1 r1 by agent
+       RunFinished        s1 r1 by agent result="wrapper: one place to change"
+when   Pratos takes the second question
+then   RunStarted         s1 r2 by pratos
+when   an agent pass leaves Pratos’s run alone
+then   nothing recorded
+when   Pratos finishes it
+then   RunFinished        s1 r2 by pratos result="exponential, capped at 30s"
+when   Pratos asks a third question
+then   RunQueued          s1 r3 by pratos asked="and idempotency?"
+when   the agent starts it, then its process is killed before it answers
+then   RunStarted         s1 r3 by agent
+when   the restarted agent resumes its own running run and finishes it
+then   RunFinished        s1 r3 by agent result="the request id is the key"
+read   runs               r1  pratos  finished  agent  wrapper: one place to change
+                          r2  pratos  finished  pratos  exponential, capped at 30s
+                          r3  pratos  finished  agent  the request id is the key

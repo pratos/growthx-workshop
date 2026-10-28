@@ -13,6 +13,7 @@ export const Ask          = defineCommand('Ask',          { sessionId: Id, by: P
 export const StartRun     = defineCommand('StartRun',     { sessionId: Id, runId: Id, by: ParticipantId });
 export const Steer        = defineCommand('Steer',        { sessionId: Id, runId: Id, by: ParticipantId, steer: Text });
 export const FinishRun    = defineCommand('FinishRun',    { sessionId: Id, runId: Id, by: ParticipantId, result: Text });
+export const FailRun      = defineCommand('FailRun',      { sessionId: Id, runId: Id, by: ParticipantId, reason: Text });
 export const EndSession   = defineCommand('EndSession',   { sessionId: Id, by: ParticipantId });
 // What a Participant says to the others in the Session. Mentioning @agent is an Ask instead (the page sends that).
 export const PostMessage  = defineCommand('PostMessage',  { sessionId: Id, by: ParticipantId, body: Text });
@@ -23,14 +24,17 @@ export const RunQueued         = defineEvent('RunQueued',         { sessionId: I
 export const RunStarted        = defineEvent('RunStarted',        { sessionId: Id, runId: Id, by: ParticipantId });
 export const RunSteered        = defineEvent('RunSteered',        { sessionId: Id, runId: Id, by: ParticipantId, steer: Text });
 export const RunFinished       = defineEvent('RunFinished',       { sessionId: Id, runId: Id, by: ParticipantId, result: Text });
+export const RunFailed         = defineEvent('RunFailed',         { sessionId: Id, runId: Id, by: ParticipantId, reason: Text });
 export const SessionEnded      = defineEvent('SessionEnded',      { sessionId: Id, by: ParticipantId });
 export const MessagePosted     = defineEvent('MessagePosted',     { sessionId: Id, messageId: Id, by: ParticipantId, body: Text });
 
 export type SessionCommand = ReturnType<typeof StartSession> | ReturnType<typeof JoinSession> | ReturnType<typeof Ask> | ReturnType<typeof StartRun>
   | ReturnType<typeof Steer> | ReturnType<typeof FinishRun> | ReturnType<typeof EndSession> | ReturnType<typeof PostMessage>
+  | ReturnType<typeof FailRun>
   ;
 export type SessionEvent = ReturnType<typeof SessionStarted> | ReturnType<typeof ParticipantJoined> | ReturnType<typeof RunQueued> | ReturnType<typeof RunStarted>
   | ReturnType<typeof RunSteered> | ReturnType<typeof RunFinished> | ReturnType<typeof SessionEnded> | ReturnType<typeof MessagePosted>
+  | ReturnType<typeof RunFailed>
   ;
 
 type RunState = { runId: string; status: 'queued' | 'running' | 'finished' | 'failed'; startedBy?: string };
@@ -50,6 +54,7 @@ export const session: Decider<SessionState, SessionCommand, SessionEvent> = {
       case 'RunQueued':         return { ...state, runs: [...state.runs, { runId: event.data.runId, status: 'queued' }] };
       case 'RunStarted':        return { ...state, runs: setRun(state.runs, event.data.runId, { status: 'running', startedBy: event.data.by }) };
       case 'RunFinished':       return { ...state, runs: setRun(state.runs, event.data.runId, { status: 'finished' }) };
+      case 'RunFailed':         return { ...state, runs: setRun(state.runs, event.data.runId, { status: 'failed' }) };
       case 'SessionEnded':      return { ...state, kind: 'ended' };
       default:                  return state;
     }
@@ -86,6 +91,11 @@ export const session: Decider<SessionState, SessionCommand, SessionEvent> = {
         if (running?.runId !== command.data.runId) return reject(`${command.data.runId} is not running`);
         if (running.startedBy !== by) return reject(`only ${running.startedBy}, who started ${running.runId}, can finish it`);
         return [RunFinished(command.data)];
+      // A run that cannot finish ends as a fact too, with the reason, so nobody waits on it forever.
+      case 'FailRun':
+        if (running?.runId !== command.data.runId) return reject(`${command.data.runId} is not running`);
+        if (running.startedBy !== by) return reject(`only ${running.startedBy}, who started ${running.runId}, can fail it`);
+        return [RunFailed(command.data)];
       case 'PostMessage':
         if (!member) return reject(`${by} has not joined this session`);
         return [MessagePosted({ ...command.data, messageId: ctx.newId() })];

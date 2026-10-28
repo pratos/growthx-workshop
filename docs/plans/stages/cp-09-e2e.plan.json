@@ -1,0 +1,419 @@
+{
+  "title": "End-to-end tests across the product, bugs fixed test-first",
+  "ticket": "cp-09",
+  "date": "2026-10-28",
+  "status": "final",
+  "author": "pratos with Claude Code",
+  "summary": "The stories prove each part; nothing yet proves a person can use the whole product in a browser. This stage adds four flows a person walks, with the real agent answering, and one rule: every bug found is a failing test before it is a fix.",
+  "current": "cp-08 has every story green: the domain, the agent loop on in-memory SQLite, pi-durable after a restart. `just e2e` runs three browser tests, all on the admin pages. No browser signs up, decides, or gets an answer from the agent.",
+  "discoveries": [
+    "A form submitted before React hydrates posts natively; `__root.tsx` sets `<html data-hydrated>`, and `ready()` in `e2e/helpers.ts` waits for it.",
+    "Playwright matches button names as substrings, so a session titled 'Start here' matches `Start`; buttons use `exact: true`.",
+    "`agent-serve` keeps its pi-durable store in one default file; a test's agent needs its own `AGENT_STORE` or it shares yours.",
+    "Each run uses a fresh plan, `e2e-<time>`, so no plan room carries an earlier run's threads.",
+    "`e2e/playwright.config.ts` migrates, seeds and starts the app unless `:3000` already answers."
+  ],
+  "endState": "`just e2e` runs seven tests in a real browser, green: three admin tests and four flows, one with the real agent answering two people. Every bug fixed here has a test that failed first.",
+  "notDoing": [
+    "A real model in tests; the faux model is deterministic and free.",
+    "Screenshot comparisons; small visual issues go through Agentation notes.",
+    "Running `just e2e` in CI; it stays a local recipe for now.",
+    "`kill -9` in a browser test; `brain.test.ts` covers the restart."
+  ],
+  "approach": "Helpers first, because every flow waits on them. Then the agent process the flows share. Then the four flows. Bugs met on the way follow the rule.",
+  "decisions": [
+    {
+      "id": "agent-in-e2e",
+      "question": "Fake the agent in end-to-end tests, or run the real process?",
+      "options": [
+        {
+          "id": "real-faux",
+          "label": "Real agent-serve, faux model"
+        },
+        {
+          "id": "fake",
+          "label": "Fake the agent in the test"
+        },
+        {
+          "id": "real-model",
+          "label": "Real agent, real model"
+        }
+      ],
+      "chosen": "real-faux",
+      "by": "pratos",
+      "at": "2026-10-28",
+      "why": "The real `agent-serve` with the faux model puts the whole path under test: API, plan room, socket, the agent's sign-in, pi-durable. It stays offline and gives the same answer every run.",
+      "viz": {
+        "kind": "decision-report",
+        "question": "Fake the agent in end-to-end tests, or run the real process?",
+        "meta": {
+          "builtBy": "create-plan",
+          "builtAt": "2026-10-28",
+          "source": "e2e/flow.spec.ts"
+        },
+        "options": [
+          {
+            "id": "real-faux",
+            "label": "Real agent-serve, faux model",
+            "summary": "The test starts the agent process; it signs in and answers as in production.",
+            "diagram": "sequenceDiagram\n  participant S as Sam's browser\n  participant R as Plan room\n  participant G as agent-serve\n  S->>R: Ask\n  G->>R: StartRun, as the agent\n  G->>G: pi-durable, faux model\n  G->>R: FinishRun\n  R-->>S: the answer",
+            "tried": {
+              "kind": "branch",
+              "ref": "cp-09",
+              "summary": "7 tests green"
+            },
+            "axes": {
+              "path": "API, plan room, socket, agent sign-in, loop, pi-durable",
+              "offline": "Yes",
+              "same": "Yes",
+              "cost": "Nothing"
+            }
+          },
+          {
+            "id": "fake",
+            "label": "Fake the agent in the test",
+            "summary": "The test sends StartRun and FinishRun itself, as the agent account.",
+            "diagram": "sequenceDiagram\n  participant S as Sam's browser\n  participant R as Plan room\n  participant T as The test\n  S->>R: Ask\n  T->>R: StartRun\n  T->>R: FinishRun, a fixed answer\n  R-->>S: the answer",
+            "tried": null,
+            "axes": {
+              "path": "API, plan room, socket",
+              "offline": "Yes",
+              "same": "Yes",
+              "cost": "Nothing"
+            }
+          },
+          {
+            "id": "real-model",
+            "label": "Real agent, real model",
+            "summary": "The same process with a model key: real answers, real cost.",
+            "diagram": "sequenceDiagram\n  participant S as Sam's browser\n  participant R as Plan room\n  participant G as agent-serve\n  participant M as Model\n  S->>R: Ask\n  G->>R: StartRun\n  G->>M: the question\n  M-->>G: an answer, different each time\n  G->>R: FinishRun",
+            "tried": null,
+            "axes": {
+              "path": "Everything, plus the model",
+              "offline": "No",
+              "same": "No: answers change",
+              "cost": "Tokens on every run"
+            }
+          }
+        ],
+        "steps": [
+          {
+            "id": "ask",
+            "option": "real-faux",
+            "caption": "Sam asks in the browser.",
+            "focus": [
+              "S",
+              "R"
+            ],
+            "edges": [
+              "i0"
+            ]
+          },
+          {
+            "id": "run",
+            "option": "real-faux",
+            "caption": "The real agent signs in and starts the Run.",
+            "focus": [
+              "G"
+            ],
+            "edges": [
+              "i1",
+              "i2"
+            ]
+          },
+          {
+            "id": "answer",
+            "option": "real-faux",
+            "caption": "Its answer comes back over the socket.",
+            "focus": [
+              "S"
+            ],
+            "edges": [
+              "i3",
+              "i4"
+            ]
+          },
+          {
+            "id": "ask",
+            "option": "fake",
+            "caption": "The test plays the agent; the agent's code never runs.",
+            "focus": [
+              "T"
+            ],
+            "edges": [
+              "i0",
+              "i1",
+              "i2",
+              "i3"
+            ]
+          },
+          {
+            "id": "ask",
+            "option": "real-model",
+            "caption": "Everything runs, but the answer changes from run to run.",
+            "focus": [
+              "M"
+            ],
+            "edges": [
+              "i0",
+              "i1",
+              "i2",
+              "i3",
+              "i4"
+            ]
+          }
+        ],
+        "axes": [
+          {
+            "key": "path",
+            "label": "What is under test"
+          },
+          {
+            "key": "offline",
+            "label": "Runs offline"
+          },
+          {
+            "key": "same",
+            "label": "Same result every run"
+          },
+          {
+            "key": "cost",
+            "label": "Cost per run"
+          }
+        ]
+      }
+    }
+  ],
+  "diagrams": [
+    {
+      "id": "shared",
+      "spec": {
+        "kind": "event-stream",
+        "question": "What does the two-people-and-the-agent test drive, end to end?",
+        "meta": {
+          "builtBy": "create-plan",
+          "builtAt": "2026-10-28",
+          "source": "e2e/flow.spec.ts"
+        },
+        "diagram": "sequenceDiagram\n  participant A as Admin's browser\n  participant S as Sam's browser\n  participant R as Plan room\n  participant G as agent-serve\n  A->>R: OpenThread, who owns the retry budget?\n  R-->>S: the thread, over the socket\n  A->>R: StartSession, Retry budget\n  S->>R: JoinSession, then Ask\n  G->>R: StartRun, signed in as the agent\n  G->>G: pi-durable, faux model\n  G->>R: FinishRun, with the answer\n  R-->>A: the answer, in both browsers",
+        "steps": [
+          {
+            "id": "open",
+            "caption": "The admin opens a thread in one browser.",
+            "focus": [
+              "A",
+              "R"
+            ],
+            "edges": [
+              "i0"
+            ]
+          },
+          {
+            "id": "live",
+            "caption": "Sam sees it without a reload: the socket works.",
+            "focus": [
+              "S"
+            ],
+            "edges": [
+              "i1"
+            ]
+          },
+          {
+            "id": "start",
+            "caption": "The admin starts a session.",
+            "focus": [
+              "A"
+            ],
+            "edges": [
+              "i2"
+            ]
+          },
+          {
+            "id": "ask",
+            "caption": "Sam joins it and asks the agent.",
+            "focus": [
+              "S"
+            ],
+            "edges": [
+              "i3"
+            ]
+          },
+          {
+            "id": "run",
+            "caption": "The real agent process signs in and starts the Run.",
+            "focus": [
+              "G"
+            ],
+            "edges": [
+              "i4"
+            ]
+          },
+          {
+            "id": "think",
+            "caption": "pi-durable runs the faux model and checkpoints it.",
+            "focus": [
+              "G"
+            ],
+            "edges": [
+              "i5"
+            ]
+          },
+          {
+            "id": "finish",
+            "caption": "The agent finishes the Run with the answer.",
+            "focus": [
+              "G",
+              "R"
+            ],
+            "edges": [
+              "i6"
+            ]
+          },
+          {
+            "id": "both",
+            "caption": "Both browsers show the same answer.",
+            "focus": [
+              "A",
+              "S"
+            ],
+            "edges": [
+              "i7"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "phases": [
+    {
+      "id": "helpers",
+      "name": "Helpers that wait for the page",
+      "goal": "Every test reaches a page through `ready()`, signs in with the seeded logins, and never waits on a fixed timeout.",
+      "changes": [
+        {
+          "file": "e2e/helpers.ts",
+          "intent": "`ready()` waits for `<html data-hydrated>`; sign-in and sign-out use the seeded logins.",
+          "contract": {
+            "lang": "ts",
+            "code": "export const logins: Record<'admin' | 'sam' | 'agent', { email: string; password: string }>; // .dev.vars.example\nexport function ready(page: Page, path: string): Promise<void>;    // goto, then html[data-hydrated]\nexport function signIn(page: Page, who: { email: string; password: string }): Promise<void>;\nexport function signOut(page: Page): Promise<void>;                 // the top bar's Sign out, if signed in"
+          }
+        }
+      ],
+      "verify": {
+        "automated": [
+          {
+            "cmd": "just e2e admin",
+            "text": "the three admin tests pass on the helpers",
+            "done": false
+          }
+        ],
+        "manual": [
+          {
+            "text": "No test waits on a fixed timeout.",
+            "done": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "agent",
+      "name": "The real agent, started by the test",
+      "goal": "The flow file starts `agent-serve` on its own plan, with the faux model and its own store, and stops it after.",
+      "changes": [
+        {
+          "file": "packages/agent/src/serve.ts",
+          "intent": "Read `AGENT_STORE` for the pi-durable file, so a test's agent never shares yours.",
+          "contract": {
+            "lang": "sh",
+            "code": "PLAN=e2e-<time>                  # the fresh plan the flows use\nAGENT_MODEL=faux                 # deterministic answers, no key\nAGENT_STORE=<tmp>/agent.sqlite   # its own pi-durable store"
+          }
+        },
+        {
+          "file": "e2e/flow.spec.ts",
+          "intent": "`beforeAll` spawns `bun run src/serve.ts` with that environment; `afterAll` sends SIGINT."
+        }
+      ],
+      "verify": {
+        "automated": [
+          {
+            "cmd": "just e2e flow",
+            "done": false
+          }
+        ],
+        "manual": [
+          {
+            "text": "After `just e2e`, `packages/agent/agent-serve.sqlite` is unchanged.",
+            "done": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "flows",
+      "name": "Four flows a person walks",
+      "goal": "Sign-up, a thread to a decision, two people live with the agent, and signed out: each passes in a real browser.",
+      "diagram": "shared",
+      "changes": [
+        {
+          "file": "e2e/flow.spec.ts",
+          "intent": "Four tests: sign up, thread to decision, two people with the agent, signed out."
+        }
+      ],
+      "verify": {
+        "automated": [
+          {
+            "cmd": "just e2e",
+            "text": "7 passed",
+            "done": false
+          }
+        ],
+        "manual": [
+          {
+            "text": "Watch `just e2e --headed` once: the answer lands in both browsers.",
+            "done": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "rule",
+      "name": "Every bug: a failing test, then the fix",
+      "goal": "Each bug found while writing the flows is reproduced by a failing test before it is fixed; visual nits become Agentation notes.",
+      "changes": [
+        {
+          "file": "e2e/flow.spec.ts",
+          "intent": "A bug found is first a failing test here or in a story, then fixed."
+        }
+      ],
+      "verify": {
+        "automated": [
+          {
+            "cmd": "just test",
+            "done": false
+          },
+          {
+            "cmd": "just e2e",
+            "done": false
+          }
+        ],
+        "manual": [
+          {
+            "text": "Every fix in this stage has a test that failed before it.",
+            "done": false
+          },
+          {
+            "text": "Each visual nit is an Agentation note, resolved with a summary.",
+            "done": false
+          }
+        ]
+      }
+    }
+  ],
+  "references": [
+    "`docs/TESTING.md`: the flows, as a person tries them",
+    "`docs/WORKFLOW.md`, step 5: the screen with its browser test"
+  ],
+  "change": {
+    "intent": "Write the cp-09 stage plan: four browser flows with the real agent, and the failing-test-first rule."
+  }
+}
