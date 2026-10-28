@@ -17,6 +17,15 @@ The artifact runs standalone in a browser tab or inside an iframe in a Greenhous
 ## Artifact to host
 
 ```json
+{ "fullscreen": "expand" }   // browser refused full screen: please fix my frame to the window
+{ "fullscreen": "exit" }     // return my frame to the page
+{ "frameHeight": 1412 }       // my content height; size my frame to it
+```
+
+The host answers an expand or exit with `{ "expanded": true | false }`.
+
+
+```json
 { "type": "greenhouse:ready", "kind": "decision-report", "question": "…" }
 { "type": "greenhouse:step", "index": 3, "id": "resolve" }
 { "type": "greenhouse:decision",

@@ -53,7 +53,7 @@ Steps are interruptible: pressing next while a timeline runs calls `tl.complete(
 
 ## The camera
 
-Pele lays out at natural size (`responsive: false`); the page owns the viewBox. Each step computes the union of its focused nodes, focused edges and both endpoint nodes of those edges, in SVG units, pads it, matches the stage's aspect, refuses to zoom past 1.1:1, and clamps the frame inside the map so an edge node shows its neighbours rather than empty stage. Anime does not interpolate a four-number attribute string, so tween a plain object and write the attribute on each frame:
+Pele lays out at natural size (`responsive: false`); the page owns the viewBox. Each step frames its highlighted nodes first. It widens the frame to the focused edges and their far endpoint nodes only when the wider frame is less than 1.6 times the tight one (or still fits the closest allowed zoom); a long edge across the map otherwise leaves the frame, so the highlight stays readable. Every frame is padded, matched to the stage's aspect, capped at 1.1:1, and clamped inside the map. Anime does not interpolate a four-number attribute string, so tween a plain object and write the attribute on each frame:
 
 ```js
 const view = { x: 0, y: 0, w: W, h: H };
@@ -65,6 +65,10 @@ camera = anime.animate(view, { x, y, w, h, duration: 480 * D, ease: 'inOutQuart'
 On-screen movement uses ease-in-out, not ease-out; 480 ms because the whole frame moves and the eye has to follow it. Pause the running tween before starting the next so stepping fast retargets instead of queueing. With reduced motion the frame jumps.
 
 Skip the camera entirely when the diagram fits the stage at natural size: moving a picture that is already whole only costs attention.
+
+## Full screen
+
+The full screen button (Shift+F) takes the whole document full screen, not just the drawing, so the caption, steps and controls come with it. On `fullscreenchange` the stage takes every pixel the heading, caption and footer leave, and the camera reframes the current step. Embedded in a plan, the host iframe carries `allow="fullscreen" allowfullscreen`. When the browser refuses full screen (sandboxed embeds, automation, some policies), the artifact asks its host with `postMessage({ fullscreen: 'expand' })`; the host fixes the frame to the window, shows Close · Esc, and answers `{ expanded: true }` so the artifact resizes as if it were full screen.
 
 ## What not to do
 

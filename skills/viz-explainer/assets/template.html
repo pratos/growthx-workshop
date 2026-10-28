@@ -96,17 +96,19 @@
   footer { padding-bottom: 20px; font-size: 12.5px; color: var(--muted); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   [hidden] { display: none !important; }
   .embedded body { min-height: 0; }
+  .is-full body { min-height: 100vh; }
+  .is-full header, .is-full main, .is-full footer { max-width: none; }
   .embedded header { padding-top: 22px; }
 </style>
 </head>
 <body>
 <header>
   <h1 id="question"></h1>
-  <p class="byline"><span id="kind"></span><span>built by <b id="by"></b></span><span id="at"></span><span id="source"></span></p>
+  <p class="byline"><span id="kind"></span><span>built by <b id="by"></b></span><span id="at"></span></p>
   <nav class="tabs" id="tabs" role="tablist" hidden></nav>
 </header>
 <main>
-  <section class="stage"><div id="diagram"></div><div class="stage-controls"><button id="reset" title="r" aria-label="Reset to the first step">reset</button><button id="fit" aria-pressed="false" title="f">fit all</button></div></section>
+  <section class="stage"><div id="diagram"></div><div class="stage-controls"><button id="reset" title="r" aria-label="Reset to the first step">reset</button><button id="fit" aria-pressed="false" title="f">fit all</button><button id="full" aria-pressed="false" title="Shift+F">full screen</button></div></section>
   <section class="rail">
     <div class="rail-text">
       <p class="step-label" id="stepLabel"></p>
@@ -132,7 +134,7 @@
     <button id="pSend">Propose</button>
   </section>
 </main>
-<footer><span id="hint">← → to step · f to fit all · r to reset · one question, one artifact</span><span id="status">standalone</span></footer>
+<footer><span id="hint">← → to step · f to fit all · ⇧F full screen · r to reset</span><span id="status">standalone</span></footer>
 
 <script type="application/json" id="spec">
 {
@@ -156,7 +158,10 @@
   // Embedded in a plan or a doc: size against a fixed reference instead of the frame (which grows to fit us), and report our height.
   const embedded = window.parent !== window;
   if (embedded) document.documentElement.classList.add('embedded');
-  const viewH = () => embedded ? 760 : innerHeight;
+  // Full means real full screen, or the host page expanding our frame to the window when the browser refuses full screen.
+  let expanded = false;
+  const isFull = () => !!document.fullscreenElement || expanded;
+  const viewH = () => embedded && !isFull() ? 760 : innerHeight;
   const $ = id => document.getElementById(id);
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const D = reduced ? 0 : 1;
@@ -173,7 +178,6 @@
   $('kind').textContent = KIND[spec.kind] || spec.kind;
   $('by').textContent = spec.meta?.builtBy || 'agent';
   $('at').textContent = spec.meta?.builtAt || '';
-  $('source').textContent = spec.meta?.source || '';
 
   const steps = () => (spec.steps || []).filter(s => !s.option || s.option === optionId);
   const diagramText = () => spec.options ? spec.options.find(o => o.id === optionId)?.diagram : spec.diagram;
@@ -224,12 +228,16 @@
     const cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
     // Keep the frame inside the map: a node at the edge shows its neighbours, not empty stage.
     const clamp = (v, size, total) => size >= total ? (total - size) / 2 : Math.min(Math.max(v, 0), total - size);
-    return [clamp(cx - w / 2, w, full[2]), clamp(cy - h / 2, h, full[3]), w, h];
+    const box = [clamp(cx - w / 2, w, full[2]), clamp(cy - h / 2, h, full[3]), w, h];
+    box.raw = Math.max(x2 - x1, (y2 - y1) * aspect);
+    return box;
   }
   // The stage takes its height from the diagram's proportions, with headroom for the camera, so a wide map is not letterboxed.
   function fitStage() {
     if (!full) return;
     const stage = document.querySelector('.stage');
+    // Full screen: the stage takes every pixel the heading, caption and controls leave.
+    if (isFull()) { const rest = ['header', '.rail', 'footer'].reduce((n, q) => n + (document.querySelector(q)?.offsetHeight ?? 0), 0) + 96; stage.style.height = `${Math.max(320, innerHeight - rest)}px`; return; }
     // A diagram that fits at natural size gets a stage its own height and no camera. A wider one gets most of the viewport.
     const h = fitsWhole() ? full[3] + 32 : Math.max(viewH() * 0.56, 420, stage.clientWidth * (full[3] / full[2]));
     stage.style.height = `${Math.round(Math.min(viewH() * 0.64, Math.max(300, h)))}px`;
@@ -264,6 +272,23 @@
   function updateReset() { $('reset').disabled = stepIndex === 0 && !fitAll && (!spec.options || optionId === spec.options[0].id); }
   $('reset').onclick = reset;
 
+  // Full screen the whole artifact, not just the drawing, so the caption and step controls stay with it.
+  if (!document.fullscreenEnabled && !embedded) $('full').hidden = true;
+  const onFullChange = () => {
+    document.documentElement.classList.toggle('is-full', isFull());
+    $('full').setAttribute('aria-pressed', String(isFull()));
+    $('full').textContent = isFull() ? 'exit full screen' : 'full screen';
+    requestAnimationFrame(() => { fitStage(); applyStep(stepIndex, false); });
+  };
+  $('full').onclick = () => {
+    if (document.fullscreenElement) return document.exitFullscreen();
+    if (expanded) return parent.postMessage({ fullscreen: 'exit' }, '*');
+    // Some browsers and embeds refuse full screen; then ask the host page to expand our frame instead.
+    document.documentElement.requestFullscreen().catch(() => { if (embedded) parent.postMessage({ fullscreen: 'expand' }, '*'); });
+  };
+  document.addEventListener('fullscreenchange', onFullChange);
+  addEventListener('message', (e) => { if (e.data && typeof e.data.expanded === 'boolean') { expanded = e.data.expanded; onFullChange(); } });
+
   function applyStep(i, animated) {
     const list = steps();
     const step = list[i];
@@ -283,7 +308,12 @@
     // Frame the focus and both ends of every focused edge, so an arrow never points off screen.
     const ends = edgeIds.flatMap(id => (/^L_(.+)_(.+)_\d+$/.exec(id) ?? []).slice(1))
       .map(n => svg.querySelector(`.pele-node[data-id="${n}"]`)).filter(Boolean);
-    moveCamera(fitAll || fitsWhole() || !(on.length || onEdges.length) ? full : boxOf([...on, ...onEdges, ...ends]), animated);
+    // Frame what is highlighted. Pull out to an edge's far end only when that costs little zoom;
+    // otherwise the edge leaves the frame pointing where it goes, and the highlight stays readable.
+    const tight = on.length ? boxOf(on) : null;
+    const wide = boxOf([...on, ...onEdges, ...ends]);
+    const roomy = tight && wide && wide.raw <= Math.max(tight.raw * 1.6, ($('diagram').clientWidth / 1.1) * 0.9);
+    moveCamera(fitAll || fitsWhole() || !(on.length || onEdges.length) ? full : (tight && !roomy ? tight : wide), animated);
     const dim = focusIds.length || edgeIds.length ? 0.3 : 1;
     const dur = animated ? 180 * D : 0;
     anime.animate(nodes, { opacity: dim, duration: dur, ease: 'outQuad' });
@@ -313,7 +343,7 @@
   addEventListener('hashchange', () => go(fromHash()));
   $('prev').onclick = () => go(stepIndex - 1);
   $('next').onclick = () => go(stepIndex + 1);
-  addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') return; if (e.key === 'ArrowRight') go(stepIndex + 1); if (e.key === 'ArrowLeft') go(stepIndex - 1); if (e.key === 'f') $('fit').click(); if (e.key === 'r' || e.key === 'Home') reset(); });
+  addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') return; if (e.key === 'ArrowRight') go(stepIndex + 1); if (e.key === 'ArrowLeft') go(stepIndex - 1); if (e.key === 'f') $('fit').click(); if (e.key === 'F') $('full').click(); if (e.key === 'Escape' && expanded) parent.postMessage({ fullscreen: 'exit' }, '*'); if (e.key === 'r' || e.key === 'Home') reset(); });
   addEventListener('resize', () => { fitStage(); applyStep(stepIndex, false); });
 
   // Options: tabs, comparison, decision

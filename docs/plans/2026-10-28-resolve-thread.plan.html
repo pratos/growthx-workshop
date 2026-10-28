@@ -8,7 +8,7 @@
   // Frames report their own height; listen before any of them load, and match by sender, not by a label.
   addEventListener('message', (e) => {
     const h = e.data && e.data.frameHeight; if (!h) return;
-    for (const f of document.querySelectorAll('iframe')) if (f.contentWindow === e.source) f.style.height = Math.min(Math.max(h + 4, 60), 2400) + 'px';
+    for (const f of document.querySelectorAll('iframe')) if (f.contentWindow === e.source && !f.classList.contains('is-expanded')) f.style.height = Math.min(Math.max(h + 4, 60), 2400) + 'px';
   });
 </script>
 <style>:root {
@@ -100,7 +100,10 @@ iframe.viz { display: block; width: 100%; max-width: 1040px; height: 640px; tran
 .component-block figcaption { font-size: 14.5px; color: var(--muted); margin-bottom: 10px; }
 .component-block figcaption b { color: var(--fg); font-weight: 600; }
 .states { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
-.state-label { font-size: 12.5px; color: var(--muted); margin: 0 0 6px; }
+.state-label { font-size: 12.5px; color: var(--muted); margin: 0 0 6px; display: flex; justify-content: space-between; align-items: baseline; }
+.state-label .full { font: inherit; font-size: 12px; color: var(--muted); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+@media (hover: hover) and (pointer: fine) { .state-label .full:hover { color: var(--fg); } }
+iframe.component:fullscreen { height: 100vh !important; border: 0; border-radius: 0; }
 iframe.component { display: block; width: 100%; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); transition: height .2s ease; }
 details { margin-top: 10px; }
 details summary { cursor: pointer; color: var(--muted); font-size: 13.5px; }
@@ -130,6 +133,10 @@ main > footer { margin-top: 72px; padding-top: 20px; border-top: 1px solid var(-
 details.report { margin-top: 8px; }
 details.report > summary { font-size: 14px; color: var(--accent); width: fit-content; }
 details.report[open] > summary { margin-bottom: 4px; }
+
+iframe.is-expanded { position: fixed; inset: 0; z-index: 1000; width: 100vw !important; max-width: none; height: 100vh !important; margin: 0; border: 0; border-radius: 0; }
+body.has-expanded { overflow: hidden; }
+.expanded-close { position: fixed; z-index: 1001; top: 14px; right: 18px; font: inherit; font-size: 13px; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); cursor: pointer; box-shadow: 0 6px 20px -8px rgb(0 0 0 / .5); }
 </style>
 </head>
 <body>
@@ -153,7 +160,7 @@ details.report[open] > summary { margin-bottom: 4px; }
 </section>
   <section id="not"><h2>Not doing</h2><ul><li>Reopening a resolved thread; nobody has asked for it yet.</li><li>Editing a recorded decision; a change of mind is a new thread.</li><li>Notifications outside the plan page.</li></ul></section>
   <section id="approach"><h2>Approach</h2><p>Domain first, because event shapes are the contract everything else reads. Then the flag and API, so the behaviour exists and is off. Then the page, with every state shown first.</p>
-<iframe class="viz" title="How does a thread move from open to decided?" srcdoc="&lt;!doctype html&gt;
+<iframe class="viz" title="How does a thread move from open to decided?" allow="fullscreen" allowfullscreen srcdoc="&lt;!doctype html&gt;
 &lt;html lang=&quot;en&quot;&gt;
 &lt;head&gt;
 &lt;meta charset=&quot;utf-8&quot;&gt;
@@ -251,17 +258,19 @@ details.report[open] > summary { margin-bottom: 4px; }
   footer { padding-bottom: 20px; font-size: 12.5px; color: var(--muted); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   [hidden] { display: none !important; }
   .embedded body { min-height: 0; }
+  .is-full body { min-height: 100vh; }
+  .is-full header, .is-full main, .is-full footer { max-width: none; }
   .embedded header { padding-top: 22px; }
 &lt;/style&gt;
 &lt;/head&gt;
 &lt;body&gt;
 &lt;header&gt;
   &lt;h1 id=&quot;question&quot;&gt;&lt;/h1&gt;
-  &lt;p class=&quot;byline&quot;&gt;&lt;span id=&quot;kind&quot;&gt;&lt;/span&gt;&lt;span&gt;built by &lt;b id=&quot;by&quot;&gt;&lt;/b&gt;&lt;/span&gt;&lt;span id=&quot;at&quot;&gt;&lt;/span&gt;&lt;span id=&quot;source&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+  &lt;p class=&quot;byline&quot;&gt;&lt;span id=&quot;kind&quot;&gt;&lt;/span&gt;&lt;span&gt;built by &lt;b id=&quot;by&quot;&gt;&lt;/b&gt;&lt;/span&gt;&lt;span id=&quot;at&quot;&gt;&lt;/span&gt;&lt;/p&gt;
   &lt;nav class=&quot;tabs&quot; id=&quot;tabs&quot; role=&quot;tablist&quot; hidden&gt;&lt;/nav&gt;
 &lt;/header&gt;
 &lt;main&gt;
-  &lt;section class=&quot;stage&quot;&gt;&lt;div id=&quot;diagram&quot;&gt;&lt;/div&gt;&lt;div class=&quot;stage-controls&quot;&gt;&lt;button id=&quot;reset&quot; title=&quot;r&quot; aria-label=&quot;Reset to the first step&quot;&gt;reset&lt;/button&gt;&lt;button id=&quot;fit&quot; aria-pressed=&quot;false&quot; title=&quot;f&quot;&gt;fit all&lt;/button&gt;&lt;/div&gt;&lt;/section&gt;
+  &lt;section class=&quot;stage&quot;&gt;&lt;div id=&quot;diagram&quot;&gt;&lt;/div&gt;&lt;div class=&quot;stage-controls&quot;&gt;&lt;button id=&quot;reset&quot; title=&quot;r&quot; aria-label=&quot;Reset to the first step&quot;&gt;reset&lt;/button&gt;&lt;button id=&quot;fit&quot; aria-pressed=&quot;false&quot; title=&quot;f&quot;&gt;fit all&lt;/button&gt;&lt;button id=&quot;full&quot; aria-pressed=&quot;false&quot; title=&quot;Shift+F&quot;&gt;full screen&lt;/button&gt;&lt;/div&gt;&lt;/section&gt;
   &lt;section class=&quot;rail&quot;&gt;
     &lt;div class=&quot;rail-text&quot;&gt;
       &lt;p class=&quot;step-label&quot; id=&quot;stepLabel&quot;&gt;&lt;/p&gt;
@@ -287,7 +296,7 @@ details.report[open] > summary { margin-bottom: 4px; }
     &lt;button id=&quot;pSend&quot;&gt;Propose&lt;/button&gt;
   &lt;/section&gt;
 &lt;/main&gt;
-&lt;footer&gt;&lt;span id=&quot;hint&quot;&gt;← → to step · f to fit all · r to reset · one question, one artifact&lt;/span&gt;&lt;span id=&quot;status&quot;&gt;standalone&lt;/span&gt;&lt;/footer&gt;
+&lt;footer&gt;&lt;span id=&quot;hint&quot;&gt;← → to step · f to fit all · ⇧F full screen · r to reset&lt;/span&gt;&lt;span id=&quot;status&quot;&gt;standalone&lt;/span&gt;&lt;/footer&gt;
 
 &lt;script type=&quot;application/json&quot; id=&quot;spec&quot;&gt;
 {&quot;kind&quot;:&quot;state-explorer&quot;,&quot;question&quot;:&quot;How does a thread move from open to decided?&quot;,&quot;meta&quot;:{&quot;builtBy&quot;:&quot;create-plan&quot;,&quot;builtAt&quot;:&quot;2026-10-28&quot;,&quot;source&quot;:&quot;GH-12 plan&quot;},&quot;diagram&quot;:&quot;stateDiagram-v2\n  [*] --&gt; Open: OpenThread\n  Open --&gt; Open: Reply\n  Open --&gt; Resolved: ResolveThread\n  Resolved --&gt; [*]\n  note right of Resolved: DecisionRecorded&quot;,&quot;steps&quot;:[{&quot;id&quot;:&quot;open&quot;,&quot;caption&quot;:&quot;OpenThread anchors a thread to one block.&quot;,&quot;focus&quot;:[&quot;Open&quot;],&quot;edges&quot;:[&quot;edge0&quot;]},{&quot;id&quot;:&quot;reply&quot;,&quot;caption&quot;:&quot;Each reply is appended. The thread stays open.&quot;,&quot;focus&quot;:[&quot;Open&quot;],&quot;edges&quot;:[&quot;edge1&quot;]},{&quot;id&quot;:&quot;resolve&quot;,&quot;caption&quot;:&quot;ResolveThread moves it to Resolved and records the decision.&quot;,&quot;focus&quot;:[&quot;Resolved&quot;],&quot;edges&quot;:[&quot;edge2&quot;]},{&quot;id&quot;:&quot;twice&quot;,&quot;caption&quot;:&quot;Resolved is the end; the type system rejects a second resolve.&quot;,&quot;focus&quot;:[&quot;Resolved&quot;,&quot;root_end&quot;],&quot;edges&quot;:[&quot;edge3&quot;]}]}
@@ -299,7 +308,10 @@ details.report[open] > summary { margin-bottom: 4px; }
   // Embedded in a plan or a doc: size against a fixed reference instead of the frame (which grows to fit us), and report our height.
   const embedded = window.parent !== window;
   if (embedded) document.documentElement.classList.add(&#39;embedded&#39;);
-  const viewH = () =&gt; embedded ? 760 : innerHeight;
+  // Full means real full screen, or the host page expanding our frame to the window when the browser refuses full screen.
+  let expanded = false;
+  const isFull = () =&gt; !!document.fullscreenElement || expanded;
+  const viewH = () =&gt; embedded &amp;&amp; !isFull() ? 760 : innerHeight;
   const $ = id =&gt; document.getElementById(id);
   const reduced = matchMedia(&#39;(prefers-reduced-motion: reduce)&#39;).matches;
   const D = reduced ? 0 : 1;
@@ -316,7 +328,6 @@ details.report[open] > summary { margin-bottom: 4px; }
   $(&#39;kind&#39;).textContent = KIND[spec.kind] || spec.kind;
   $(&#39;by&#39;).textContent = spec.meta?.builtBy || &#39;agent&#39;;
   $(&#39;at&#39;).textContent = spec.meta?.builtAt || &#39;&#39;;
-  $(&#39;source&#39;).textContent = spec.meta?.source || &#39;&#39;;
 
   const steps = () =&gt; (spec.steps || []).filter(s =&gt; !s.option || s.option === optionId);
   const diagramText = () =&gt; spec.options ? spec.options.find(o =&gt; o.id === optionId)?.diagram : spec.diagram;
@@ -367,12 +378,16 @@ details.report[open] > summary { margin-bottom: 4px; }
     const cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
     // Keep the frame inside the map: a node at the edge shows its neighbours, not empty stage.
     const clamp = (v, size, total) =&gt; size &gt;= total ? (total - size) / 2 : Math.min(Math.max(v, 0), total - size);
-    return [clamp(cx - w / 2, w, full[2]), clamp(cy - h / 2, h, full[3]), w, h];
+    const box = [clamp(cx - w / 2, w, full[2]), clamp(cy - h / 2, h, full[3]), w, h];
+    box.raw = Math.max(x2 - x1, (y2 - y1) * aspect);
+    return box;
   }
   // The stage takes its height from the diagram&#39;s proportions, with headroom for the camera, so a wide map is not letterboxed.
   function fitStage() {
     if (!full) return;
     const stage = document.querySelector(&#39;.stage&#39;);
+    // Full screen: the stage takes every pixel the heading, caption and controls leave.
+    if (isFull()) { const rest = [&#39;header&#39;, &#39;.rail&#39;, &#39;footer&#39;].reduce((n, q) =&gt; n + (document.querySelector(q)?.offsetHeight ?? 0), 0) + 96; stage.style.height = `${Math.max(320, innerHeight - rest)}px`; return; }
     // A diagram that fits at natural size gets a stage its own height and no camera. A wider one gets most of the viewport.
     const h = fitsWhole() ? full[3] + 32 : Math.max(viewH() * 0.56, 420, stage.clientWidth * (full[3] / full[2]));
     stage.style.height = `${Math.round(Math.min(viewH() * 0.64, Math.max(300, h)))}px`;
@@ -407,6 +422,23 @@ details.report[open] > summary { margin-bottom: 4px; }
   function updateReset() { $(&#39;reset&#39;).disabled = stepIndex === 0 &amp;&amp; !fitAll &amp;&amp; (!spec.options || optionId === spec.options[0].id); }
   $(&#39;reset&#39;).onclick = reset;
 
+  // Full screen the whole artifact, not just the drawing, so the caption and step controls stay with it.
+  if (!document.fullscreenEnabled &amp;&amp; !embedded) $(&#39;full&#39;).hidden = true;
+  const onFullChange = () =&gt; {
+    document.documentElement.classList.toggle(&#39;is-full&#39;, isFull());
+    $(&#39;full&#39;).setAttribute(&#39;aria-pressed&#39;, String(isFull()));
+    $(&#39;full&#39;).textContent = isFull() ? &#39;exit full screen&#39; : &#39;full screen&#39;;
+    requestAnimationFrame(() =&gt; { fitStage(); applyStep(stepIndex, false); });
+  };
+  $(&#39;full&#39;).onclick = () =&gt; {
+    if (document.fullscreenElement) return document.exitFullscreen();
+    if (expanded) return parent.postMessage({ fullscreen: &#39;exit&#39; }, &#39;*&#39;);
+    // Some browsers and embeds refuse full screen; then ask the host page to expand our frame instead.
+    document.documentElement.requestFullscreen().catch(() =&gt; { if (embedded) parent.postMessage({ fullscreen: &#39;expand&#39; }, &#39;*&#39;); });
+  };
+  document.addEventListener(&#39;fullscreenchange&#39;, onFullChange);
+  addEventListener(&#39;message&#39;, (e) =&gt; { if (e.data &amp;&amp; typeof e.data.expanded === &#39;boolean&#39;) { expanded = e.data.expanded; onFullChange(); } });
+
   function applyStep(i, animated) {
     const list = steps();
     const step = list[i];
@@ -426,7 +458,12 @@ details.report[open] > summary { margin-bottom: 4px; }
     // Frame the focus and both ends of every focused edge, so an arrow never points off screen.
     const ends = edgeIds.flatMap(id =&gt; (/^L_(.+)_(.+)_\d+$/.exec(id) ?? []).slice(1))
       .map(n =&gt; svg.querySelector(`.pele-node[data-id=&quot;${n}&quot;]`)).filter(Boolean);
-    moveCamera(fitAll || fitsWhole() || !(on.length || onEdges.length) ? full : boxOf([...on, ...onEdges, ...ends]), animated);
+    // Frame what is highlighted. Pull out to an edge&#39;s far end only when that costs little zoom;
+    // otherwise the edge leaves the frame pointing where it goes, and the highlight stays readable.
+    const tight = on.length ? boxOf(on) : null;
+    const wide = boxOf([...on, ...onEdges, ...ends]);
+    const roomy = tight &amp;&amp; wide &amp;&amp; wide.raw &lt;= Math.max(tight.raw * 1.6, ($(&#39;diagram&#39;).clientWidth / 1.1) * 0.9);
+    moveCamera(fitAll || fitsWhole() || !(on.length || onEdges.length) ? full : (tight &amp;&amp; !roomy ? tight : wide), animated);
     const dim = focusIds.length || edgeIds.length ? 0.3 : 1;
     const dur = animated ? 180 * D : 0;
     anime.animate(nodes, { opacity: dim, duration: dur, ease: &#39;outQuad&#39; });
@@ -456,7 +493,7 @@ details.report[open] > summary { margin-bottom: 4px; }
   addEventListener(&#39;hashchange&#39;, () =&gt; go(fromHash()));
   $(&#39;prev&#39;).onclick = () =&gt; go(stepIndex - 1);
   $(&#39;next&#39;).onclick = () =&gt; go(stepIndex + 1);
-  addEventListener(&#39;keydown&#39;, e =&gt; { if (e.target.tagName === &#39;INPUT&#39;) return; if (e.key === &#39;ArrowRight&#39;) go(stepIndex + 1); if (e.key === &#39;ArrowLeft&#39;) go(stepIndex - 1); if (e.key === &#39;f&#39;) $(&#39;fit&#39;).click(); if (e.key === &#39;r&#39; || e.key === &#39;Home&#39;) reset(); });
+  addEventListener(&#39;keydown&#39;, e =&gt; { if (e.target.tagName === &#39;INPUT&#39;) return; if (e.key === &#39;ArrowRight&#39;) go(stepIndex + 1); if (e.key === &#39;ArrowLeft&#39;) go(stepIndex - 1); if (e.key === &#39;f&#39;) $(&#39;fit&#39;).click(); if (e.key === &#39;F&#39;) $(&#39;full&#39;).click(); if (e.key === &#39;Escape&#39; &amp;&amp; expanded) parent.postMessage({ fullscreen: &#39;exit&#39; }, &#39;*&#39;); if (e.key === &#39;r&#39; || e.key === &#39;Home&#39;) reset(); });
   addEventListener(&#39;resize&#39;, () =&gt; { fitStage(); applyStep(stepIndex, false); });
 
   // Options: tabs, comparison, decision
@@ -533,7 +570,7 @@ details.report[open] > summary { margin-bottom: 4px; }
     <p class="chosen">Chosen: <b>Two events</b> · pratos · 2026-10-27</p>
     <p>Two events keep a closed thread and a made decision as separate facts, so a projection can count decisions without reading thread state. Both explorations passed their expect tests.</p>
 
-    <details class="report"><summary>Compare the 3 options</summary><iframe class="viz" title="Is a decision its own fact, or part of ThreadResolved?" srcdoc="&lt;!doctype html&gt;
+    <details class="report"><summary>Compare the 3 options</summary><iframe class="viz" title="Is a decision its own fact, or part of ThreadResolved?" allow="fullscreen" allowfullscreen srcdoc="&lt;!doctype html&gt;
 &lt;html lang=&quot;en&quot;&gt;
 &lt;head&gt;
 &lt;meta charset=&quot;utf-8&quot;&gt;
@@ -631,17 +668,19 @@ details.report[open] > summary { margin-bottom: 4px; }
   footer { padding-bottom: 20px; font-size: 12.5px; color: var(--muted); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   [hidden] { display: none !important; }
   .embedded body { min-height: 0; }
+  .is-full body { min-height: 100vh; }
+  .is-full header, .is-full main, .is-full footer { max-width: none; }
   .embedded header { padding-top: 22px; }
 &lt;/style&gt;
 &lt;/head&gt;
 &lt;body&gt;
 &lt;header&gt;
   &lt;h1 id=&quot;question&quot;&gt;&lt;/h1&gt;
-  &lt;p class=&quot;byline&quot;&gt;&lt;span id=&quot;kind&quot;&gt;&lt;/span&gt;&lt;span&gt;built by &lt;b id=&quot;by&quot;&gt;&lt;/b&gt;&lt;/span&gt;&lt;span id=&quot;at&quot;&gt;&lt;/span&gt;&lt;span id=&quot;source&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+  &lt;p class=&quot;byline&quot;&gt;&lt;span id=&quot;kind&quot;&gt;&lt;/span&gt;&lt;span&gt;built by &lt;b id=&quot;by&quot;&gt;&lt;/b&gt;&lt;/span&gt;&lt;span id=&quot;at&quot;&gt;&lt;/span&gt;&lt;/p&gt;
   &lt;nav class=&quot;tabs&quot; id=&quot;tabs&quot; role=&quot;tablist&quot; hidden&gt;&lt;/nav&gt;
 &lt;/header&gt;
 &lt;main&gt;
-  &lt;section class=&quot;stage&quot;&gt;&lt;div id=&quot;diagram&quot;&gt;&lt;/div&gt;&lt;div class=&quot;stage-controls&quot;&gt;&lt;button id=&quot;reset&quot; title=&quot;r&quot; aria-label=&quot;Reset to the first step&quot;&gt;reset&lt;/button&gt;&lt;button id=&quot;fit&quot; aria-pressed=&quot;false&quot; title=&quot;f&quot;&gt;fit all&lt;/button&gt;&lt;/div&gt;&lt;/section&gt;
+  &lt;section class=&quot;stage&quot;&gt;&lt;div id=&quot;diagram&quot;&gt;&lt;/div&gt;&lt;div class=&quot;stage-controls&quot;&gt;&lt;button id=&quot;reset&quot; title=&quot;r&quot; aria-label=&quot;Reset to the first step&quot;&gt;reset&lt;/button&gt;&lt;button id=&quot;fit&quot; aria-pressed=&quot;false&quot; title=&quot;f&quot;&gt;fit all&lt;/button&gt;&lt;button id=&quot;full&quot; aria-pressed=&quot;false&quot; title=&quot;Shift+F&quot;&gt;full screen&lt;/button&gt;&lt;/div&gt;&lt;/section&gt;
   &lt;section class=&quot;rail&quot;&gt;
     &lt;div class=&quot;rail-text&quot;&gt;
       &lt;p class=&quot;step-label&quot; id=&quot;stepLabel&quot;&gt;&lt;/p&gt;
@@ -667,7 +706,7 @@ details.report[open] > summary { margin-bottom: 4px; }
     &lt;button id=&quot;pSend&quot;&gt;Propose&lt;/button&gt;
   &lt;/section&gt;
 &lt;/main&gt;
-&lt;footer&gt;&lt;span id=&quot;hint&quot;&gt;← → to step · f to fit all · r to reset · one question, one artifact&lt;/span&gt;&lt;span id=&quot;status&quot;&gt;standalone&lt;/span&gt;&lt;/footer&gt;
+&lt;footer&gt;&lt;span id=&quot;hint&quot;&gt;← → to step · f to fit all · ⇧F full screen · r to reset&lt;/span&gt;&lt;span id=&quot;status&quot;&gt;standalone&lt;/span&gt;&lt;/footer&gt;
 
 &lt;script type=&quot;application/json&quot; id=&quot;spec&quot;&gt;
 {&quot;kind&quot;:&quot;decision-report&quot;,&quot;question&quot;:&quot;Is a decision its own fact, or part of ThreadResolved?&quot;,&quot;meta&quot;:{&quot;builtBy&quot;:&quot;agent · just explore GH-12&quot;,&quot;builtAt&quot;:&quot;2026-10-27&quot;,&quot;source&quot;:&quot;GH-12 · two explorations&quot;},&quot;options&quot;:[{&quot;id&quot;:&quot;two-events&quot;,&quot;label&quot;:&quot;Two events&quot;,&quot;summary&quot;:&quot;ThreadResolved, then DecisionRecorded; a thread can close without a decision.&quot;,&quot;diagram&quot;:&quot;sequenceDiagram\n  participant P as Person\n  participant A as API\n  participant L as Event log\n  participant D as Decision log\n  P-&gt;&gt;A: ResolveThread(thread-7, \&quot;wrapper\&quot;)\n  A-&gt;&gt;L: ThreadResolved\n  A-&gt;&gt;L: DecisionRecorded\n  L-&gt;&gt;D: project decision&quot;,&quot;tried&quot;:{&quot;kind&quot;:&quot;exploration&quot;,&quot;ref&quot;:&quot;exp_two_events&quot;,&quot;summary&quot;:&quot;expect green, 2 projections touched&quot;},&quot;axes&quot;:{&quot;callSites&quot;:{&quot;count&quot;:4,&quot;list&quot;:[&quot;resolve.ts&quot;,&quot;decision-log.ts&quot;,&quot;thread-view.ts&quot;,&quot;mcp/list-decisions.ts&quot;]},&quot;mechanical&quot;:&quot;2 mechanical, 2 judgement (what a decision-less close means in the UI)&quot;,&quot;silent&quot;:&quot;Decision log can lag the thread by one event&quot;,&quot;invariant&quot;:&quot;\&quot;A decision references exactly one thread\&quot; stays a type; \&quot;every resolved thread has a decision\&quot; becomes a check&quot;}},{&quot;id&quot;:&quot;one-event&quot;,&quot;label&quot;:&quot;One event&quot;,&quot;summary&quot;:&quot;ThreadResolved carries the decision; closing without one is impossible.&quot;,&quot;diagram&quot;:&quot;sequenceDiagram\n  participant P as Person\n  participant A as API\n  participant L as Event log\n  participant D as Decision log\n  P-&gt;&gt;A: ResolveThread(thread-7, \&quot;wrapper\&quot;)\n  A-&gt;&gt;L: ThreadResolved{decision}\n  L-&gt;&gt;D: project decision&quot;,&quot;tried&quot;:{&quot;kind&quot;:&quot;exploration&quot;,&quot;ref&quot;:&quot;exp_one_event&quot;,&quot;summary&quot;:&quot;expect green, 1 projection touched&quot;},&quot;axes&quot;:{&quot;callSites&quot;:{&quot;count&quot;:3,&quot;list&quot;:[&quot;resolve.ts&quot;,&quot;decision-log.ts&quot;,&quot;mcp/list-decisions.ts&quot;]},&quot;mechanical&quot;:&quot;3 mechanical, 0 judgement&quot;,&quot;silent&quot;:&quot;None found&quot;,&quot;invariant&quot;:&quot;Both invariants are types. Loses \&quot;close without deciding\&quot;, which the glossary does not have&quot;}},{&quot;id&quot;:&quot;close-only&quot;,&quot;label&quot;:&quot;ThreadClosed, no decision&quot;,&quot;summary&quot;:&quot;The thread closes and nothing is recorded. This is what the first pass wrote.&quot;,&quot;diagram&quot;:&quot;sequenceDiagram\n  participant P as Person\n  participant A as API\n  participant L as Event log\n  P-&gt;&gt;A: ResolveThread(thread-7)\n  A-&gt;&gt;L: ThreadClosed&quot;,&quot;tried&quot;:null,&quot;axes&quot;:{&quot;callSites&quot;:{&quot;count&quot;:1,&quot;list&quot;:[&quot;resolve.ts&quot;]},&quot;mechanical&quot;:&quot;1 mechanical&quot;,&quot;silent&quot;:&quot;Decision ownership disappears&quot;,&quot;invariant&quot;:&quot;Breaks the glossary: there is no ThreadClosed&quot;}}],&quot;steps&quot;:[{&quot;id&quot;:&quot;cmd&quot;,&quot;option&quot;:&quot;two-events&quot;,&quot;caption&quot;:&quot;Pratos resolves thread 7 with one command and gives the decision in their own words.&quot;,&quot;edges&quot;:[&quot;i0&quot;],&quot;focus&quot;:[&quot;P&quot;,&quot;A&quot;]},{&quot;id&quot;:&quot;resolved&quot;,&quot;option&quot;:&quot;two-events&quot;,&quot;caption&quot;:&quot;The log records that the thread is resolved.&quot;,&quot;edges&quot;:[&quot;i1&quot;],&quot;focus&quot;:[&quot;L&quot;]},{&quot;id&quot;:&quot;decided&quot;,&quot;option&quot;:&quot;two-events&quot;,&quot;caption&quot;:&quot;The log records who decided what; this second event can be left out.&quot;,&quot;edges&quot;:[&quot;i2&quot;],&quot;focus&quot;:[&quot;L&quot;]},{&quot;id&quot;:&quot;proj&quot;,&quot;option&quot;:&quot;two-events&quot;,&quot;caption&quot;:&quot;The decision log is built from both events.&quot;,&quot;edges&quot;:[&quot;i3&quot;],&quot;focus&quot;:[&quot;D&quot;]},{&quot;id&quot;:&quot;cmd&quot;,&quot;option&quot;:&quot;one-event&quot;,&quot;caption&quot;:&quot;Pratos sends the same command.&quot;,&quot;edges&quot;:[&quot;i0&quot;],&quot;focus&quot;:[&quot;P&quot;,&quot;A&quot;]},{&quot;id&quot;:&quot;resolved&quot;,&quot;option&quot;:&quot;one-event&quot;,&quot;caption&quot;:&quot;One event records the resolve and the decision; no decision, no resolve.&quot;,&quot;edges&quot;:[&quot;i1&quot;],&quot;focus&quot;:[&quot;L&quot;]},{&quot;id&quot;:&quot;proj&quot;,&quot;option&quot;:&quot;one-event&quot;,&quot;caption&quot;:&quot;The decision log is built from that one event.&quot;,&quot;edges&quot;:[&quot;i2&quot;],&quot;focus&quot;:[&quot;D&quot;]},{&quot;id&quot;:&quot;cmd&quot;,&quot;option&quot;:&quot;close-only&quot;,&quot;caption&quot;:&quot;Every test passes, and the word ThreadClosed is not in the glossary.&quot;,&quot;edges&quot;:[&quot;i0&quot;,&quot;i1&quot;],&quot;focus&quot;:[&quot;L&quot;]}],&quot;decision&quot;:{&quot;optionId&quot;:&quot;two-events&quot;,&quot;label&quot;:&quot;Two events&quot;,&quot;by&quot;:{&quot;name&quot;:&quot;pratos&quot;},&quot;at&quot;:&quot;2026-10-27&quot;}}
@@ -679,7 +718,10 @@ details.report[open] > summary { margin-bottom: 4px; }
   // Embedded in a plan or a doc: size against a fixed reference instead of the frame (which grows to fit us), and report our height.
   const embedded = window.parent !== window;
   if (embedded) document.documentElement.classList.add(&#39;embedded&#39;);
-  const viewH = () =&gt; embedded ? 760 : innerHeight;
+  // Full means real full screen, or the host page expanding our frame to the window when the browser refuses full screen.
+  let expanded = false;
+  const isFull = () =&gt; !!document.fullscreenElement || expanded;
+  const viewH = () =&gt; embedded &amp;&amp; !isFull() ? 760 : innerHeight;
   const $ = id =&gt; document.getElementById(id);
   const reduced = matchMedia(&#39;(prefers-reduced-motion: reduce)&#39;).matches;
   const D = reduced ? 0 : 1;
@@ -696,7 +738,6 @@ details.report[open] > summary { margin-bottom: 4px; }
   $(&#39;kind&#39;).textContent = KIND[spec.kind] || spec.kind;
   $(&#39;by&#39;).textContent = spec.meta?.builtBy || &#39;agent&#39;;
   $(&#39;at&#39;).textContent = spec.meta?.builtAt || &#39;&#39;;
-  $(&#39;source&#39;).textContent = spec.meta?.source || &#39;&#39;;
 
   const steps = () =&gt; (spec.steps || []).filter(s =&gt; !s.option || s.option === optionId);
   const diagramText = () =&gt; spec.options ? spec.options.find(o =&gt; o.id === optionId)?.diagram : spec.diagram;
@@ -747,12 +788,16 @@ details.report[open] > summary { margin-bottom: 4px; }
     const cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
     // Keep the frame inside the map: a node at the edge shows its neighbours, not empty stage.
     const clamp = (v, size, total) =&gt; size &gt;= total ? (total - size) / 2 : Math.min(Math.max(v, 0), total - size);
-    return [clamp(cx - w / 2, w, full[2]), clamp(cy - h / 2, h, full[3]), w, h];
+    const box = [clamp(cx - w / 2, w, full[2]), clamp(cy - h / 2, h, full[3]), w, h];
+    box.raw = Math.max(x2 - x1, (y2 - y1) * aspect);
+    return box;
   }
   // The stage takes its height from the diagram&#39;s proportions, with headroom for the camera, so a wide map is not letterboxed.
   function fitStage() {
     if (!full) return;
     const stage = document.querySelector(&#39;.stage&#39;);
+    // Full screen: the stage takes every pixel the heading, caption and controls leave.
+    if (isFull()) { const rest = [&#39;header&#39;, &#39;.rail&#39;, &#39;footer&#39;].reduce((n, q) =&gt; n + (document.querySelector(q)?.offsetHeight ?? 0), 0) + 96; stage.style.height = `${Math.max(320, innerHeight - rest)}px`; return; }
     // A diagram that fits at natural size gets a stage its own height and no camera. A wider one gets most of the viewport.
     const h = fitsWhole() ? full[3] + 32 : Math.max(viewH() * 0.56, 420, stage.clientWidth * (full[3] / full[2]));
     stage.style.height = `${Math.round(Math.min(viewH() * 0.64, Math.max(300, h)))}px`;
@@ -787,6 +832,23 @@ details.report[open] > summary { margin-bottom: 4px; }
   function updateReset() { $(&#39;reset&#39;).disabled = stepIndex === 0 &amp;&amp; !fitAll &amp;&amp; (!spec.options || optionId === spec.options[0].id); }
   $(&#39;reset&#39;).onclick = reset;
 
+  // Full screen the whole artifact, not just the drawing, so the caption and step controls stay with it.
+  if (!document.fullscreenEnabled &amp;&amp; !embedded) $(&#39;full&#39;).hidden = true;
+  const onFullChange = () =&gt; {
+    document.documentElement.classList.toggle(&#39;is-full&#39;, isFull());
+    $(&#39;full&#39;).setAttribute(&#39;aria-pressed&#39;, String(isFull()));
+    $(&#39;full&#39;).textContent = isFull() ? &#39;exit full screen&#39; : &#39;full screen&#39;;
+    requestAnimationFrame(() =&gt; { fitStage(); applyStep(stepIndex, false); });
+  };
+  $(&#39;full&#39;).onclick = () =&gt; {
+    if (document.fullscreenElement) return document.exitFullscreen();
+    if (expanded) return parent.postMessage({ fullscreen: &#39;exit&#39; }, &#39;*&#39;);
+    // Some browsers and embeds refuse full screen; then ask the host page to expand our frame instead.
+    document.documentElement.requestFullscreen().catch(() =&gt; { if (embedded) parent.postMessage({ fullscreen: &#39;expand&#39; }, &#39;*&#39;); });
+  };
+  document.addEventListener(&#39;fullscreenchange&#39;, onFullChange);
+  addEventListener(&#39;message&#39;, (e) =&gt; { if (e.data &amp;&amp; typeof e.data.expanded === &#39;boolean&#39;) { expanded = e.data.expanded; onFullChange(); } });
+
   function applyStep(i, animated) {
     const list = steps();
     const step = list[i];
@@ -806,7 +868,12 @@ details.report[open] > summary { margin-bottom: 4px; }
     // Frame the focus and both ends of every focused edge, so an arrow never points off screen.
     const ends = edgeIds.flatMap(id =&gt; (/^L_(.+)_(.+)_\d+$/.exec(id) ?? []).slice(1))
       .map(n =&gt; svg.querySelector(`.pele-node[data-id=&quot;${n}&quot;]`)).filter(Boolean);
-    moveCamera(fitAll || fitsWhole() || !(on.length || onEdges.length) ? full : boxOf([...on, ...onEdges, ...ends]), animated);
+    // Frame what is highlighted. Pull out to an edge&#39;s far end only when that costs little zoom;
+    // otherwise the edge leaves the frame pointing where it goes, and the highlight stays readable.
+    const tight = on.length ? boxOf(on) : null;
+    const wide = boxOf([...on, ...onEdges, ...ends]);
+    const roomy = tight &amp;&amp; wide &amp;&amp; wide.raw &lt;= Math.max(tight.raw * 1.6, ($(&#39;diagram&#39;).clientWidth / 1.1) * 0.9);
+    moveCamera(fitAll || fitsWhole() || !(on.length || onEdges.length) ? full : (tight &amp;&amp; !roomy ? tight : wide), animated);
     const dim = focusIds.length || edgeIds.length ? 0.3 : 1;
     const dur = animated ? 180 * D : 0;
     anime.animate(nodes, { opacity: dim, duration: dur, ease: &#39;outQuad&#39; });
@@ -836,7 +903,7 @@ details.report[open] > summary { margin-bottom: 4px; }
   addEventListener(&#39;hashchange&#39;, () =&gt; go(fromHash()));
   $(&#39;prev&#39;).onclick = () =&gt; go(stepIndex - 1);
   $(&#39;next&#39;).onclick = () =&gt; go(stepIndex + 1);
-  addEventListener(&#39;keydown&#39;, e =&gt; { if (e.target.tagName === &#39;INPUT&#39;) return; if (e.key === &#39;ArrowRight&#39;) go(stepIndex + 1); if (e.key === &#39;ArrowLeft&#39;) go(stepIndex - 1); if (e.key === &#39;f&#39;) $(&#39;fit&#39;).click(); if (e.key === &#39;r&#39; || e.key === &#39;Home&#39;) reset(); });
+  addEventListener(&#39;keydown&#39;, e =&gt; { if (e.target.tagName === &#39;INPUT&#39;) return; if (e.key === &#39;ArrowRight&#39;) go(stepIndex + 1); if (e.key === &#39;ArrowLeft&#39;) go(stepIndex - 1); if (e.key === &#39;f&#39;) $(&#39;fit&#39;).click(); if (e.key === &#39;F&#39;) $(&#39;full&#39;).click(); if (e.key === &#39;Escape&#39; &amp;&amp; expanded) parent.postMessage({ fullscreen: &#39;exit&#39; }, &#39;*&#39;); if (e.key === &#39;r&#39; || e.key === &#39;Home&#39;) reset(); });
   addEventListener(&#39;resize&#39;, () =&gt; { fitStage(); applyStep(stepIndex, false); });
 
   // Options: tabs, comparison, decision
@@ -921,7 +988,7 @@ details.report[open] > summary { margin-bottom: 4px; }
     <header class="phase-head"><h2><span class="phase-num">Phase 1</span> Domain: resolve records two facts</h2><span class="pill pill-done">done · 3/3</span></header>
     <p>The thread decider accepts <code>ResolveThread</code> and returns <code>ThreadResolved</code> then <code>DecisionRecorded</code>. Resolving twice is refused by the state type, not by a check.</p>
 
-    <iframe class="viz" title="How does a thread move from open to decided?" srcdoc="&lt;!doctype html&gt;
+    <iframe class="viz" title="How does a thread move from open to decided?" allow="fullscreen" allowfullscreen srcdoc="&lt;!doctype html&gt;
 &lt;html lang=&quot;en&quot;&gt;
 &lt;head&gt;
 &lt;meta charset=&quot;utf-8&quot;&gt;
@@ -1019,17 +1086,19 @@ details.report[open] > summary { margin-bottom: 4px; }
   footer { padding-bottom: 20px; font-size: 12.5px; color: var(--muted); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   [hidden] { display: none !important; }
   .embedded body { min-height: 0; }
+  .is-full body { min-height: 100vh; }
+  .is-full header, .is-full main, .is-full footer { max-width: none; }
   .embedded header { padding-top: 22px; }
 &lt;/style&gt;
 &lt;/head&gt;
 &lt;body&gt;
 &lt;header&gt;
   &lt;h1 id=&quot;question&quot;&gt;&lt;/h1&gt;
-  &lt;p class=&quot;byline&quot;&gt;&lt;span id=&quot;kind&quot;&gt;&lt;/span&gt;&lt;span&gt;built by &lt;b id=&quot;by&quot;&gt;&lt;/b&gt;&lt;/span&gt;&lt;span id=&quot;at&quot;&gt;&lt;/span&gt;&lt;span id=&quot;source&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+  &lt;p class=&quot;byline&quot;&gt;&lt;span id=&quot;kind&quot;&gt;&lt;/span&gt;&lt;span&gt;built by &lt;b id=&quot;by&quot;&gt;&lt;/b&gt;&lt;/span&gt;&lt;span id=&quot;at&quot;&gt;&lt;/span&gt;&lt;/p&gt;
   &lt;nav class=&quot;tabs&quot; id=&quot;tabs&quot; role=&quot;tablist&quot; hidden&gt;&lt;/nav&gt;
 &lt;/header&gt;
 &lt;main&gt;
-  &lt;section class=&quot;stage&quot;&gt;&lt;div id=&quot;diagram&quot;&gt;&lt;/div&gt;&lt;div class=&quot;stage-controls&quot;&gt;&lt;button id=&quot;reset&quot; title=&quot;r&quot; aria-label=&quot;Reset to the first step&quot;&gt;reset&lt;/button&gt;&lt;button id=&quot;fit&quot; aria-pressed=&quot;false&quot; title=&quot;f&quot;&gt;fit all&lt;/button&gt;&lt;/div&gt;&lt;/section&gt;
+  &lt;section class=&quot;stage&quot;&gt;&lt;div id=&quot;diagram&quot;&gt;&lt;/div&gt;&lt;div class=&quot;stage-controls&quot;&gt;&lt;button id=&quot;reset&quot; title=&quot;r&quot; aria-label=&quot;Reset to the first step&quot;&gt;reset&lt;/button&gt;&lt;button id=&quot;fit&quot; aria-pressed=&quot;false&quot; title=&quot;f&quot;&gt;fit all&lt;/button&gt;&lt;button id=&quot;full&quot; aria-pressed=&quot;false&quot; title=&quot;Shift+F&quot;&gt;full screen&lt;/button&gt;&lt;/div&gt;&lt;/section&gt;
   &lt;section class=&quot;rail&quot;&gt;
     &lt;div class=&quot;rail-text&quot;&gt;
       &lt;p class=&quot;step-label&quot; id=&quot;stepLabel&quot;&gt;&lt;/p&gt;
@@ -1055,7 +1124,7 @@ details.report[open] > summary { margin-bottom: 4px; }
     &lt;button id=&quot;pSend&quot;&gt;Propose&lt;/button&gt;
   &lt;/section&gt;
 &lt;/main&gt;
-&lt;footer&gt;&lt;span id=&quot;hint&quot;&gt;← → to step · f to fit all · r to reset · one question, one artifact&lt;/span&gt;&lt;span id=&quot;status&quot;&gt;standalone&lt;/span&gt;&lt;/footer&gt;
+&lt;footer&gt;&lt;span id=&quot;hint&quot;&gt;← → to step · f to fit all · ⇧F full screen · r to reset&lt;/span&gt;&lt;span id=&quot;status&quot;&gt;standalone&lt;/span&gt;&lt;/footer&gt;
 
 &lt;script type=&quot;application/json&quot; id=&quot;spec&quot;&gt;
 {&quot;kind&quot;:&quot;state-explorer&quot;,&quot;question&quot;:&quot;How does a thread move from open to decided?&quot;,&quot;meta&quot;:{&quot;builtBy&quot;:&quot;create-plan&quot;,&quot;builtAt&quot;:&quot;2026-10-28&quot;,&quot;source&quot;:&quot;GH-12 plan&quot;},&quot;diagram&quot;:&quot;stateDiagram-v2\n  [*] --&gt; Open: OpenThread\n  Open --&gt; Open: Reply\n  Open --&gt; Resolved: ResolveThread\n  Resolved --&gt; [*]\n  note right of Resolved: DecisionRecorded&quot;,&quot;steps&quot;:[{&quot;id&quot;:&quot;open&quot;,&quot;caption&quot;:&quot;OpenThread anchors a thread to one block.&quot;,&quot;focus&quot;:[&quot;Open&quot;],&quot;edges&quot;:[&quot;edge0&quot;]},{&quot;id&quot;:&quot;reply&quot;,&quot;caption&quot;:&quot;Each reply is appended. The thread stays open.&quot;,&quot;focus&quot;:[&quot;Open&quot;],&quot;edges&quot;:[&quot;edge1&quot;]},{&quot;id&quot;:&quot;resolve&quot;,&quot;caption&quot;:&quot;ResolveThread moves it to Resolved and records the decision.&quot;,&quot;focus&quot;:[&quot;Resolved&quot;],&quot;edges&quot;:[&quot;edge2&quot;]},{&quot;id&quot;:&quot;twice&quot;,&quot;caption&quot;:&quot;Resolved is the end; the type system rejects a second resolve.&quot;,&quot;focus&quot;:[&quot;Resolved&quot;,&quot;root_end&quot;],&quot;edges&quot;:[&quot;edge3&quot;]}]}
@@ -1067,7 +1136,10 @@ details.report[open] > summary { margin-bottom: 4px; }
   // Embedded in a plan or a doc: size against a fixed reference instead of the frame (which grows to fit us), and report our height.
   const embedded = window.parent !== window;
   if (embedded) document.documentElement.classList.add(&#39;embedded&#39;);
-  const viewH = () =&gt; embedded ? 760 : innerHeight;
+  // Full means real full screen, or the host page expanding our frame to the window when the browser refuses full screen.
+  let expanded = false;
+  const isFull = () =&gt; !!document.fullscreenElement || expanded;
+  const viewH = () =&gt; embedded &amp;&amp; !isFull() ? 760 : innerHeight;
   const $ = id =&gt; document.getElementById(id);
   const reduced = matchMedia(&#39;(prefers-reduced-motion: reduce)&#39;).matches;
   const D = reduced ? 0 : 1;
@@ -1084,7 +1156,6 @@ details.report[open] > summary { margin-bottom: 4px; }
   $(&#39;kind&#39;).textContent = KIND[spec.kind] || spec.kind;
   $(&#39;by&#39;).textContent = spec.meta?.builtBy || &#39;agent&#39;;
   $(&#39;at&#39;).textContent = spec.meta?.builtAt || &#39;&#39;;
-  $(&#39;source&#39;).textContent = spec.meta?.source || &#39;&#39;;
 
   const steps = () =&gt; (spec.steps || []).filter(s =&gt; !s.option || s.option === optionId);
   const diagramText = () =&gt; spec.options ? spec.options.find(o =&gt; o.id === optionId)?.diagram : spec.diagram;
@@ -1135,12 +1206,16 @@ details.report[open] > summary { margin-bottom: 4px; }
     const cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
     // Keep the frame inside the map: a node at the edge shows its neighbours, not empty stage.
     const clamp = (v, size, total) =&gt; size &gt;= total ? (total - size) / 2 : Math.min(Math.max(v, 0), total - size);
-    return [clamp(cx - w / 2, w, full[2]), clamp(cy - h / 2, h, full[3]), w, h];
+    const box = [clamp(cx - w / 2, w, full[2]), clamp(cy - h / 2, h, full[3]), w, h];
+    box.raw = Math.max(x2 - x1, (y2 - y1) * aspect);
+    return box;
   }
   // The stage takes its height from the diagram&#39;s proportions, with headroom for the camera, so a wide map is not letterboxed.
   function fitStage() {
     if (!full) return;
     const stage = document.querySelector(&#39;.stage&#39;);
+    // Full screen: the stage takes every pixel the heading, caption and controls leave.
+    if (isFull()) { const rest = [&#39;header&#39;, &#39;.rail&#39;, &#39;footer&#39;].reduce((n, q) =&gt; n + (document.querySelector(q)?.offsetHeight ?? 0), 0) + 96; stage.style.height = `${Math.max(320, innerHeight - rest)}px`; return; }
     // A diagram that fits at natural size gets a stage its own height and no camera. A wider one gets most of the viewport.
     const h = fitsWhole() ? full[3] + 32 : Math.max(viewH() * 0.56, 420, stage.clientWidth * (full[3] / full[2]));
     stage.style.height = `${Math.round(Math.min(viewH() * 0.64, Math.max(300, h)))}px`;
@@ -1175,6 +1250,23 @@ details.report[open] > summary { margin-bottom: 4px; }
   function updateReset() { $(&#39;reset&#39;).disabled = stepIndex === 0 &amp;&amp; !fitAll &amp;&amp; (!spec.options || optionId === spec.options[0].id); }
   $(&#39;reset&#39;).onclick = reset;
 
+  // Full screen the whole artifact, not just the drawing, so the caption and step controls stay with it.
+  if (!document.fullscreenEnabled &amp;&amp; !embedded) $(&#39;full&#39;).hidden = true;
+  const onFullChange = () =&gt; {
+    document.documentElement.classList.toggle(&#39;is-full&#39;, isFull());
+    $(&#39;full&#39;).setAttribute(&#39;aria-pressed&#39;, String(isFull()));
+    $(&#39;full&#39;).textContent = isFull() ? &#39;exit full screen&#39; : &#39;full screen&#39;;
+    requestAnimationFrame(() =&gt; { fitStage(); applyStep(stepIndex, false); });
+  };
+  $(&#39;full&#39;).onclick = () =&gt; {
+    if (document.fullscreenElement) return document.exitFullscreen();
+    if (expanded) return parent.postMessage({ fullscreen: &#39;exit&#39; }, &#39;*&#39;);
+    // Some browsers and embeds refuse full screen; then ask the host page to expand our frame instead.
+    document.documentElement.requestFullscreen().catch(() =&gt; { if (embedded) parent.postMessage({ fullscreen: &#39;expand&#39; }, &#39;*&#39;); });
+  };
+  document.addEventListener(&#39;fullscreenchange&#39;, onFullChange);
+  addEventListener(&#39;message&#39;, (e) =&gt; { if (e.data &amp;&amp; typeof e.data.expanded === &#39;boolean&#39;) { expanded = e.data.expanded; onFullChange(); } });
+
   function applyStep(i, animated) {
     const list = steps();
     const step = list[i];
@@ -1194,7 +1286,12 @@ details.report[open] > summary { margin-bottom: 4px; }
     // Frame the focus and both ends of every focused edge, so an arrow never points off screen.
     const ends = edgeIds.flatMap(id =&gt; (/^L_(.+)_(.+)_\d+$/.exec(id) ?? []).slice(1))
       .map(n =&gt; svg.querySelector(`.pele-node[data-id=&quot;${n}&quot;]`)).filter(Boolean);
-    moveCamera(fitAll || fitsWhole() || !(on.length || onEdges.length) ? full : boxOf([...on, ...onEdges, ...ends]), animated);
+    // Frame what is highlighted. Pull out to an edge&#39;s far end only when that costs little zoom;
+    // otherwise the edge leaves the frame pointing where it goes, and the highlight stays readable.
+    const tight = on.length ? boxOf(on) : null;
+    const wide = boxOf([...on, ...onEdges, ...ends]);
+    const roomy = tight &amp;&amp; wide &amp;&amp; wide.raw &lt;= Math.max(tight.raw * 1.6, ($(&#39;diagram&#39;).clientWidth / 1.1) * 0.9);
+    moveCamera(fitAll || fitsWhole() || !(on.length || onEdges.length) ? full : (tight &amp;&amp; !roomy ? tight : wide), animated);
     const dim = focusIds.length || edgeIds.length ? 0.3 : 1;
     const dur = animated ? 180 * D : 0;
     anime.animate(nodes, { opacity: dim, duration: dur, ease: &#39;outQuad&#39; });
@@ -1224,7 +1321,7 @@ details.report[open] > summary { margin-bottom: 4px; }
   addEventListener(&#39;hashchange&#39;, () =&gt; go(fromHash()));
   $(&#39;prev&#39;).onclick = () =&gt; go(stepIndex - 1);
   $(&#39;next&#39;).onclick = () =&gt; go(stepIndex + 1);
-  addEventListener(&#39;keydown&#39;, e =&gt; { if (e.target.tagName === &#39;INPUT&#39;) return; if (e.key === &#39;ArrowRight&#39;) go(stepIndex + 1); if (e.key === &#39;ArrowLeft&#39;) go(stepIndex - 1); if (e.key === &#39;f&#39;) $(&#39;fit&#39;).click(); if (e.key === &#39;r&#39; || e.key === &#39;Home&#39;) reset(); });
+  addEventListener(&#39;keydown&#39;, e =&gt; { if (e.target.tagName === &#39;INPUT&#39;) return; if (e.key === &#39;ArrowRight&#39;) go(stepIndex + 1); if (e.key === &#39;ArrowLeft&#39;) go(stepIndex - 1); if (e.key === &#39;f&#39;) $(&#39;fit&#39;).click(); if (e.key === &#39;F&#39;) $(&#39;full&#39;).click(); if (e.key === &#39;Escape&#39; &amp;&amp; expanded) parent.postMessage({ fullscreen: &#39;exit&#39; }, &#39;*&#39;); if (e.key === &#39;r&#39; || e.key === &#39;Home&#39;) reset(); });
   addEventListener(&#39;resize&#39;, () =&gt; { fitStage(); applyStep(stepIndex, false); });
 
   // Options: tabs, comparison, decision
@@ -1326,21 +1423,21 @@ type ThreadState = { kind: &#39;none&#39; } | { kind: &#39;open&#39;; blockId: s
     <h3>Changes</h3><ul class="changes"><li class="change"><code class="file">apps/web/src/routes/plans.$planId.tsx</code><div class="intent">Resolve form on open threads, decision line on resolved ones, live socket.</div></li><li class="change"><code class="file">apps/web/src/routes/plans.$planId.ws.ts</code><div class="intent">Proxy the socket to the API over the service binding.</div></li></ul>
     <h3>Components</h3><figure class="component-block">
     <figcaption><b>Thread, resolving</b> · One field, one action. The refusal names the flag in a sentence, never a status code.</figcaption>
-    <div class="states"><div class="state"><div class="state-label">open</div><iframe class="component" data-frame="c1" sandbox="allow-scripts" style="height:190px" srcdoc="&lt;!doctype html&gt;&lt;html&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;style&gt;:root{--bg: #fffcf0; --fg: #100f0f; --muted: #6f6e69; --line: #dad8ce; --surface: #f2f0e5; --accent: #205ea6; --ok: #66800b; --warn: #ad8301; --radius-md: 8px; --radius-lg: 12px; --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px; --font: ui-sans-serif, system-ui, -apple-system, Inter, sans-serif; --mono: ui-monospace, SF Mono, Menlo, monospace;} *{box-sizing:border-box} html,body{overflow:hidden} body{margin:0;padding:20px;font:15px/1.5 var(--font, ui-sans-serif, system-ui, sans-serif);background:var(--bg, #fffcf0);color:var(--fg, #100f0f)} .thread { border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 16px; max-width: 560px; }
+    <div class="states"><div class="state"><div class="state-label"><span>open</span><button type="button" class="full" aria-label="Show open full screen">full screen</button></div><iframe class="component" data-frame="c1" sandbox="allow-scripts" style="height:190px" srcdoc="&lt;!doctype html&gt;&lt;html&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;style&gt;:root{--bg: #fffcf0; --fg: #100f0f; --muted: #6f6e69; --line: #dad8ce; --surface: #f2f0e5; --accent: #205ea6; --ok: #66800b; --warn: #ad8301; --radius-md: 8px; --radius-lg: 12px; --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px; --font: ui-sans-serif, system-ui, -apple-system, Inter, sans-serif; --mono: ui-monospace, SF Mono, Menlo, monospace;} *{box-sizing:border-box} html,body{overflow:hidden} body{margin:0;padding:20px;font:15px/1.5 var(--font, ui-sans-serif, system-ui, sans-serif);background:var(--bg, #fffcf0);color:var(--fg, #100f0f)} .thread { border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 16px; max-width: 560px; }
 .meta { font-size: 12px; color: var(--muted); }
 .body { margin: 6px 0 12px; font-size: 16px; }
 .row { display: flex; gap: 8px; }
 input { flex: 1; font: inherit; font-size: 14px; padding: 8px 12px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); color: var(--fg); }
 button { font: inherit; font-size: 14px; padding: 8px 14px; border: 0; border-radius: var(--radius-md); background: var(--fg); color: var(--bg); }
 .alert { margin: 10px 0 0; font-size: 13.5px; color: var(--warn); }
-.decided { margin: 0; font-size: 14px; color: var(--ok); }&lt;/style&gt;&lt;/head&gt;&lt;body&gt;&lt;article class=&quot;thread&quot;&gt;&lt;div class=&quot;meta&quot;&gt;block b3 · 2 replies&lt;/div&gt;&lt;p class=&quot;body&quot;&gt;Should retries live in the client or the wrapper?&lt;/p&gt;&lt;form class=&quot;row&quot;&gt;&lt;input aria-label=&quot;What was decided?&quot; placeholder=&quot;What was decided?&quot;&gt;&lt;button type=&quot;button&quot;&gt;Resolve&lt;/button&gt;&lt;/form&gt;&lt;/article&gt;&lt;script&gt;new ResizeObserver(()=&gt;parent.postMessage({frameHeight:Math.ceil(document.body.getBoundingClientRect().height)},&#39;*&#39;)).observe(document.body)&lt;/script&gt;&lt;/body&gt;&lt;/html&gt;"></iframe></div><div class="state"><div class="state-label">refused</div><iframe class="component" data-frame="c2" sandbox="allow-scripts" style="height:190px" srcdoc="&lt;!doctype html&gt;&lt;html&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;style&gt;:root{--bg: #fffcf0; --fg: #100f0f; --muted: #6f6e69; --line: #dad8ce; --surface: #f2f0e5; --accent: #205ea6; --ok: #66800b; --warn: #ad8301; --radius-md: 8px; --radius-lg: 12px; --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px; --font: ui-sans-serif, system-ui, -apple-system, Inter, sans-serif; --mono: ui-monospace, SF Mono, Menlo, monospace;} *{box-sizing:border-box} html,body{overflow:hidden} body{margin:0;padding:20px;font:15px/1.5 var(--font, ui-sans-serif, system-ui, sans-serif);background:var(--bg, #fffcf0);color:var(--fg, #100f0f)} .thread { border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 16px; max-width: 560px; }
+.decided { margin: 0; font-size: 14px; color: var(--ok); }&lt;/style&gt;&lt;/head&gt;&lt;body&gt;&lt;article class=&quot;thread&quot;&gt;&lt;div class=&quot;meta&quot;&gt;block b3 · 2 replies&lt;/div&gt;&lt;p class=&quot;body&quot;&gt;Should retries live in the client or the wrapper?&lt;/p&gt;&lt;form class=&quot;row&quot;&gt;&lt;input aria-label=&quot;What was decided?&quot; placeholder=&quot;What was decided?&quot;&gt;&lt;button type=&quot;button&quot;&gt;Resolve&lt;/button&gt;&lt;/form&gt;&lt;/article&gt;&lt;script&gt;new ResizeObserver(()=&gt;parent.postMessage({frameHeight:Math.ceil(document.body.getBoundingClientRect().height)},&#39;*&#39;)).observe(document.body)&lt;/script&gt;&lt;/body&gt;&lt;/html&gt;"></iframe></div><div class="state"><div class="state-label"><span>refused</span><button type="button" class="full" aria-label="Show refused full screen">full screen</button></div><iframe class="component" data-frame="c2" sandbox="allow-scripts" style="height:190px" srcdoc="&lt;!doctype html&gt;&lt;html&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;style&gt;:root{--bg: #fffcf0; --fg: #100f0f; --muted: #6f6e69; --line: #dad8ce; --surface: #f2f0e5; --accent: #205ea6; --ok: #66800b; --warn: #ad8301; --radius-md: 8px; --radius-lg: 12px; --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px; --font: ui-sans-serif, system-ui, -apple-system, Inter, sans-serif; --mono: ui-monospace, SF Mono, Menlo, monospace;} *{box-sizing:border-box} html,body{overflow:hidden} body{margin:0;padding:20px;font:15px/1.5 var(--font, ui-sans-serif, system-ui, sans-serif);background:var(--bg, #fffcf0);color:var(--fg, #100f0f)} .thread { border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 16px; max-width: 560px; }
 .meta { font-size: 12px; color: var(--muted); }
 .body { margin: 6px 0 12px; font-size: 16px; }
 .row { display: flex; gap: 8px; }
 input { flex: 1; font: inherit; font-size: 14px; padding: 8px 12px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); color: var(--fg); }
 button { font: inherit; font-size: 14px; padding: 8px 14px; border: 0; border-radius: var(--radius-md); background: var(--fg); color: var(--bg); }
 .alert { margin: 10px 0 0; font-size: 13.5px; color: var(--warn); }
-.decided { margin: 0; font-size: 14px; color: var(--ok); }&lt;/style&gt;&lt;/head&gt;&lt;body&gt;&lt;article class=&quot;thread&quot;&gt;&lt;div class=&quot;meta&quot;&gt;block b3 · 2 replies&lt;/div&gt;&lt;p class=&quot;body&quot;&gt;Should retries live in the client or the wrapper?&lt;/p&gt;&lt;form class=&quot;row&quot;&gt;&lt;input aria-label=&quot;What was decided?&quot; value=&quot;wrapper&quot;&gt;&lt;button type=&quot;button&quot;&gt;Resolve&lt;/button&gt;&lt;/form&gt;&lt;p class=&quot;alert&quot; role=&quot;alert&quot;&gt;Resolving threads is not switched on for you yet.&lt;/p&gt;&lt;/article&gt;&lt;script&gt;new ResizeObserver(()=&gt;parent.postMessage({frameHeight:Math.ceil(document.body.getBoundingClientRect().height)},&#39;*&#39;)).observe(document.body)&lt;/script&gt;&lt;/body&gt;&lt;/html&gt;"></iframe></div><div class="state"><div class="state-label">decided</div><iframe class="component" data-frame="c3" sandbox="allow-scripts" style="height:190px" srcdoc="&lt;!doctype html&gt;&lt;html&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;style&gt;:root{--bg: #fffcf0; --fg: #100f0f; --muted: #6f6e69; --line: #dad8ce; --surface: #f2f0e5; --accent: #205ea6; --ok: #66800b; --warn: #ad8301; --radius-md: 8px; --radius-lg: 12px; --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px; --font: ui-sans-serif, system-ui, -apple-system, Inter, sans-serif; --mono: ui-monospace, SF Mono, Menlo, monospace;} *{box-sizing:border-box} html,body{overflow:hidden} body{margin:0;padding:20px;font:15px/1.5 var(--font, ui-sans-serif, system-ui, sans-serif);background:var(--bg, #fffcf0);color:var(--fg, #100f0f)} .thread { border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 16px; max-width: 560px; }
+.decided { margin: 0; font-size: 14px; color: var(--ok); }&lt;/style&gt;&lt;/head&gt;&lt;body&gt;&lt;article class=&quot;thread&quot;&gt;&lt;div class=&quot;meta&quot;&gt;block b3 · 2 replies&lt;/div&gt;&lt;p class=&quot;body&quot;&gt;Should retries live in the client or the wrapper?&lt;/p&gt;&lt;form class=&quot;row&quot;&gt;&lt;input aria-label=&quot;What was decided?&quot; value=&quot;wrapper&quot;&gt;&lt;button type=&quot;button&quot;&gt;Resolve&lt;/button&gt;&lt;/form&gt;&lt;p class=&quot;alert&quot; role=&quot;alert&quot;&gt;Resolving threads is not switched on for you yet.&lt;/p&gt;&lt;/article&gt;&lt;script&gt;new ResizeObserver(()=&gt;parent.postMessage({frameHeight:Math.ceil(document.body.getBoundingClientRect().height)},&#39;*&#39;)).observe(document.body)&lt;/script&gt;&lt;/body&gt;&lt;/html&gt;"></iframe></div><div class="state"><div class="state-label"><span>decided</span><button type="button" class="full" aria-label="Show decided full screen">full screen</button></div><iframe class="component" data-frame="c3" sandbox="allow-scripts" style="height:190px" srcdoc="&lt;!doctype html&gt;&lt;html&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;style&gt;:root{--bg: #fffcf0; --fg: #100f0f; --muted: #6f6e69; --line: #dad8ce; --surface: #f2f0e5; --accent: #205ea6; --ok: #66800b; --warn: #ad8301; --radius-md: 8px; --radius-lg: 12px; --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px; --font: ui-sans-serif, system-ui, -apple-system, Inter, sans-serif; --mono: ui-monospace, SF Mono, Menlo, monospace;} *{box-sizing:border-box} html,body{overflow:hidden} body{margin:0;padding:20px;font:15px/1.5 var(--font, ui-sans-serif, system-ui, sans-serif);background:var(--bg, #fffcf0);color:var(--fg, #100f0f)} .thread { border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 16px; max-width: 560px; }
 .meta { font-size: 12px; color: var(--muted); }
 .body { margin: 6px 0 12px; font-size: 16px; }
 .row { display: flex; gap: 8px; }
@@ -1378,6 +1475,25 @@ button { font: inherit; font-size: 14px; padding: 8px 14px; border: 0; border-ra
 </div>
 <script type="application/json" id="plan">{"title":"Resolve a comment thread into a decision","ticket":"GH-12","date":"2026-10-28","status":"implementing","author":"pratos with Claude Code","summary":"Today a comment thread on a block just ends. After this plan, a person or the agent resolves it with one sentence of what was decided, and that **decision stays attached to the block** with who decided and when. It ships behind the `resolve-thread` flag, off by default.","current":"Threads can be opened and replied to. Nothing records how a thread ended, so the same question gets argued again a week later. The plan room already keeps every change as an event, so a decision can be one more fact in that log.","discoveries":["The plan room appends every event a command produces in one synchronous block, so two events from one command land together or not at all.","Flags are read once per request and passed to the plan room as names; a function would arrive as a promise and read as true.","The glossary already names **Decision** and bans *resolution*, *verdict* and *outcome*."],"endState":"Resolving a thread records two facts, `ThreadResolved` and `DecisionRecorded`. A second resolve is refused. The plan page shows the decision on the thread, and every open tab sees it at once. People without the flag see the thread as before.","notDoing":["Reopening a resolved thread; nobody has asked for it yet.","Editing a recorded decision; a change of mind is a new thread.","Notifications outside the plan page."],"approach":"Domain first, because event shapes are the contract everything else reads. Then the flag and API, so the behaviour exists and is off. Then the page, with every state shown first.","approachDiagram":"lifecycle","diagrams":[{"id":"lifecycle","spec":{"kind":"state-explorer","question":"How does a thread move from open to decided?","meta":{"builtBy":"create-plan","builtAt":"2026-10-28","source":"GH-12 plan"},"diagram":"stateDiagram-v2\n  [*] --> Open: OpenThread\n  Open --> Open: Reply\n  Open --> Resolved: ResolveThread\n  Resolved --> [*]\n  note right of Resolved: DecisionRecorded","steps":[{"id":"open","caption":"OpenThread anchors a thread to one block.","focus":["Open"],"edges":["edge0"]},{"id":"reply","caption":"Each reply is appended. The thread stays open.","focus":["Open"],"edges":["edge1"]},{"id":"resolve","caption":"ResolveThread moves it to Resolved and records the decision.","focus":["Resolved"],"edges":["edge2"]},{"id":"twice","caption":"Resolved is the end; the type system rejects a second resolve.","focus":["Resolved","root_end"],"edges":["edge3"]}]}}],"decisions":[{"id":"events","question":"Is a decision its own fact, or part of ThreadResolved?","options":[{"id":"two-events","label":"Two events"},{"id":"one-event","label":"One event"},{"id":"close-only","label":"ThreadClosed, no decision"}],"chosen":"two-events","by":"pratos","at":"2026-10-27","why":"Two events keep a closed thread and a made decision as separate facts, so a projection can count decisions without reading thread state. Both explorations passed their expect tests.","viz":{"kind":"decision-report","question":"Is a decision its own fact, or part of ThreadResolved?","meta":{"builtBy":"agent · just explore GH-12","builtAt":"2026-10-27","source":"GH-12 · two explorations"},"options":[{"id":"two-events","label":"Two events","summary":"ThreadResolved, then DecisionRecorded; a thread can close without a decision.","diagram":"sequenceDiagram\n  participant P as Person\n  participant A as API\n  participant L as Event log\n  participant D as Decision log\n  P->>A: ResolveThread(thread-7, \"wrapper\")\n  A->>L: ThreadResolved\n  A->>L: DecisionRecorded\n  L->>D: project decision","tried":{"kind":"exploration","ref":"exp_two_events","summary":"expect green, 2 projections touched"},"axes":{"callSites":{"count":4,"list":["resolve.ts","decision-log.ts","thread-view.ts","mcp/list-decisions.ts"]},"mechanical":"2 mechanical, 2 judgement (what a decision-less close means in the UI)","silent":"Decision log can lag the thread by one event","invariant":"\"A decision references exactly one thread\" stays a type; \"every resolved thread has a decision\" becomes a check"}},{"id":"one-event","label":"One event","summary":"ThreadResolved carries the decision; closing without one is impossible.","diagram":"sequenceDiagram\n  participant P as Person\n  participant A as API\n  participant L as Event log\n  participant D as Decision log\n  P->>A: ResolveThread(thread-7, \"wrapper\")\n  A->>L: ThreadResolved{decision}\n  L->>D: project decision","tried":{"kind":"exploration","ref":"exp_one_event","summary":"expect green, 1 projection touched"},"axes":{"callSites":{"count":3,"list":["resolve.ts","decision-log.ts","mcp/list-decisions.ts"]},"mechanical":"3 mechanical, 0 judgement","silent":"None found","invariant":"Both invariants are types. Loses \"close without deciding\", which the glossary does not have"}},{"id":"close-only","label":"ThreadClosed, no decision","summary":"The thread closes and nothing is recorded. This is what the first pass wrote.","diagram":"sequenceDiagram\n  participant P as Person\n  participant A as API\n  participant L as Event log\n  P->>A: ResolveThread(thread-7)\n  A->>L: ThreadClosed","tried":null,"axes":{"callSites":{"count":1,"list":["resolve.ts"]},"mechanical":"1 mechanical","silent":"Decision ownership disappears","invariant":"Breaks the glossary: there is no ThreadClosed"}}],"steps":[{"id":"cmd","option":"two-events","caption":"Pratos resolves thread 7 with one command and gives the decision in their own words.","edges":["i0"],"focus":["P","A"]},{"id":"resolved","option":"two-events","caption":"The log records that the thread is resolved.","edges":["i1"],"focus":["L"]},{"id":"decided","option":"two-events","caption":"The log records who decided what; this second event can be left out.","edges":["i2"],"focus":["L"]},{"id":"proj","option":"two-events","caption":"The decision log is built from both events.","edges":["i3"],"focus":["D"]},{"id":"cmd","option":"one-event","caption":"Pratos sends the same command.","edges":["i0"],"focus":["P","A"]},{"id":"resolved","option":"one-event","caption":"One event records the resolve and the decision; no decision, no resolve.","edges":["i1"],"focus":["L"]},{"id":"proj","option":"one-event","caption":"The decision log is built from that one event.","edges":["i2"],"focus":["D"]},{"id":"cmd","option":"close-only","caption":"Every test passes, and the word ThreadClosed is not in the glossary.","edges":["i0","i1"],"focus":["L"]}]}}],"design":{"notes":"The plan page is a working surface, read often and quickly. Quiet surfaces, one accent for the action, green only for something decided.","tokens":{"color":{"bg":"#fffcf0","fg":"#100f0f","muted":"#6f6e69","line":"#dad8ce","surface":"#f2f0e5","accent":"#205ea6","ok":"#66800b","warn":"#ad8301"},"type":[{"name":"title","size":28,"weight":650,"lineHeight":1.15,"sample":"Plan GH-12"},{"name":"body","size":16,"weight":400,"lineHeight":1.5,"sample":"Should retries live in the client or the wrapper?"},{"name":"meta","size":12,"weight":500,"lineHeight":1.4,"sample":"block b3 · 2 replies"}],"space":[4,8,12,16,24,32],"radius":{"md":8,"lg":12},"font":{"sans":"ui-sans-serif, system-ui, -apple-system, Inter, sans-serif","mono":"ui-monospace, SF Mono, Menlo, monospace"}}},"phases":[{"id":"domain","name":"Domain: resolve records two facts","goal":"The thread decider accepts `ResolveThread` and returns `ThreadResolved` then `DecisionRecorded`. Resolving twice is refused by the state type, not by a check.","diagram":"lifecycle","changes":[{"file":"docs/GLOSSARY.md","intent":"Add `ResolveThread` and `DecisionRecorded` under Thread and Decision, before any code names them."},{"file":"packages/domain/src/thread/decider.ts","intent":"Add the command, the two events, and the resolve case in `decide`.","contract":{"lang":"ts","code":"ResolveThread    = defineCommand('ResolveThread', { threadId, by, decision })\nThreadResolved   = defineEvent('ThreadResolved',  { threadId, by })\nDecisionRecorded = defineEvent('DecisionRecorded', { threadId, blockId, by, decision })\n\ntype ThreadState = { kind: 'none' } | { kind: 'open'; blockId: string } | { kind: 'resolved' }"}},{"file":"packages/domain/src/thread/thread.expect.test.ts","intent":"One expect test for resolve, one for resolving twice, one for the flag being off."}],"verify":{"automated":[{"cmd":"just test","done":true},{"cmd":"just glossary-check","done":true}],"manual":[{"text":"Read `resolve.snap.txt` aloud; it should sound like something that happened.","done":true}]}},{"id":"flag","name":"Flag and API: the behaviour exists and is off","goal":"The API runs the command through Effect services. `resolve-thread` is checked in `decide`, off by default, on for the two seeded people.","changes":[{"file":"apps/api/src/services.ts","intent":"Decode, read flags, dispatch, and turn a rejection into a typed error.","contract":{"lang":"ts","code":"dispatch(planId: string, body: unknown):\n  Effect\u003cStoredEvent[], InvalidCommand | CommandRejected>"}},{"file":"apps/api/migrations/0001_flags_and_projections.sql","intent":"The flags table and the decisions projection; additive only."},{"file":"packages/db/seed.sql","intent":"Seed `resolve-thread` off, allowlisted for admin and pratos."}],"verify":{"automated":[{"cmd":"bun test apps/api/test","done":true},{"cmd":"GH_REMOTE=1 just flag list","text":"shows resolve-thread off with an allowlist","done":true}],"manual":[{"text":"A guest gets 409 with a sentence that names the flag; pratos gets both events.","done":false}]}},{"id":"page","name":"Plan page: resolve where the thread is","goal":"Open threads get a field and a Resolve button; resolved ones show who decided what and when. Other tabs update without a refresh.","changes":[{"file":"apps/web/src/routes/plans.$planId.tsx","intent":"Resolve form on open threads, decision line on resolved ones, live socket."},{"file":"apps/web/src/routes/plans.$planId.ws.ts","intent":"Proxy the socket to the API over the service binding."}],"components":[{"name":"Thread, resolving","notes":"One field, one action. The refusal names the flag in a sentence, never a status code.","height":190,"states":[{"label":"open","html":"\u003carticle class=\"thread\">\u003cdiv class=\"meta\">block b3 · 2 replies\u003c/div>\u003cp class=\"body\">Should retries live in the client or the wrapper?\u003c/p>\u003cform class=\"row\">\u003cinput aria-label=\"What was decided?\" placeholder=\"What was decided?\">\u003cbutton type=\"button\">Resolve\u003c/button>\u003c/form>\u003c/article>"},{"label":"refused","html":"\u003carticle class=\"thread\">\u003cdiv class=\"meta\">block b3 · 2 replies\u003c/div>\u003cp class=\"body\">Should retries live in the client or the wrapper?\u003c/p>\u003cform class=\"row\">\u003cinput aria-label=\"What was decided?\" value=\"wrapper\">\u003cbutton type=\"button\">Resolve\u003c/button>\u003c/form>\u003cp class=\"alert\" role=\"alert\">Resolving threads is not switched on for you yet.\u003c/p>\u003c/article>"},{"label":"decided","html":"\u003carticle class=\"thread\">\u003cdiv class=\"meta\">block b3 · 2 replies\u003c/div>\u003cp class=\"body\">Should retries live in the client or the wrapper?\u003c/p>\u003cp class=\"decided\">Decided by pratos · 2026-10-28 19:30 UTC · “wrapper”\u003c/p>\u003c/article>"}],"css":".thread { border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 16px; max-width: 560px; }\n.meta { font-size: 12px; color: var(--muted); }\n.body { margin: 6px 0 12px; font-size: 16px; }\n.row { display: flex; gap: 8px; }\ninput { flex: 1; font: inherit; font-size: 14px; padding: 8px 12px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); color: var(--fg); }\nbutton { font: inherit; font-size: 14px; padding: 8px 14px; border: 0; border-radius: var(--radius-md); background: var(--fg); color: var(--bg); }\n.alert { margin: 10px 0 0; font-size: 13.5px; color: var(--warn); }\n.decided { margin: 0; font-size: 14px; color: var(--ok); }"}],"verify":{"automated":[{"cmd":"just lint","done":true},{"cmd":"just demo cp-08","text":"a second socket hears the append","done":true}],"manual":[{"text":"Two tabs on /plans/gh-12: resolve in one, the other shows the decision without a refresh.","done":true},{"text":"As a guest, the refusal is a sentence and the field keeps its text.","done":false}]}}],"references":["`docs/ARCHITECTURE.md` and the map at `docs/architecture/index.html#record`","`docs/decisions/gh-12.html`, the decision report","`docs/RELEASE.md`, for the rollout once the page is done"]}</script>
 <script>
+  // Full screen for a component state or a diagram. When the browser refuses (embeds, automation, some policies),
+  // the frame expands to fill the window instead; Esc or the close button returns it.
+  const close = Object.assign(document.createElement('button'), { className: 'expanded-close', textContent: 'Close · Esc', hidden: true });
+  document.body.append(close);
+  let open = null;
+  const expand = (f, on) => {
+    if (open && open !== f) expand(open, false);
+    f.classList.toggle('is-expanded', on); document.body.classList.toggle('has-expanded', on); close.hidden = !on; open = on ? f : null;
+    f.contentWindow?.postMessage({ expanded: on }, '*');
+  };
+  const goFull = (f) => document.fullscreenElement ? document.exitFullscreen() : f.requestFullscreen().catch(() => expand(f, true));
+  close.onclick = () => open && expand(open, false);
+  addEventListener('keydown', (e) => { if (e.key === 'Escape' && open) expand(open, false); });
+  document.addEventListener('click', (e) => { const b = e.target.closest('button.full'); if (b) goFull(b.closest('.state').querySelector('iframe')); });
+  addEventListener('message', (e) => {
+    const want = e.data && e.data.fullscreen; if (!want) return;
+    const f = [...document.querySelectorAll('iframe')].find((x) => x.contentWindow === e.source); if (!f) return;
+    if (want === 'expand') expand(f, true); else if (want === 'exit' && open === f) expand(f, false);
+  });
   const links = [...document.querySelectorAll('.toc a')]; const targets = links.map((a) => document.querySelector(a.getAttribute('href'))).filter(Boolean);
   const io = new IntersectionObserver((es) => { for (const e of es) if (e.isIntersecting) links.forEach((a) => a.toggleAttribute('aria-current', a.getAttribute('href') === '#' + e.target.id)); }, { rootMargin: '-20% 0px -70% 0px' });
   targets.forEach((t) => io.observe(t));

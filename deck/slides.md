@@ -686,6 +686,7 @@ Note:
 One small repo that does everything the playbook asks, so each practice can be shown running instead of described.
 
 --
+<!-- .slide: data-cp="cp-00" -->
 ## The layout is the first thing the agent reads
 
 ```text
@@ -705,6 +706,7 @@ Minute 0 to 3. Type `ls` then `ls apps packages`; point at the two Workers and t
 Cut from screen: header label "GREENHOUSE · THE DEMO · 01 SCAFFOLD · cp-00"
 
 --
+<!-- .slide: data-cp="cp-00" -->
 <div class="live">live</div>
 
 ## Health before login
@@ -723,7 +725,7 @@ Minute 3 to 6. Run `just up`, open http://localhost:3000/healthz and point at th
 Cut from screen: header label "GREENHOUSE · THE DEMO · 01 SCAFFOLD · cp-00"
 
 --
-<!-- .slide: class="statement" -->
+<!-- .slide: class="statement" data-cp="cp-04" -->
 
 ## Where does the agent's loop live?
 
@@ -736,6 +738,7 @@ Minute 6 to 9. Say the planning question out loud before the agent hears it. Ope
 Cut from screen: header label "GREENHOUSE · THE DEMO · 02 PLAN THE PRODUCT"
 
 --
+<!-- .slide: data-cp="cp-04" -->
 ## The plan is a page you look at, not a wall of Markdown
 
 ```sh
@@ -753,6 +756,7 @@ Minute 9 to 13. Run `/create_plan GH-12` in Claude Code; it writes the plan JSON
 Cut from screen: header label "GREENHOUSE · THE DEMO · 02 PLAN THE PRODUCT · cp-04"
 
 --
+<!-- .slide: data-cp="cp-01" -->
 ## The glossary lives next to the code
 
 <p><code>docs/GLOSSARY.md</code>: Thread, Decision, Participant, each with the events and commands that carry it.</p>
@@ -765,6 +769,7 @@ Cut from screen: The agent searches the web before it names: how Linear, GitHub 
 Cut from screen: header label "GREENHOUSE · THE DEMO · 03 ONE VOCABULARY · cp-01"
 
 --
+<!-- .slide: data-cp="cp-01" -->
 <div class="live">live</div>
 
 ## The check that catches ThreadClosed
@@ -782,6 +787,7 @@ Minute 16 to 20. Run `just glossary-check` on main, then `git checkout wrong/cp-
 Cut from screen: header label "GREENHOUSE · THE DEMO · 03 ONE VOCABULARY · cp-01"
 
 --
+<!-- .slide: data-cp="cp-02 · cp-03" -->
 ## Hono at the edge. Effect behind it.
 
 <p>Schema decodes at the boundary; nothing unknown gets past the handler.</p>
@@ -797,6 +803,7 @@ Cut from screen: A rejection is a typed error, not a thrown string.
 Cut from screen: header label "GREENHOUSE · THE DEMO · 04 THE BACKEND · cp-02 · cp-03"
 
 --
+<!-- .slide: data-cp="cp-02" -->
 <div class="live">live</div>
 
 ## The test is a story a person can read
@@ -816,7 +823,7 @@ Minute 25 to 28. Run `just test`, then `cat packages/domain/src/thread/__expect_
 Cut from screen: header label "GREENHOUSE · THE DEMO · 04 THE BACKEND · cp-02"
 
 --
-<!-- .slide: class="btw-slide" -->
+<!-- .slide: class="btw-slide" data-cp="cp-03" -->
 
 ## Changing a recorded event
 
@@ -835,6 +842,7 @@ Cut from screen: The Effect source sits at repos/effect, read-only. The agent re
 Cut from screen: header label "/BTW · 04 THE BACKEND · cp-03"
 
 --
+<!-- .slide: data-cp="cp-05" -->
 <div class="live">live</div>
 
 ## Build the plan page under skills
@@ -849,6 +857,25 @@ Cut from screen: Skills are vendored at a pinned commit in skills/manifest.json.
 Cut from screen: header label "GREENHOUSE · THE DEMO · 05 COMPONENTS · cp-05"
 
 --
+<!-- .slide: data-cp="cp-06" -->
+
+## The review a second model writes
+
+```sh
+scripts/review.sh main                   # cp-06 · REVIEWER=claude|pi
+```
+
+<p>Author with pi, review with Claude. The glossary goes into the prompt before the diff.</p>
+
+<p>On <code>wrong/cp-01</code> every test passes. The review finds <code>ThreadClosed</code>, a <code>verdict</code>, and a thread that can be resolved twice.</p>
+
+<p class="kicker">correct code can be wrong.</p>
+
+Note:
+Model inversion, live. The script diffs the branch against main, skips snapshots and the lockfile, and asks for vocabulary violations, correct-but-wrong code, at most two real bugs, and one question before merge. Author with Claude Code and it reviews with pi instead.
+Recorded fallback: demo/cp-06-review.md. It ends with the question: how are streams that already hold ThreadResolved and DecisionRecorded read after this change?
+--
+<!-- .slide: data-cp="cp-08" -->
 <div class="live">live</div>
 
 ## Two tabs, one Durable Object
@@ -895,6 +922,7 @@ Minute 45 to 48. Three sentences, three clicks. Point back at plan-room.ts: the 
 Cut from screen: header label "GREENHOUSE · THE DEMO · 06 WHY CLOUDFLARE"
 
 --
+<!-- .slide: data-cp="cp-07" -->
 ## Flags default off, in decide()
 
 ```sh
@@ -910,6 +938,7 @@ Minute 48 to 53. `just deploy` first, about a minute including the smoke. Then t
 Cut from screen: header label "GREENHOUSE · THE DEMO · 07 SHIP BEHIND A FLAG · cp-07"
 
 --
+<!-- .slide: data-cp="cp-07" -->
 <div class="live">live</div>
 
 ## The code version is a separate dial
@@ -1083,7 +1112,9 @@ The button files a ReportFiled event: the user's note, session id, plan and bloc
 Note:
 Everyone picks their own ticket instead of a shared CRUD example. Brooks's fractions are the starting guess: plan a third, code a sixth, test half. The point is the comparison afterwards: most people find coding shrank and the other slices did not. Bring the numbers back; the delta is the lesson.
 
---
+---
+<!-- .slide: data-part="Questions" -->
+
 ## Thank you
 
 <div class="contact-grid">

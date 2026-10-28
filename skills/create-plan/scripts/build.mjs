@@ -113,7 +113,7 @@ function vizFrame(spec, label) {
   writeFileSync(sp, JSON.stringify(spec));
   const r = spawnSync('bun', [join(vizDir, 'scripts', 'build.mjs'), sp, op], { encoding: 'utf8' });
   if (r.status !== 0) { console.error(r.stdout + r.stderr); console.error(`✗ diagram "${label}" did not build`); process.exit(1); }
-  return `<iframe class="viz" title="${esc(spec.question ?? label)}" srcdoc="${esc(readFileSync(op, 'utf8'))}"></iframe>`;
+  return `<iframe class="viz" title="${esc(spec.question ?? label)}" allow="fullscreen" allowfullscreen srcdoc="${esc(readFileSync(op, 'utf8'))}"></iframe>`;
 }
 
 const tokens = plan.design?.tokens ?? {};
@@ -134,7 +134,7 @@ function component(c) {
   const states = c.states?.length ? c.states : [{ label: 'default', html: c.html }];
   return `<figure class="component-block">
     <figcaption><b>${esc(c.name)}</b>${c.notes ? ` · ${mdi(c.notes)}` : ''}</figcaption>
-    <div class="states">${states.map((s) => `<div class="state"><div class="state-label">${esc(s.label)}</div>${componentFrame(s.html, c.css, c.height)}</div>`).join('')}</div>
+    <div class="states">${states.map((s) => `<div class="state"><div class="state-label"><span>${esc(s.label)}</span><button type="button" class="full" aria-label="Show ${esc(s.label)} full screen">full screen</button></div>${componentFrame(s.html, c.css, c.height)}</div>`).join('')}</div>
     <details><summary>markup</summary><pre><code>${esc(states.map((s) => `<!-- ${s.label} -->\n${s.html}`).join('\n\n') + (c.css ? `\n\n/* css */\n${c.css}` : ''))}</code></pre></details>
   </figure>`;
 }
@@ -207,7 +207,7 @@ const html = `<!doctype html>
   // Frames report their own height; listen before any of them load, and match by sender, not by a label.
   addEventListener('message', (e) => {
     const h = e.data && e.data.frameHeight; if (!h) return;
-    for (const f of document.querySelectorAll('iframe')) if (f.contentWindow === e.source) f.style.height = Math.min(Math.max(h + 4, 60), 2400) + 'px';
+    for (const f of document.querySelectorAll('iframe')) if (f.contentWindow === e.source && !f.classList.contains('is-expanded')) f.style.height = Math.min(Math.max(h + 4, 60), 2400) + 'px';
   });
 </script>
 <style>${readFileSync(join(here, '..', 'assets', 'plan.css'), 'utf8')}</style>
@@ -239,6 +239,25 @@ const html = `<!doctype html>
 </div>
 <script type="application/json" id="plan">${JSON.stringify(plan).replace(/</g, '\\u003c')}</script>
 <script>
+  // Full screen for a component state or a diagram. When the browser refuses (embeds, automation, some policies),
+  // the frame expands to fill the window instead; Esc or the close button returns it.
+  const close = Object.assign(document.createElement('button'), { className: 'expanded-close', textContent: 'Close · Esc', hidden: true });
+  document.body.append(close);
+  let open = null;
+  const expand = (f, on) => {
+    if (open && open !== f) expand(open, false);
+    f.classList.toggle('is-expanded', on); document.body.classList.toggle('has-expanded', on); close.hidden = !on; open = on ? f : null;
+    f.contentWindow?.postMessage({ expanded: on }, '*');
+  };
+  const goFull = (f) => document.fullscreenElement ? document.exitFullscreen() : f.requestFullscreen().catch(() => expand(f, true));
+  close.onclick = () => open && expand(open, false);
+  addEventListener('keydown', (e) => { if (e.key === 'Escape' && open) expand(open, false); });
+  document.addEventListener('click', (e) => { const b = e.target.closest('button.full'); if (b) goFull(b.closest('.state').querySelector('iframe')); });
+  addEventListener('message', (e) => {
+    const want = e.data && e.data.fullscreen; if (!want) return;
+    const f = [...document.querySelectorAll('iframe')].find((x) => x.contentWindow === e.source); if (!f) return;
+    if (want === 'expand') expand(f, true); else if (want === 'exit' && open === f) expand(f, false);
+  });
   const links = [...document.querySelectorAll('.toc a')]; const targets = links.map((a) => document.querySelector(a.getAttribute('href'))).filter(Boolean);
   const io = new IntersectionObserver((es) => { for (const e of es) if (e.isIntersecting) links.forEach((a) => a.toggleAttribute('aria-current', a.getAttribute('href') === '#' + e.target.id)); }, { rootMargin: '-20% 0px -70% 0px' });
   targets.forEach((t) => io.observe(t));

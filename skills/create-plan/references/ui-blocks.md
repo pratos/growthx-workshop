@@ -1,6 +1,6 @@
 # UI blocks: design language and components
 
-When a plan changes anything a person sees, the plan shows it. Load `impeccable` for the decisions and `animate` for any motion before writing these blocks. Components render live in the page, inside sandboxed frames, with the design tokens as CSS variables, so the person reviews the actual thing, not a description of it.
+When a plan changes anything a person sees, the plan shows it. Load `impeccable` for the decisions and `animate` for any motion before writing these blocks. Components render live in the page, inside sandboxed frames, with the design tokens as CSS variables, so the person reviews the actual thing, not a description of it. Each state has a full screen control, so it can be judged at the size it ships; diagrams and decision reports can go full screen too.
 
 ## Design block
 

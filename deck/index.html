@@ -48,9 +48,9 @@
           hd.setAttribute("aria-hidden", "true");
           const cell = (cls, text) => { const e = document.createElement("span"); e.className = cls; e.textContent = text; return e; };
           hd.append(
-            cell("no", "Order #" + String(i + 1).padStart(3, "0") + (btw ? " · /btw" : "")),
+            cell("no", "#" + String(i + 1).padStart(3, "0") + (btw ? " · /btw" : "")),
             cell("item", s.dataset.section || section),
-            cell("clock", s.dataset.clock || clock),
+            cell("clock", s.dataset.cp || s.dataset.clock || clock),
           );
           const live = s.querySelector(".live");
           if (live) { live.textContent = "Fire"; hd.append(live); }
