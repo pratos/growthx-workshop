@@ -84,6 +84,8 @@ export function summarize(prev, next) {
     if (vChanged.length) out.push(`vocabulary edited: ${vChanged.join(', ')}`);
   }
   if (JSON.stringify(prev.design) !== JSON.stringify(next.design)) out.push('design language edited');
+  const known = new Set(['status', 'title', 'summary', 'current', 'endState', 'approach', 'discoveries', 'notDoing', 'references', 'decisions', 'phases', 'vocabulary', 'design', 'diagrams', 'change']);
+  for (const k of new Set([...Object.keys(prev), ...Object.keys(next)])) if (!known.has(k) && JSON.stringify(prev[k]) !== JSON.stringify(next[k])) out.push(`${k} ${prev[k] === undefined ? 'added' : next[k] === undefined ? 'removed' : 'edited'}`);
   if (JSON.stringify(prev.diagrams) !== JSON.stringify(next.diagrams)) out.push('diagrams edited');
   return out.length ? out : ['wording only'];
 }
