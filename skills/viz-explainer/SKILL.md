@@ -26,10 +26,11 @@ Do not fire for a single fact, a code snippet, or anything a one-line sentence a
 3. **Every decision carries who and when.** The artifact records the choice and posts it to the host (see `references/protocol.md`). It never pretends a choice was made.
 4. **One artifact, one question.** The title is the question. If you need two titles, build two artifacts.
 5. **Under a minute to read.** Eight steps at most, captions under twenty words, one diagram on screen at a time.
-6. **Motion only for state change.** Steps, focus, and edge drawing animate because they show order. Nothing decorative. Load the `animate` skill for curve and duration decisions; do not invent values here.
-7. **Craft is someone else's skill.** Layout, type and the "AI-generated look" belong to `impeccable`. Load it for anything the reader will see more than once (product artifacts, talk slides). Do not duplicate its guidance.
-8. **Captions are sentences someone would say aloud.** Subject, verb, under twenty words. No colon fragments ("First fact: resolved"), no telegraphic labels ("Same command."). Before building, collect every caption, summary and option label into one text file and run the `slop-guard` skill on it; fix what it names and fix any fragment it does not catch.
-9. **Plans orient, they do not bind.** An artifact that meets a reality it did not predict says so in a step, instead of hiding it.
+6. **Motion only for state change.** Steps, focus, edge drawing and the camera animate because they show order and place. Nothing decorative. Load the `animate` skill for curve and duration decisions; do not invent values here.
+7. **Readable at the size it ships.** The page owns the SVG's viewBox. A diagram that fits the stage at natural size is shown whole, no camera. A wider one gets a camera that frames each step's focus plus both ends of its edges, never zooming past 1.25:1, with `f` for the whole map. If a step's frame still reads small, the step focuses too much; split it.
+8. **Craft is someone else's skill.** Layout, type and the "AI-generated look" belong to `impeccable`. Load it for anything the reader will see more than once (product artifacts, talk slides). Do not duplicate its guidance.
+9. **Captions are sentences someone would say aloud.** Subject, verb, under twenty words. No colon fragments ("First fact: resolved"), no telegraphic labels ("Same command."). Before building, collect every caption, summary and option label into one text file and run the `slop-guard` skill on it; fix what it names and fix any fragment it does not catch.
+10. **Plans orient, they do not bind.** An artifact that meets a reality it did not predict says so in a step, instead of hiding it.
 
 ## Build sequence
 

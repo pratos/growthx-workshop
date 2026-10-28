@@ -18,7 +18,7 @@ Browser global (what the template uses):
 <script> pele.mount(el, text) </script>
 ```
 
-Useful options: `idPrefix` (prefix all SVG ids; set it when two diagrams share a page), `fontFamily`, `fontSize` (default 16), `maxWidth`, `responsive` (default true), `padding`, `config` (Mermaid settings).
+Useful options: `responsive: false` (the template does this: lay out at natural size and let the page own the viewBox), `fontSize` (the template uses 17), `idPrefix` (prefix all SVG ids; set it when two diagrams share a page), `fontFamily`, `fontSize` (default 16), `maxWidth`, `responsive` (default true), `padding`, `config` (Mermaid settings).
 
 Errors: `render()` throws `PeleError` with `code` (`unsupported-diagram | syntax | semantic | limit`), `line`, `column`, `snippet`. `mount()` does not throw; it draws the error in the container and calls `onError`.
 
