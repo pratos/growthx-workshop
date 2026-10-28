@@ -9,7 +9,7 @@ git status                 # clean, on main
 just install               # bun workspaces + vendored skills + the artifact builder
 just reset                 # fresh local D1 and Durable Object state, migrated and seeded
 just up                    # api + web in one process; http://localhost:3000
-for c in cp-00 cp-01 cp-02 cp-03 cp-04 cp-05 cp-06 cp-07; do scripts/demo.sh $c; done
+for c in cp-00 cp-01 cp-02 cp-03 cp-04 cp-05 cp-06 cp-07 cp-08; do scripts/demo.sh $c; done
 ```
 
 cmux panes: `just up` · a shell on main · `tail -f /tmp/gh-*.log` · the browser on http://localhost:3000/plans/gh-12 with Agentation.
@@ -25,6 +25,7 @@ cmux panes: `just up` · a shell on main · `tail -f /tmp/gh-*.log` · the brows
 | Plan as a wall of Markdown | `/create_plan GH-12` in Claude Code | open `docs/decisions/gh-12.html`, click an option | `just demo cp-04` |
 | UI half | Claude Code with impeccable + animate on `/plans/gh-12`; one Agentation note | open a thread, resolve it, see the decision | `just demo cp-05` |
 | Correct code that is wrong | `HEAD_REF=wrong/cp-01 just review cp-02` live, about ninety seconds | `cat demo/cp-06-review.md` | `just demo cp-06` |
+| Two people, one room | two tabs on `/plans/gh-12`, open a thread in one, watch the other | `just demo cp-08` | the api socket directly: `bun scripts/ws-check.ts <api url>` |
 | Released, then changed | `just deploy`, `GH_REMOTE=1 just flag user resolve-thread <you>`, use it live, `just rollback api <id>` | `curl …/healthz` shows label and id; `GH_REMOTE=1 just flag list` | `just demo cp-07` |
 
 ## Live

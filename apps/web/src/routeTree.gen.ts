@@ -12,7 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as HealthzRouteImport } from './routes/healthz'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ReadyzRouteImport } from './routes/readyz'
 import { Route as PlansPlanIdRouteImport } from './routes/plans.$planId'
+import { Route as PlansPlanIdWsRouteImport } from './routes/plans.$planId.ws'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -29,44 +31,80 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReadyzRoute = ReadyzRouteImport.update({
+  id: '/readyz',
+  path: '/readyz',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlansPlanIdRoute = PlansPlanIdRouteImport.update({
   id: '/plans/$planId',
   path: '/plans/$planId',
   getParentRoute: () => rootRouteImport,
+} as any)
+const PlansPlanIdWsRoute = PlansPlanIdWsRouteImport.update({
+  id: '/ws',
+  path: '/ws',
+  getParentRoute: () => PlansPlanIdRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/healthz': typeof HealthzRoute
   '/login': typeof LoginRoute
-  '/plans/$planId': typeof PlansPlanIdRoute
+  '/readyz': typeof ReadyzRoute
+  '/plans/$planId': typeof PlansPlanIdRouteWithChildren
+  '/plans/$planId/ws': typeof PlansPlanIdWsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/healthz': typeof HealthzRoute
   '/login': typeof LoginRoute
-  '/plans/$planId': typeof PlansPlanIdRoute
+  '/readyz': typeof ReadyzRoute
+  '/plans/$planId': typeof PlansPlanIdRouteWithChildren
+  '/plans/$planId/ws': typeof PlansPlanIdWsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/healthz': typeof HealthzRoute
   '/login': typeof LoginRoute
-  '/plans/$planId': typeof PlansPlanIdRoute
+  '/readyz': typeof ReadyzRoute
+  '/plans/$planId': typeof PlansPlanIdRouteWithChildren
+  '/plans/$planId/ws': typeof PlansPlanIdWsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/healthz' | '/login' | '/plans/$planId'
+  fullPaths:
+    | '/'
+    | '/healthz'
+    | '/login'
+    | '/readyz'
+    | '/plans/$planId'
+    | '/plans/$planId/ws'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/healthz' | '/login' | '/plans/$planId'
-  id: '__root__' | '/' | '/healthz' | '/login' | '/plans/$planId'
+  to:
+    | '/'
+    | '/healthz'
+    | '/login'
+    | '/readyz'
+    | '/plans/$planId'
+    | '/plans/$planId/ws'
+  id:
+    | '__root__'
+    | '/'
+    | '/healthz'
+    | '/login'
+    | '/readyz'
+    | '/plans/$planId'
+    | '/plans/$planId/ws'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   HealthzRoute: typeof HealthzRoute
   LoginRoute: typeof LoginRoute
-  PlansPlanIdRoute: typeof PlansPlanIdRoute
+  ReadyzRoute: typeof ReadyzRoute
+  PlansPlanIdRoute: typeof PlansPlanIdRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -92,6 +130,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/readyz': {
+      id: '/readyz'
+      path: '/readyz'
+      fullPath: '/readyz'
+      preLoaderRoute: typeof ReadyzRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/plans/$planId': {
       id: '/plans/$planId'
       path: '/plans/$planId'
@@ -99,14 +144,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlansPlanIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/plans/$planId/ws': {
+      id: '/plans/$planId/ws'
+      path: '/ws'
+      fullPath: '/plans/$planId/ws'
+      preLoaderRoute: typeof PlansPlanIdWsRouteImport
+      parentRoute: typeof PlansPlanIdRoute
+    }
   }
 }
+
+interface PlansPlanIdRouteChildren {
+  PlansPlanIdWsRoute: typeof PlansPlanIdWsRoute
+}
+
+const PlansPlanIdRouteChildren: PlansPlanIdRouteChildren = {
+  PlansPlanIdWsRoute: PlansPlanIdWsRoute,
+}
+
+const PlansPlanIdRouteWithChildren = PlansPlanIdRoute._addFileChildren(
+  PlansPlanIdRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   HealthzRoute: HealthzRoute,
   LoginRoute: LoginRoute,
-  PlansPlanIdRoute: PlansPlanIdRoute,
+  ReadyzRoute: ReadyzRoute,
+  PlansPlanIdRoute: PlansPlanIdRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
