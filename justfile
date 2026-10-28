@@ -92,6 +92,10 @@ plans:
 artifact spec out:
     bun skills/viz-explainer/scripts/build.mjs {{spec}} {{out}}
 
+# Can an agent clone, run, seed, log into, administer and browse this repo alone? ✓/✗ per item with the fix
+agent-ready:
+    skills/agent-ready/scripts/check.sh
+
 # Fail if a command or event in code is missing from the domain vocabulary
 domain-vocabulary-check:
     skills/ddd-vocabulary/scripts/check-domain-vocabulary.sh docs/DOMAIN-VOCABULARY.md packages apps

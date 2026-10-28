@@ -1,0 +1,5 @@
+{
+  "$comment": "Overrides for skills/agent-ready/scripts/check.sh. Greenhouse's admin actions are the flags API (GET /flags, PUT /flags/:name), not /admin.",
+  "seed": ["packages/db/seed.sql"],
+  "adminApi": ["/flags"]
+}
