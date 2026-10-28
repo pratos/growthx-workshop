@@ -1,6 +1,6 @@
-# Glossary
+# Domain vocabulary
 
-The ubiquitous language. The person says it, the code says it, the agent says it back. A noun appears here and in `packages/schema` before it appears anywhere else. `just glossary-check` fails a build that disagrees with this file.
+The ubiquitous language. The person says it, the code says it, the agent says it back. A noun appears here and in `packages/schema` before it appears anywhere else. `just domain-vocabulary-check` fails a build that disagrees with this file.
 
 ## Context: Planning
 

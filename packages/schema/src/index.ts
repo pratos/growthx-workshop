@@ -1,6 +1,6 @@
 import { Schema } from 'effect';
 
-// The ubiquitous language, as schemas. Every word here is in docs/GLOSSARY.md. Nothing in code gets a noun that is not here.
+// The ubiquitous language, as schemas. Every word here is in docs/DOMAIN-VOCABULARY.md. Nothing in code gets a noun that is not here.
 export const Id = Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(64));
 export const ParticipantId = Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(64)); // a person or an agent; same commands, same rights
 export const Text = Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(4000));

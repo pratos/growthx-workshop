@@ -140,7 +140,7 @@
 {
   "kind": "state-explorer",
   "question": "How does a comment thread end?",
-  "meta": { "builtBy": "agent", "builtAt": "2026-10-27", "source": "GLOSSARY.md · packages/domain/thread.ts" },
+  "meta": { "builtBy": "agent", "builtAt": "2026-10-27", "source": "DOMAIN-VOCABULARY.md · packages/domain/thread.ts" },
   "diagram": "stateDiagram-v2\n  [*] --> Open: OpenThread\n  Open --> Open: Reply\n  Open --> Resolved: ResolveThread\n  Resolved --> [*]\n  note right of Resolved: DecisionRecorded",
   "steps": [
     { "id": "open", "caption": "OpenThread anchors a thread to one block.", "focus": ["Open"], "edges": ["edge0"], "evidence": ["packages/domain/thread.ts:12"] },

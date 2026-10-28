@@ -4,7 +4,7 @@ Run this list before saying a scaffold is finished. Every line is a command or a
 
 ## Always
 
-- [ ] Every new noun is in `docs/GLOSSARY.md`; `just glossary-check` passes.
+- [ ] Every new noun is in `docs/DOMAIN-VOCABULARY.md`; `just domain-vocabulary-check` passes.
 - [ ] Every new import edge is a row in `docs/ARCHITECTURE.md`, in this commit.
 - [ ] Anything a person or agent runs is a `just` recipe with a comment line. `just --list` shows it.
 - [ ] `just lint` passes: oxlint type-aware, oxfmt, tsc for every Worker.

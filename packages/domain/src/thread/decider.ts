@@ -1,7 +1,7 @@
 import { Id, ParticipantId, Text } from '@greenhouse/schema';
 import { defineCommand, defineEvent, reject, type Decider, type Message } from '../kernel';
 
-// Commands: what a Participant asks, in the glossary's words.
+// Commands: what a Participant asks, in the domain vocabulary's words.
 export const OpenThread    = defineCommand('OpenThread',    { blockId: Id, by: ParticipantId, body: Text });
 export const Reply         = defineCommand('Reply',         { threadId: Id, by: ParticipantId, body: Text });
 export const ResolveThread = defineCommand('ResolveThread', { threadId: Id, by: ParticipantId, decision: Text });

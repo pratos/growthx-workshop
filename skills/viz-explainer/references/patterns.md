@@ -37,7 +37,7 @@ Deep links: `index.html#record` opens on that step, which is how a slide or a PR
 
 ## State explorer
 
-Mermaid: `stateDiagram-v2`. Transition labels are the command names from the glossary, exactly. Notes name the events a transition records.
+Mermaid: `stateDiagram-v2`. Transition labels are the command names from the domain vocabulary, exactly. Notes name the events a transition records.
 
 Steps: one per transition, in the order a real stream would take. Focus the target state and the transition edge.
 
@@ -77,7 +77,7 @@ Axes, always the same four so reports are comparable across decisions:
 1. Call sites touched (count and list).
 2. Mechanical changes vs judgement calls.
 3. Silent behaviour changes.
-4. The invariant this option risks, in glossary words.
+4. The invariant this option risks, in domain vocabulary words.
 
 Each option has `tried: { kind: "exploration" | "branch" | "snapshot", ref, summary }`. Untried options render disabled with "not explored yet". The "Choose" button posts `decision` to the host and locks the report, showing who and when. If the host supplies no participant, the artifact asks for a name once; it never records an anonymous decision.
 

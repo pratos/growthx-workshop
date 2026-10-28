@@ -141,9 +141,9 @@
   "kind": "architecture-map",
   "question": "What are the seven words in Greenhouse, and how do they relate?",
   "meta": {
-    "builtBy": "agent · just glossary",
+    "builtBy": "agent · just domain vocabulary",
     "builtAt": "2026-10-27",
-    "source": "docs/GLOSSARY.md"
+    "source": "docs/DOMAIN-VOCABULARY.md"
   },
   "diagram": "flowchart LR\n  subgraph planning[Planning context]\n    Plan[Plan · one stream]\n    Block[Block]\n    Thread[Thread]\n    Decision[Decision]\n    Exploration[Exploration]\n    Artifact[Artifact]\n  end\n  subgraph identity[Identity context]\n    Participant[Participant · person or agent]\n  end\n  Plan -- has many --> Block\n  Block -- anchors --> Thread\n  Thread -- ends in --> Decision\n  Decision -- attached to --> Block\n  Block -- embeds --> Artifact\n  Plan -- requests --> Exploration\n  Exploration -- reports as --> Artifact\n  Participant -- issues commands --> Plan",
   "steps": [
@@ -154,7 +154,7 @@
         "Plan"
       ],
       "evidence": [
-        "GLOSSARY.md · Plan",
+        "DOMAIN-VOCABULARY.md · Plan",
         "packages/schema/plan.ts"
       ]
     },
@@ -168,7 +168,7 @@
         "L_Plan_Block_0"
       ],
       "evidence": [
-        "GLOSSARY.md · Block",
+        "DOMAIN-VOCABULARY.md · Block",
         "packages/schema/block.ts"
       ]
     },
@@ -182,7 +182,7 @@
         "L_Block_Thread_0"
       ],
       "evidence": [
-        "GLOSSARY.md · Thread · not: discussion, comment chain"
+        "DOMAIN-VOCABULARY.md · Thread · not: discussion, comment chain"
       ]
     },
     {
@@ -196,7 +196,7 @@
         "L_Decision_Block_0"
       ],
       "evidence": [
-        "GLOSSARY.md · Decision · not: resolution, verdict, outcome"
+        "DOMAIN-VOCABULARY.md · Decision · not: resolution, verdict, outcome"
       ]
     },
     {
@@ -209,7 +209,7 @@
         "L_Plan_Exploration_0"
       ],
       "evidence": [
-        "GLOSSARY.md · Exploration"
+        "DOMAIN-VOCABULARY.md · Exploration"
       ]
     },
     {
@@ -223,7 +223,7 @@
         "L_Exploration_Artifact_0"
       ],
       "evidence": [
-        "GLOSSARY.md · Artifact · not: widget, page"
+        "DOMAIN-VOCABULARY.md · Artifact · not: widget, page"
       ]
     },
     {
@@ -237,7 +237,7 @@
         "L_Participant_Plan_0"
       ],
       "evidence": [
-        "GLOSSARY.md · Participant · not: user, bot, assistant"
+        "DOMAIN-VOCABULARY.md · Participant · not: user, bot, assistant"
       ]
     }
   ]

@@ -4,7 +4,7 @@ set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"; cd "$root"
 kind="${1:?command|event}"; name="${2:?Name}"
 [[ "$name" =~ ^[A-Z][A-Za-z]+$ ]] || { echo "Name must be PascalCase"; exit 2; }
-grep -q "\`$name\`" docs/GLOSSARY.md || { echo "✗ $name is not in docs/GLOSSARY.md. Add the entry first (ddd-vocabulary), then scaffold."; exit 1; }
+grep -q "\`$name\`" docs/DOMAIN-VOCABULARY.md || { echo "✗ $name is not in docs/DOMAIN-VOCABULARY.md. Add the entry first (ddd-vocabulary), then scaffold."; exit 1; }
 dec=packages/domain/src/thread/decider.ts
 case "$kind" in
   command)

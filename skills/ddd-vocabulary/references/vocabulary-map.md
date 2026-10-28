@@ -1,6 +1,6 @@
 # Vocabulary map
 
-A viz-explainer artifact of the architecture-map kind. Contexts become `subgraph`s, nouns become nodes, relationships become labelled edges. One step per noun: caption is the definition, evidence is the glossary line and the schema file. Build with `bun skills/viz-explainer/scripts/build.mjs spec.json docs/architecture/vocabulary.html`, and wire that as `just glossary`.
+A viz-explainer artifact of the architecture-map kind. Contexts become `subgraph`s, nouns become nodes, relationships become labelled edges. One step per noun: caption is the definition, evidence is the domain vocabulary line and the schema file. Build with `bun skills/viz-explainer/scripts/build.mjs spec.json docs/architecture/vocabulary.html`, and wire that as `just domain-vocabulary`.
 
 Mermaid shape:
 

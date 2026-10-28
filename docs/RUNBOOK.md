@@ -19,7 +19,7 @@ cmux panes: `just up` · a shell on main · `tail -f /tmp/gh-*.log` · the brows
 | Beat | Live | Twin (always works) | Fallback |
 |---|---|---|---|
 | Fresh clone, nobody at the keyboard | `git clone … && just up`, open `/login` and `/healthz` | `just demo cp-00` | the two curls in `scripts/demo.sh` |
-| Agent names it ThreadClosed | ask pi: "add resolve thread"; watch the names | `git checkout wrong/cp-01 && just glossary-check` fails; on `cp-01` it passes | `just demo cp-01` |
+| Agent names it ThreadClosed | ask pi: "add resolve thread"; watch the names | `git checkout wrong/cp-01 && just domain-vocabulary-check` fails; on `cp-01` it passes | `just demo cp-01` |
 | Tests the agent learns from | ask pi for a test; it writes a mock | `just test`, then `cat packages/domain/src/thread/__expect__/resolve.snap.txt` | `just demo cp-02` |
 | Changing a recorded event | ask Claude Code to "add rationale to decisions"; it edits the schema | `cat packages/domain/src/upcast/__expect__/*.snap.txt` | `just demo cp-03` |
 | A plan you look at | `/create_plan GH-12` in Claude Code; the hook builds the page | open `docs/plans/2026-10-28-resolve-thread.plan.html`: decision, components, phases | `just plans`, then open the page |
@@ -46,7 +46,7 @@ cmux panes: `just up` · a shell on main · `tail -f /tmp/gh-*.log` · the brows
 ```sh
 just up                                  # api + web locally, D1 and DO in miniflare
 just test                                # expect tests then api tests
-just glossary-check                      # cp-01
+just domain-vocabulary-check                      # cp-01
 just replay gh-12                        # the stream as a story (api must be up on :8787, or GH_API=<url>)
 just plan docs/plans/2026-10-28-resolve-thread.plan.json   # the plan page; a hook rebuilds it on edit
 just plans                               # every plan with status and progress

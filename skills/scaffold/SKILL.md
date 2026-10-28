@@ -31,7 +31,7 @@ A fresh clone has to work with three commands: `just up`, `just test`, `just dep
 11. **Hono in front, Effect behind.** Hono owns routing and the request/response. Everything behind a handler is Effect: services as Layers, Schema for types, typed errors. `repos/effect` is the vendored Effect source: read it for idiomatic shapes, never import from it; the dependency is the `effect` package. Code that already uses zod stays as it is until its own change.
 12. **Edges are documented.** `docs/ARCHITECTURE.md` lists the allowed import edges. A change that adds one updates that table in the same commit. No edge in the table, no import.
 13. **Twelve factors.** When anything under `apps/*`, a `wrangler.jsonc`, `scripts/deploy.sh`, the workflow or `flake.nix` changes, run the checker in `tools/twelve-factor-baml` against the Worker. When `packages/agent` changes, read HumanLayer's 12-factor agents list (github.com/humanlayer/12-factor-agents) before writing code.
-14. **Names come from the glossary.** A noun in a route, table, command or UI label goes through `ddd-vocabulary` first. `just glossary-check` passes.
+14. **Names come from the domain vocabulary.** A noun in a route, table, command or UI label goes through `ddd-vocabulary` first. `just domain-vocabulary-check` passes.
 
 ## Build sequence
 

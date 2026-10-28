@@ -9,7 +9,7 @@
   "discoveries": [
     "The plan room appends every event a command produces in one synchronous block, so two events from one command land together or not at all.",
     "Flags are read once per request and passed to the plan room as names; a function would arrive as a promise and read as true.",
-    "The glossary already names **Decision** and bans *resolution*, *verdict* and *outcome*."
+    "The domain vocabulary already names **Decision** and bans *resolution*, *verdict* and *outcome*."
   ],
   "endState": "Resolving a thread records two facts, `ThreadResolved` and `DecisionRecorded`. A second resolve is refused. The plan page shows the decision on the thread, and every open tab sees it at once. People without the flag see the thread as before.",
   "notDoing": [
@@ -154,7 +154,7 @@
               },
               "mechanical": "3 mechanical, 0 judgement",
               "silent": "None found",
-              "invariant": "Both invariants are types. Loses \"close without deciding\", which the glossary does not have"
+              "invariant": "Both invariants are types. Loses \"close without deciding\", which the domain vocabulary does not have"
             }
           },
           {
@@ -172,7 +172,7 @@
               },
               "mechanical": "1 mechanical",
               "silent": "Decision ownership disappears",
-              "invariant": "Breaks the glossary: there is no ThreadClosed"
+              "invariant": "Breaks the domain vocabulary: there is no ThreadClosed"
             }
           }
         ],
@@ -259,7 +259,7 @@
           {
             "id": "cmd",
             "option": "close-only",
-            "caption": "Every test passes, and the word ThreadClosed is not in the glossary.",
+            "caption": "Every test passes, and the word ThreadClosed is not in the domain vocabulary.",
             "edges": [
               "i0",
               "i1"
@@ -334,7 +334,7 @@
       "diagram": "lifecycle",
       "changes": [
         {
-          "file": "docs/GLOSSARY.md",
+          "file": "docs/DOMAIN-VOCABULARY.md",
           "intent": "Add `ResolveThread` and `DecisionRecorded` under Thread and Decision, before any code names them."
         },
         {
@@ -357,7 +357,7 @@
             "done": true
           },
           {
-            "cmd": "just glossary-check",
+            "cmd": "just domain-vocabulary-check",
             "done": true
           }
         ],

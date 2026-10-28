@@ -33,7 +33,7 @@ Its expect test's `given` is a verbatim v1 event copied from prod, and the snaps
 
 ## Rung 3, new event type
 
-`ThreadResolved` used to mean "closed, maybe with a decision". It now means "closed with a decision", and "closed without one" is a different fact: `ThreadAbandoned`. Both stay in the log. `evolve` handles both. The glossary gets a new entry first (`ddd-vocabulary`).
+`ThreadResolved` used to mean "closed, maybe with a decision". It now means "closed with a decision", and "closed without one" is a different fact: `ThreadAbandoned`. Both stay in the log. `evolve` handles both. The domain vocabulary gets a new entry first (`ddd-vocabulary`).
 
 ## Rung 4, transform
 

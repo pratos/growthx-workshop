@@ -28,7 +28,7 @@ One line per folder: what it holds, and what goes there. Read the second table b
 │   │   └── wrangler.jsonc    `services: [{ binding: API, service: greenhouse-api }]`, `VERSION`, `GIT_DESCRIBE`, observability.
 │   └── checkin/              Standalone Worker for the workshop check-in (growthx-eng.tarp.sh). Own D1, own domain, `just checkin dev|deploy`. Imports nothing from packages/.
 ├── packages/
-│   ├── schema/               The glossary as types (zod today). Imported by domain and web. Depends only on zod.
+│   ├── schema/               The domain vocabulary as types (zod today). Imported by domain and web. Depends only on zod.
 │   ├── domain/               The decider: kernel.ts, thread/decider.ts, upcast/. Expect tests and __expect__/ snapshots. No I/O.
 │   └── db/                   seed.sql (local admin + random user, flags off). Migrations are NOT here; wrangler wants them under apps/api/migrations.
 ├── scripts/                  What recipes call when they outgrow one line: deploy.sh, new.sh, flag.sh, replay.sh, review.sh, demo.sh, skills-sync.sh.
@@ -37,7 +37,7 @@ One line per folder: what it holds, and what goes there. Read the second table b
 │   ├── twelve-factor-baml/   Twelve-factor checker in BAML. `baml run main -- <service path>` from that folder.
 │   └── slop-jev/             The Jev prose scorer binary source.
 ├── docs/
-│   ├── GLOSSARY.md           The vocabulary. A noun is here before it is in code.
+│   ├── DOMAIN-VOCABULARY.md           The vocabulary. A noun is here before it is in code.
 │   ├── ARCHITECTURE.md       The diagram and the allowed-edges table. Update in the same commit as a new edge.
 │   ├── RELEASE.md            Release checklist: flag off at deploy, you first, slice, percentage, rollback path.
 │   ├── CHECKPOINTS.md        Workshop tags cp-00..cp-07 and the demo.sh beat for each.
@@ -53,9 +53,9 @@ One line per folder: what it holds, and what goes there. Read the second table b
 |---|---|---|
 | Worker | `apps/<name>/` with `wrangler.jsonc`, `src/index.ts`, `package.json`, `tsconfig.json`, `worker-configuration.d.ts`. Only when it needs its own deploy, domain or dependencies; otherwise it is a route. | `references/new-worker.md`. Row in the ARCHITECTURE.md edges table. Row in the README table. |
 | Package | `packages/<name>/` with `package.json` (`@greenhouse/<name>`, `exports: { ".": "./src/index.ts" }`) and `src/index.ts`. Extend `tsconfig.base.json`. Domain-side packages have no I/O. | Edge row in ARCHITECTURE.md. Lint override if a Worker must not import it. `just test` already covers `packages`. |
-| API route | `apps/api/src/index.ts` until it is long; then `apps/api/src/routes/<area>.ts` mounted with `app.route()`. Hono handler in front, Effect behind. | Glossary word for any new noun in the path. A command route goes through `dispatch`, never writes events itself. |
+| API route | `apps/api/src/index.ts` until it is long; then `apps/api/src/routes/<area>.ts` mounted with `app.route()`. Hono handler in front, Effect behind. | Domain vocabulary word for any new noun in the path. A command route goes through `dispatch`, never writes events itself. |
 | Web route | `apps/web/src/routes/<name>.tsx` (page) or `<name>.ts` with `server.handlers` (endpoint). `routeTree.gen.ts` regenerates; do not edit it. | Data only through `#/lib/api`. Public pages are `/login` and `/healthz`; everything else sits behind auth once it lands. |
-| Command or event | `just new command Name` / `just new event Name` after the glossary entry. Lands in `packages/domain/src/thread/decider.ts` with an expect stub. | `event-sourcing` skill. Flag question first; the flag check goes in `decide()`. |
+| Command or event | `just new command Name` / `just new event Name` after the domain vocabulary entry. Lands in `packages/domain/src/thread/decider.ts` with an expect stub. | `event-sourcing` skill. Flag question first; the flag check goes in `decide()`. |
 | Migration | `apps/api/migrations/NNNN_name.sql`, next number. Additive only. | `just migrate-local`. Seed rows in `packages/db/seed.sql`. Apply to remote by hand before deploying the code that needs it. |
 | Flag | A row in the `flags` table via `just flag off NAME` (local) / `GH_REMOTE=1 just flag off NAME` (prod). No code file. | Seed it off in `seed.sql` if local dev needs the row to exist. |
 | Recipe | The justfile, with a comment line. Script in `scripts/<name>.sh` if over a few lines, `set -euo pipefail`, ends with a `Next:` line. | Mention it in RUNBOOK.md "Commands you will type" if a person runs it on stage. |

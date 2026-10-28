@@ -13,7 +13,7 @@ About 12 attendees of the GrowthX "Shipping Reliable Products" workshop: mostly 
 The deck in `deck/` is the visual aid for that live talk, projected at 1280x720. It is projected live only; it is not sent out afterwards, so slides may lean on the speaker and the speaker notes (`Note:` in `deck/slides.md`) carry the detail. Success: the room follows the argument, the jokes land, and the two runs start on time.
 
 ## Positioning
-Thesis of the talk: agents made the typing cheap, not the thinking. Engineering practice (intent, types, tests, glossary, event sourcing, a justfile) is how you make the agent's life easier. Runs live against the Greenhouse planning-room repo.
+Thesis of the talk: agents made the typing cheap, not the thinking. Engineering practice (intent, types, tests, domain vocabulary, event sourcing, a justfile) is how you make the agent's life easier. Runs live against the Greenhouse planning-room repo.
 
 ## Operating Context
 reveal.js 5.1 from CDN, markdown source of truth in `deck/slides.md`, theme in `deck/theme.css`. `---` horizontal slides, `--` vertical "/btw" asides, speaker view on `S`. Several slides are marked `live` (demo happens in a terminal). Companion page: `reliable-products-workshop.html`, deployed at growthx-workshop.tarp.sh.

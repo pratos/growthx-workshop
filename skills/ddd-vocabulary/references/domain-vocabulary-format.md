@@ -1,9 +1,9 @@
-# Glossary format
+# Domain vocabulary format
 
-`docs/GLOSSARY.md` is data, so its shape is fixed. One entry per noun or verb, alphabetical within a context. The check script parses the `##` headings and the `Not:` line.
+`docs/DOMAIN-VOCABULARY.md` is data, so its shape is fixed. One entry per noun or verb, alphabetical within a context. The check script parses the `##` headings and the `Not:` line.
 
 ```md
-# Glossary
+# Domain vocabulary
 
 ## Context: Planning
 
@@ -25,7 +25,7 @@ Rules for an entry:
 - `Not:` lists the synonyms this word replaces. Any of them appearing as an identifier is a defect.
 - A word with two meanings gets two entries under two contexts. Never one entry with "or".
 
-## Greenhouse starter glossary
+## Greenhouse starter domain vocabulary
 
 Seven nouns and the commands and events that use them. This is the whole model.
 

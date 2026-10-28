@@ -5,7 +5,7 @@ Short on purpose. Lives next to the code; the PR template links it.
 ## Product fit
 - [ ] The user's sentence: one line, in their words, of what is now possible.
 - [ ] Dogfooded on real data today.
-- [ ] Vocabulary intact: `just glossary-check` passes, UI copy uses glossary words.
+- [ ] Vocabulary intact: `just domain-vocabulary-check` passes, UI copy uses domain vocabulary words.
 - [ ] Signal defined: which event shows it is used, and the number expected in a week.
 
 ## Staged rollout

@@ -3,23 +3,23 @@
   "date": "2026-10-28",
   "status": "draft",
   "author": "pratos with Claude Code",
-  "summary": "Greenhouse has words for planning, but none for the agent's work, the live room, or the workspace. This plan names them in the glossary and `packages/schema`: pi-durable's words for agent work, Amp's *Thread* for a conversation with the agent, and *Comment* for today's comment thread.",
+  "summary": "Greenhouse has words for planning, but none for the agent's work, the live room, or the workspace. This plan names them in the domain vocabulary and `packages/schema`: pi-durable's words for agent work, Amp's *Thread* for a conversation with the agent, and *Comment* for today's comment thread.",
   "current": "Eight nouns across two contexts; two definitions contradict themselves and three schemas are missing. The stack's own words collide: *session* means six things, pi-durable's *agent* is a configuration, and Amp's *thread* is our comment thread.",
   "discoveries": [
-    "Plan is \"a document\" while banning *document*, and four event verbs are missing from the verb list (`docs/GLOSSARY.md:28,51`).",
+    "Plan is \"a document\" while banning *document*, and four event verbs are missing from the verb list (`docs/DOMAIN-VOCABULARY.md:28,51`).",
     "`rationale` is read by the upcaster but named nowhere else (`packages/domain/src/upcast/index.ts`).",
     "Chopin says *document* for the product, *Plan* only on a tab, *comment* in its interface and *finding* for research results.",
     "pi-durable's *run* is one input to its final answer: what people mean by the agent is running.",
     "Appleton's own terms are *boundary objects* and *interactive report*. The pattern labels on our workshop page are ours, not hers."
   ],
-  "endState": "One glossary with four contexts, an adopted-words table pinned to pi-durable 1.4.0, a schema per noun, a check that enforces all of it, and a map of the vocabulary. After the workshop, the code says Comment.",
+  "endState": "One domain vocabulary with four contexts, an adopted-words table pinned to pi-durable 1.4.0, a schema per noun, a check that enforces all of it, and a map of the vocabulary. After the workshop, the code says Comment.",
   "notDoing": [
     "Implementing Runs, Rooms or Workspaces; this plan only names them.",
     "Renaming kernel words like Decider and Message; they stay internal.",
     "Copying Chopin's identifiers; we borrow only the words users already say.",
     "Rewriting the workshop page beyond the Appleton attribution."
   ],
-  "approach": "Fix the glossary's mistakes first. Then add contexts, words and schemas, make the check enforce them, and render the map. Renaming code and stored events waits until after the workshop.",
+  "approach": "Fix the domain vocabulary's mistakes first. Then add contexts, words and schemas, make the check enforce them, and render the map. Renaming code and stored events waits until after the workshop.",
   "approachDiagram": "context-map",
   "diagrams": [
     {
@@ -220,7 +220,7 @@
               "callSites": {
                 "count": 4,
                 "list": [
-                  "glossary",
+                  "domain vocabulary",
                   "schema",
                   "plan page",
                   "packages/agent adapter"
@@ -266,7 +266,7 @@
             "tried": {
               "kind": "exploration",
               "ref": "sentence test",
-              "summary": "Rejected by the glossary check: Thread is taken"
+              "summary": "Rejected by the domain vocabulary check: Thread is taken"
             },
             "axes": {
               "callSites": {
@@ -365,7 +365,7 @@
           "label": "Hide the runtime entirely"
         }
       ],
-      "why": "pi-durable's words go straight into the domain, except Conversation (Thread) and Agent (Setup); four stay internal. The glossary pins 1.4.0 because the library renames between releases.",
+      "why": "pi-durable's words go straight into the domain, except Conversation (Thread) and Agent (Setup); four stay internal. The domain vocabulary pins 1.4.0 because the library renames between releases.",
       "viz": {
         "kind": "decision-report",
         "question": "Where may pi-durable and Cloudflare words appear?",
@@ -378,8 +378,8 @@
           {
             "id": "translate",
             "label": "Translate at the edge",
-            "summary": "Library words stay in the adapters; domain and screens use glossary words.",
-            "diagram": "flowchart LR\n  LIB[\"pi-durable and Cloudflare words\"]\n  AD[\"Adapters · packages/agent, the plan room object\"]\n  DOM[\"Domain and schema · glossary words only\"]\n  UI[\"Screens · glossary words only\"]\n  LIB -- \"stay inside\" --> AD\n  AD -- \"translated\" --> DOM\n  DOM -- \"same words\" --> UI",
+            "summary": "Library words stay in the adapters; domain and screens use domain vocabulary words.",
+            "diagram": "flowchart LR\n  LIB[\"pi-durable and Cloudflare words\"]\n  AD[\"Adapters · packages/agent, the plan room object\"]\n  DOM[\"Domain and schema · domain vocabulary words only\"]\n  UI[\"Screens · domain vocabulary words only\"]\n  LIB -- \"stay inside\" --> AD\n  AD -- \"translated\" --> DOM\n  DOM -- \"same words\" --> UI",
             "tried": {
               "kind": "exploration",
               "ref": "sentence test",
@@ -393,7 +393,7 @@
                   "apps/api/src/plan-room.ts"
                 ]
               },
-              "mechanical": "A translation table in the glossary; one check rule",
+              "mechanical": "A translation table in the domain vocabulary; one check rule",
               "silent": "None",
               "invariant": "No library word appears in domain, schema or screen copy"
             }
@@ -458,7 +458,7 @@
           },
           {
             "id": "out",
-            "caption": "Everything past the adapter speaks the glossary, and the check enforces it.",
+            "caption": "Everything past the adapter speaks the domain vocabulary, and the check enforces it.",
             "edges": [
               "L_AD_DOM_0",
               "L_DOM_UI_0"
@@ -551,7 +551,7 @@
               "callSites": {
                 "count": 3,
                 "list": [
-                  "glossary",
+                  "domain vocabulary",
                   "architecture map",
                   "plan page header"
                 ]
@@ -575,7 +575,7 @@
               "callSites": {
                 "count": 2,
                 "list": [
-                  "glossary",
+                  "domain vocabulary",
                   "architecture map wording"
                 ]
               },
@@ -588,7 +588,7 @@
             "id": "document",
             "label": "Document, as Chopin names it",
             "summary": "Chopin's product noun; plan becomes the planning use of a document.",
-            "diagram": "flowchart LR\n  DC[\"Document · Chopin's word\"]\n  PL[\"Plan · a document used for planning\"]\n  CL[\"Collides · pi-durable Document, glossary bans document\"]\n  PL -- \"is a\" --> DC\n  DC -- \"collides\" --> CL",
+            "diagram": "flowchart LR\n  DC[\"Document · Chopin's word\"]\n  PL[\"Plan · a document used for planning\"]\n  CL[\"Collides · pi-durable Document, domain vocabulary bans document\"]\n  PL -- \"is a\" --> DC\n  DC -- \"collides\" --> CL",
             "tried": {
               "kind": "exploration",
               "ref": "sentence test",
@@ -598,7 +598,7 @@
               "callSites": {
                 "count": 4,
                 "list": [
-                  "glossary Plan entry",
+                  "domain vocabulary Plan entry",
                   "pi-durable Document",
                   "schema PlanView",
                   "UI copy"
@@ -706,7 +706,7 @@
               "callSites": {
                 "count": 3,
                 "list": [
-                  "glossary",
+                  "domain vocabulary",
                   "schema",
                   "packages/agent adapter"
                 ]
@@ -730,7 +730,7 @@
               "callSites": {
                 "count": 4,
                 "list": [
-                  "glossary",
+                  "domain vocabulary",
                   "schema",
                   "UI copy",
                   "MCP tool names"
@@ -755,7 +755,7 @@
               "callSites": {
                 "count": 5,
                 "list": [
-                  "glossary",
+                  "domain vocabulary",
                   "architecture map",
                   "workshop page",
                   "schema",
@@ -771,7 +771,7 @@
         "steps": [
           {
             "id": "actor",
-            "caption": "Agent keeps meaning an actor, as it already does in the glossary and the map.",
+            "caption": "Agent keeps meaning an actor, as it already does in the domain vocabulary and the map.",
             "edges": [
               "L_AG_SU_0"
             ],
@@ -866,7 +866,7 @@
               "callSites": {
                 "count": 4,
                 "list": [
-                  "glossary",
+                  "domain vocabulary",
                   "schema",
                   "domain events",
                   "plan page copy"
@@ -891,7 +891,7 @@
               "callSites": {
                 "count": 4,
                 "list": [
-                  "glossary",
+                  "domain vocabulary",
                   "schema",
                   "domain events",
                   "plan page copy"
@@ -916,7 +916,7 @@
               "callSites": {
                 "count": 4,
                 "list": [
-                  "glossary",
+                  "domain vocabulary",
                   "schema",
                   "domain events",
                   "plan page copy"
@@ -984,17 +984,17 @@
       "chosen": "after",
       "by": "pratos",
       "at": "2026-10-28",
-      "why": "Glossary and schema change now. Code, stored events and checkpoints keep Thread until after the talk, so tonight's demos run as rehearsed."
+      "why": "Domain vocabulary and schema change now. Code, stored events and checkpoints keep Thread until after the talk, so tonight's demos run as rehearsed."
     }
   ],
   "phases": [
     {
       "id": "fix",
-      "name": "Fix what the glossary gets wrong today",
-      "goal": "The glossary agrees with itself and the code: Plan defined without a banned word, verbs matching events, and a name for the Decision's reason.",
+      "name": "Fix what the domain vocabulary gets wrong today",
+      "goal": "The domain vocabulary agrees with itself and the code: Plan defined without a banned word, verbs matching events, and a name for the Decision's reason.",
       "changes": [
         {
-          "file": "docs/GLOSSARY.md",
+          "file": "docs/DOMAIN-VOCABULARY.md",
           "intent": "Redefine Plan, add four verbs, and add *why* to Decision."
         },
         {
@@ -1021,7 +1021,7 @@
       "verify": {
         "automated": [
           {
-            "cmd": "just glossary-check",
+            "cmd": "just domain-vocabulary-check",
             "done": false
           },
           {
@@ -1044,7 +1044,7 @@
       "diagram": "context-map",
       "changes": [
         {
-          "file": "docs/GLOSSARY.md",
+          "file": "docs/DOMAIN-VOCABULARY.md",
           "intent": "Add the four contexts and the adopted-words table.",
           "contract": {
             "lang": "md",
@@ -1052,7 +1052,7 @@
           }
         },
         {
-          "file": "docs/GLOSSARY.md",
+          "file": "docs/DOMAIN-VOCABULARY.md",
           "intent": "Redefine Thread; add Comment with its old events under *Formerly*.",
           "contract": {
             "lang": "md",
@@ -1067,7 +1067,7 @@
       "verify": {
         "automated": [
           {
-            "cmd": "just glossary-check",
+            "cmd": "just domain-vocabulary-check",
             "done": false
           },
           {
@@ -1090,7 +1090,7 @@
       "diagram": "run-states",
       "changes": [
         {
-          "file": "docs/GLOSSARY.md",
+          "file": "docs/DOMAIN-VOCABULARY.md",
           "intent": "Add the nineteen new words with Seen in and Not lines."
         },
         {
@@ -1102,14 +1102,14 @@
           }
         },
         {
-          "file": "docs/GLOSSARY.md",
+          "file": "docs/DOMAIN-VOCABULARY.md",
           "intent": "List the Run lifecycle's commands and events."
         }
       ],
       "verify": {
         "automated": [
           {
-            "cmd": "just glossary-check",
+            "cmd": "just domain-vocabulary-check",
             "done": false
           },
           {
@@ -1131,26 +1131,26 @@
       "goal": "The check fails on an unknown verb, a missing schema, an internal library word outside `packages/agent`, or a moved pi-durable version. CI runs it.",
       "changes": [
         {
-          "file": "skills/ddd-vocabulary/scripts/check-glossary.sh",
-          "intent": "Add the four checks, read from the glossary."
+          "file": "skills/ddd-vocabulary/scripts/check-domain-vocabulary.sh",
+          "intent": "Add the four checks, read from the domain vocabulary."
         },
         {
-          "file": "skills/ddd-vocabulary/references/glossary-format.md",
+          "file": "skills/ddd-vocabulary/references/domain-vocabulary-format.md",
           "intent": "Document the adopted-words table, *Formerly* and Seen in."
         },
         {
           "file": ".github/workflows/deploy.yml",
-          "intent": "Run `just glossary-check` in the check job."
+          "intent": "Run `just domain-vocabulary-check` in the check job."
         }
       ],
       "verify": {
         "automated": [
           {
-            "cmd": "just glossary-check",
+            "cmd": "just domain-vocabulary-check",
             "done": false
           },
           {
-            "cmd": "git checkout wrong/cp-01 && just glossary-check",
+            "cmd": "git checkout wrong/cp-01 && just domain-vocabulary-check",
             "text": "still fails on ThreadClosed and verdict",
             "done": false
           }
@@ -1166,7 +1166,7 @@
     {
       "id": "show",
       "name": "Render the vocabulary so it can be shown",
-      "goal": "`just glossary` renders the vocabulary as a map through the architecture map's builder, and the hook keeps it current.",
+      "goal": "`just domain-vocabulary` renders the vocabulary as a map through the architecture map's builder, and the hook keeps it current.",
       "diagram": "context-map",
       "changes": [
         {
@@ -1174,22 +1174,22 @@
           "intent": "Accept a source document and an output path."
         },
         {
-          "file": "docs/GLOSSARY.md",
+          "file": "docs/DOMAIN-VOCABULARY.md",
           "intent": "Add a Mermaid block and a walkthrough."
         },
         {
           "file": "scripts/hooks/arch-hook.sh",
-          "intent": "Rebuild the map when the glossary changes."
+          "intent": "Rebuild the map when the domain vocabulary changes."
         },
         {
           "file": "justfile",
-          "intent": "Add `just glossary`."
+          "intent": "Add `just domain-vocabulary`."
         }
       ],
       "verify": {
         "automated": [
           {
-            "cmd": "just glossary",
+            "cmd": "just domain vocabulary",
             "done": false
           },
           {
@@ -1231,7 +1231,7 @@
           "intent": "Say comment where the page says thread."
         },
         {
-          "file": "docs/GLOSSARY.md",
+          "file": "docs/DOMAIN-VOCABULARY.md",
           "intent": "Drop the *Formerly* line."
         }
       ],
@@ -1242,7 +1242,7 @@
             "done": false
           },
           {
-            "cmd": "just glossary-check",
+            "cmd": "just domain-vocabulary-check",
             "done": false
           },
           {
@@ -1283,10 +1283,10 @@
     }
   ],
   "references": [
-    "`docs/GLOSSARY.md`, `packages/schema/src/index.ts`, `skills/ddd-vocabulary/SKILL.md`",
+    "`docs/DOMAIN-VOCABULARY.md`, `packages/schema/src/index.ts`, `skills/ddd-vocabulary/SKILL.md`",
     "githubnext/chopin: `docs/architecture.md`, `docs/decisions.md`",
     "Maggie Appleton, *Planning with Agents* (maggieappleton.com/planning-agents)",
-    "pi-durable README; Amp threads docs; Claude Code glossary"
+    "pi-durable README; Amp threads docs; Claude Code domain vocabulary"
   ],
   "design": {
     "notes": "Same tokens as the plan page today; only the words change. The rename is visible in two places: the meta line and the action.",

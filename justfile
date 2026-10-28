@@ -92,9 +92,9 @@ plans:
 artifact spec out:
     bun skills/viz-explainer/scripts/build.mjs {{spec}} {{out}}
 
-# Fail if a command or event in code is missing from the glossary
-glossary-check:
-    skills/ddd-vocabulary/scripts/check-glossary.sh docs/GLOSSARY.md packages apps
+# Fail if a command or event in code is missing from the domain vocabulary
+domain-vocabulary-check:
+    skills/ddd-vocabulary/scripts/check-domain-vocabulary.sh docs/DOMAIN-VOCABULARY.md packages apps
 
 # Score prose for slop: rules first, then Jev if a key is present
 slop file:

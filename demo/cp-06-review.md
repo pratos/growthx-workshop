@@ -1,16 +1,16 @@
 I reviewed the diff you pasted against the repo at HEAD (fa34267). The diff isn't in the working tree: `packages/domain` is unchanged locally, and the `__expect__` snapshots still show `ThreadResolved` + `DecisionRecorded`.
 
-## 1. Words that aren't in the glossary
+## 1. Words that aren't in the domain vocabulary
 
 | Identifier | Where (new-file lines) | Why it's a defect |
 |---|---|---|
-| `ThreadClosed` (event and type) | `packages/domain/src/thread/decider.ts:13`, `:17`, `:27`, `:42`; `packages/domain/src/index.ts:42`; `thread.expect.test.ts:3`, `:19` | The glossary event for Thread is `ThreadResolved`. "Close" isn't one of the seven verbs. The GH-12 report already rejects this option: "Breaks the glossary: there is no ThreadClosed" (`docs/decisions/gh-12.spec.json:74`). |
-| `verdict` (field) | `decider.ts:13`, `:42`; `thread.expect.test.ts:19` | The glossary lists it under Decision as **Not: verdict**. The code even copies `command.data.decision` into `verdict`, so the same thing has two names in one line. |
+| `ThreadClosed` (event and type) | `packages/domain/src/thread/decider.ts:13`, `:17`, `:27`, `:42`; `packages/domain/src/index.ts:42`; `thread.expect.test.ts:3`, `:19` | The domain vocabulary event for Thread is `ThreadResolved`. "Close" isn't one of the seven verbs. The GH-12 report already rejects this option: "Breaks the domain vocabulary: there is no ThreadClosed" (`docs/decisions/gh-12.spec.json:74`). |
+| `verdict` (field) | `decider.ts:13`, `:42`; `thread.expect.test.ts:19` | The domain vocabulary lists it under Decision as **Not: verdict**. The code even copies `command.data.decision` into `verdict`, so the same thing has two names in one line. |
 
 ## 2. Code that runs but contradicts the rules
 
 - **It edits recorded events.** `decider.ts:10` says events are "Never edited, never deleted". This change renames an event type and changes its schema. The fix is the upcast ladder that cp-03 used (`packages/domain/src/upcast/index.ts`), and this diff adds no upcaster.
-- **The Decision no longer has its own event.** The glossary says `ResolveThread` produces `DecisionRecorded`, and that a Decision "stays attached to the Block it changed". Now the Decision is a text field on a thread event, and `ThreadClosed` has no `blockId`. So the Decision can't point at the Block it changed. That breaks the glossary's main promise: "every decision is owned, dated and attached to the block it changed."
+- **The Decision no longer has its own event.** The domain vocabulary says `ResolveThread` produces `DecisionRecorded`, and that a Decision "stays attached to the Block it changed". Now the Decision is a text field on a thread event, and `ThreadClosed` has no `blockId`. So the Decision can't point at the Block it changed. That breaks the domain vocabulary's main promise: "every decision is owned, dated and attached to the block it changed."
 - **The tests don't match their names.**
   - `'resolve records two facts'` now records one fact.
   - `'resolve twice is rejected'` now starts from a `ThreadClosed` event, so it no longer tests the history that is actually stored.
@@ -25,7 +25,7 @@ I reviewed the diff you pasted against the repo at HEAD (fa34267). The diff isn'
 
 ## Question before merge
 
-How are streams that already hold `ThreadResolved` and `DecisionRecorded` read after this change: upcast, migrated, or assumed not to exist? And which GH-12 option is this implementing, given the report itself marks this one as breaking the glossary?
+How are streams that already hold `ThreadResolved` and `DecisionRecorded` read after this change: upcast, migrated, or assumed not to exist? And which GH-12 option is this implementing, given the report itself marks this one as breaking the domain vocabulary?
 
 Suggested next step: drop the rename, keep `ThreadResolved` + `DecisionRecorded`, and if a field needs to change, add it through an upcaster as cp-03 did.
 exit 0

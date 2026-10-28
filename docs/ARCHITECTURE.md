@@ -58,7 +58,7 @@ The map's parts, and the folders that hold them. `just arch` refuses a folder un
 | Web app | `apps/web` |
 | API | `apps/api` |
 | Plan room | `apps/api` (the PlanRoom Durable Object), `packages/domain` |
-| Rules and shared words | `packages/domain`, `packages/schema`, `docs/GLOSSARY.md` |
+| Rules and shared words | `packages/domain`, `packages/schema`, `docs/DOMAIN-VOCABULARY.md` |
 | Settings and summaries | `apps/api/migrations`, `packages/db` |
 | Agent | `packages/agent` |
 | Agent memory | `packages/agent` (SQLite checkpoints) |

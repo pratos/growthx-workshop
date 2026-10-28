@@ -93,7 +93,7 @@ Projections that live in D1 subscribe to the same events and are rebuilt by `jus
 
 ## What `just new command Name` produces
 
-- `packages/schema/commands/Name.ts` with the command type and a glossary check.
+- `packages/schema/commands/Name.ts` with the command type and a domain vocabulary check.
 - The `case 'Name':` in the aggregate's `decide`, returning `reject('todo')`.
 - `__expect__/name.expect.ts` with a `given/when/snapshot` stub and one `rejected` stub.
-- A line in `docs/GLOSSARY.md` under the right noun, marked `(draft)` until the entry is written.
+- A line in `docs/DOMAIN-VOCABULARY.md` under the right noun, marked `(draft)` until the entry is written.

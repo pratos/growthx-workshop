@@ -10,10 +10,10 @@ case "$cp" in
     curl -sf localhost:8799/healthz | grep -q '"ok":true' && curl -sf localhost:8799/readyz | grep -q '"ok":true'; pkill -f "wrangler dev --port 8799" || true
     pass "api answers /healthz and /readyz from a fresh clone" ;;
   cp-01)
-    scripts/../skills/ddd-vocabulary/scripts/check-glossary.sh docs/GLOSSARY.md packages apps >/dev/null && pass "every command and event in code has a glossary entry"
+    scripts/../skills/ddd-vocabulary/scripts/check-domain-vocabulary.sh docs/DOMAIN-VOCABULARY.md packages apps >/dev/null && pass "every command and event in code has a domain vocabulary entry"
     if git show-ref --quiet refs/heads/wrong/cp-01; then
       tmp=$(mktemp -d); git worktree add -q "$tmp" wrong/cp-01
-      if (cd "$tmp" && skills/ddd-vocabulary/scripts/check-glossary.sh docs/GLOSSARY.md packages apps >/dev/null 2>&1); then echo "✗ wrong/cp-01 should fail the glossary check"; git worktree remove --force "$tmp"; exit 1; fi
+      if (cd "$tmp" && skills/ddd-vocabulary/scripts/check-domain-vocabulary.sh docs/DOMAIN-VOCABULARY.md packages apps >/dev/null 2>&1); then echo "✗ wrong/cp-01 should fail the domain vocabulary check"; git worktree remove --force "$tmp"; exit 1; fi
       git worktree remove --force "$tmp"; pass "and the branch with ThreadClosed fails it"
     fi ;;
   cp-02) bun test packages/domain >/dev/null 2>&1 && pass "Thread decider expect snapshots pass, read as prose: packages/domain/src/thread/__expect__/" ;;

@@ -30,7 +30,7 @@ Source of truth: `docs/plans/YYYY-MM-DD-slug.plan.json` (or `thoughts/shared/pla
 - **No open questions in a final plan.** Undecided means draft.
 - **Say what is not being done.** `notDoing` is required.
 - **Verification is runnable or observable.** Automated items are commands (prefer `just` recipes). Manual items are sentences a person can check by looking.
-- **Use the glossary's words.** Load `ddd-vocabulary` if the plan names anything new.
+- **Use the domain vocabulary's words.** Load `ddd-vocabulary` if the plan names anything new.
 
 ## After the plan
 

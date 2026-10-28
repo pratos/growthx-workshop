@@ -350,8 +350,8 @@ body:not(.tabs-on) .tabbar,body:not(.tabs-on) .pager,body:not(.tabs-on) .subnav{
         <ul>
           <li><b>Domain (Run 1):</b> <code>ResolveThread</code> command, <code>ThreadResolved</code> and <code>DecisionRecorded</code> events, decision-log projection updated. Invariant: a decision references exactly one thread and one block, and a resolved thread cannot be resolved twice. Expect test: command in, events out, read as a story.</li>
           <li><b>UI (Run 2):</b> a resolve action on the thread, a one-line "what was decided" field, the decision appearing in the log and as a marker on the block. One Stagehand flow: open a plan, comment, resolve, see the decision in the log.</li>
-          <li><b>Review:</b> a different model reviews the branch against <code>GLOSSARY.md</code>. Planted bug: the first pass names the event <code>ThreadClosed</code>, which passes every test and breaks the vocabulary.</li>
-          <li><b>Done means:</b> expect and e2e green, one Stagehand flow green, glossary updated, PR opened with the agent's walkthrough, release checklist attached. And the plan for GH-12 itself, in Greenhouse, shows the decision that chose the modelling.</li>
+          <li><b>Review:</b> a different model reviews the branch against <code>DOMAIN-VOCABULARY.md</code>. Planted bug: the first pass names the event <code>ThreadClosed</code>, which passes every test and breaks the vocabulary.</li>
+          <li><b>Done means:</b> expect and e2e green, one Stagehand flow green, domain vocabulary updated, PR opened with the agent's walkthrough, release checklist attached. And the plan for GH-12 itself, in Greenhouse, shows the decision that chose the modelling.</li>
         </ul>
       </div>
     </div>
@@ -609,7 +609,7 @@ body:not(.tabs-on) .tabbar,body:not(.tabs-on) .pager,body:not(.tabs-on) .subnav{
         </div>
         <ul>
           <li>Bounded contexts tell the agent where a word stops meaning what it meant</li>
-          <li>Put the glossary in the repo, next to the code, where both of you read it</li>
+          <li>Put the domain vocabulary in the repo, next to the code, where both of you read it</li>
           <li>When a user's phrase does not map to a type, that is a design finding, not a naming chore</li>
         </ul>
       </article>
@@ -795,7 +795,7 @@ Participant  <span class="c">— a person or an agent; same commands, same right
 ├── scripts/               <span class="c"># scaffolding: new-command, new-event, new-projection, new-route</span>
 ├── skills/                <span class="c"># the collection below, loaded by pi and Claude Code</span>
 ├── docs/
-│   ├── GLOSSARY.md        <span class="c"># the ubiquitous language, kept next to the code</span>
+│   ├── DOMAIN-VOCABULARY.md        <span class="c"># the ubiquitous language, kept next to the code</span>
 │   └── decisions/         <span class="c"># living wiki: why, not what</span>
 ├── AGENTS.md              <span class="c"># shared agent instructions</span>
 └── CLAUDE.md              <span class="c"># → AGENTS.md</span></pre>
@@ -969,7 +969,7 @@ for await (const view of root.viewState(context)) {
               <tr><td>viz-explainer</td><td>ours, on manimgl</td><td>Renders a short animated explainer of a flow from the event stream or a diagram spec</td><td><code>just explain &lt;stream-id&gt;</code>, and in the talk</td></tr>
               <tr><td>claude-artifacts</td><td>Anthropic's artifact skills</td><td>Self-contained HTML pages for prototypes and show-me reviews</td><td>"show me", before any UI gets built for real</td></tr>
               <tr><td>testing</td><td>ours</td><td>Which test to write: expect at the library level, event-replay e2e through the domain, Stagehand for browser flows. Never a unit test for its own sake</td><td>any new command, event or route</td></tr>
-              <tr><td>ddd-vocabulary</td><td>ours</td><td>New nouns must appear in <code>GLOSSARY.md</code> and as a schema before they appear in code</td><td>a new type, table or route</td></tr>
+              <tr><td>ddd-vocabulary</td><td>ours</td><td>New nouns must appear in <code>DOMAIN-VOCABULARY.md</code> and as a schema before they appear in code</td><td>a new type, table or route</td></tr>
               <tr><td>event-sourcing</td><td>ours</td><td>Commands validate, events are facts, projections are pure. Scaffolds with <code>just new</code></td><td>anything under <code>packages/domain</code></td></tr>
               <tr><td>review-for-understanding</td><td>ours</td><td>Walkthrough first, stacked PRs, questions before comments, model inversion</td><td><code>just review</code>, PR webhook</td></tr>
               <tr><td>deploy</td><td>ours</td><td>Read Cloudflare and Alchemy docs before touching <code>alchemy.run.ts</code>; never guess a limit, a price or a default (Workers CPU time and D1 row limits bite quietly)</td><td>any infra change</td></tr>
@@ -1057,7 +1057,7 @@ for await (const view of root.viewState(context)) {
           <li><div class="body"><span class="t">A new feature as command, event, projection</span><span class="d"><code>just new command ResolveThread</code>. The scaffold writes the expect stub; the agent fills it; the snapshot is reviewed as prose.</span><span class="maps">event sourcing · expect tests</span></div></li>
           <li><div class="body"><span class="t">End to end without a browser</span><span class="d">Replay a full plan (edit, thread, replies, resolve, fork) through the API and assert on the decision log. Then the one Stagehand flow, to show what it costs by comparison.</span><span class="maps">testing skill</span></div></li>
           <li><div class="body"><span class="t">Taste under supervision</span><span class="d">Ask for the resolve action "to feel better". impeccable and the animation skills turn that into specific edits; you judge the result by using it.</span><span class="maps">taste · dogfood</span></div></li>
-          <li><div class="body"><span class="t">Correct code that is wrong</span><span class="d">Have one tool author a change that passes every test but breaks a glossary rule. Have a different model review it with <code>just review</code>.</span><span class="maps">model inversion · review for understanding</span></div></li>
+          <li><div class="body"><span class="t">Correct code that is wrong</span><span class="d">Have one tool author a change that passes every test but breaks a domain vocabulary rule. Have a different model review it with <code>just review</code>.</span><span class="maps">model inversion · review for understanding</span></div></li>
           <li><div class="body"><span class="t">Explain it back</span><span class="d"><code>just trace</code> renders the event flow of a real session with viz-explainer and attaches it to the plan as an artifact block. The agent's account of its own work, as a picture, where the decision lives.</span><span class="maps">augment your learning</span></div></li>
           <li><div class="body"><span class="t">Implement from the plan, anywhere</span><span class="d">Open Claude Code with the Greenhouse MCP server. It reads the plan, sees the one decision, implements against it, and writes "implemented in PR #n" back as a decision. Plan here, build there, review against the plan.</span><span class="maps">one vocabulary · legibility</span></div></li>
           <li><div class="body"><span class="t">Ship it</span><span class="d"><code>just deploy</code> from the agent's sandbox, after it has read the Cloudflare docs via the deploy skill. Same repo, same vocabulary, now on Workers.</span><span class="maps">read the docs · trust ladder</span></div></li>
@@ -1079,13 +1079,13 @@ for await (const view of root.viewState(context)) {
         <h3>The workflow, one task end to end</h3>
         <div class="principles">
           <div class="principle"><div class="k">1 · Interview</div><div class="v">Talk to the user who asked, or the one who would. Write the feature, not the ask. <span class="tag you">you</span></div></div>
-          <div class="principle"><div class="k">2 · Name it</div><div class="v">New nouns go in the glossary and the schema first. If a word has no type, stop here. <span class="tag you">you</span></div></div>
+          <div class="principle"><div class="k">2 · Name it</div><div class="v">New nouns go in the domain vocabulary and the schema first. If a word has no type, stop here. <span class="tag you">you</span></div></div>
           <div class="principle"><div class="k">3 · Estimate</div><div class="v">Brooks's fractions. The coding sixth is the agent's; budget the other five sixths for yourself. <span class="tag you">you</span></div></div>
           <div class="principle"><div class="k">4 · Plan as a boundary object</div><div class="v"><code>just plan</code>: open decisions come back as built artifacts and explored threads, not prose questions. You decide by clicking on something real; the plan records it. <span class="tag both">shared</span></div></div>
           <div class="principle"><div class="k">4b · Scaffold</div><div class="v"><code>just new …</code> so the shape is right before any code exists, including the expect stub. <span class="tag agent">agent</span></div></div>
           <div class="principle"><div class="k">5 · Build in the loop</div><div class="v">Domain first, UI second, each with its own test layer. Show-me reviews on artifacts before real UI. <span class="tag agent">agent</span></div></div>
           <div class="principle"><div class="k">6 · Dogfood</div><div class="v">Use it. The Stagehand flow proves it works; only you can tell whether it feels right. <span class="tag you">you</span></div></div>
-          <div class="principle"><div class="k">7 · Review inverted</div><div class="v">A different model, the glossary in context, walkthrough attached to the PR. <span class="tag both">shared</span></div></div>
+          <div class="principle"><div class="k">7 · Review inverted</div><div class="v">A different model, the domain vocabulary in context, walkthrough attached to the PR. <span class="tag both">shared</span></div></div>
           <div class="principle"><div class="k">8 · Release staged</div><div class="v">Checklist below. Ship to yourself, then a slice, then everyone, with the way back decided in advance. <span class="tag you">you</span></div></div>
           <div class="principle"><div class="k">9 · Feed it back</div><div class="v">What the release taught goes into <code>docs/decisions</code> and the skills, so the next session starts smarter. <span class="tag both">shared</span></div></div>
         </div>
@@ -1100,7 +1100,7 @@ for await (const view of root.viewState(context)) {
             <ul class="check">
               <li><b>The user's sentence.</b> One line, in the user's words, of what is now possible. If you cannot write it, you built an ask.</li>
               <li><b>Dogfooded.</b> You used the feature on real data at least once today.</li>
-              <li><b>Vocabulary intact.</b> No new noun in code that is missing from the glossary and the UI copy.</li>
+              <li><b>Vocabulary intact.</b> No new noun in code that is missing from the domain vocabulary and the UI copy.</li>
               <li><b>Signal defined.</b> Which event in the stream tells you it is being used, and what number you expect in a week.</li>
             </ul>
           </div>

@@ -12,4 +12,4 @@ Loaded by both Claude Code (`.claude/skills/*` symlinks) and pi (`.pi/skills/*` 
 | slop-guard | any prose over ~400 characters, artifact captions, PR bodies | a Jev score with a fix-first line (pi runs it as a hook) |
 
 One-time: `cd skills/viz-explainer && bun install` restores Pele for the artifact builder.
-Smoke test: `bun skills/viz-explainer/scripts/build.mjs <spec.json> out.html` and `skills/ddd-vocabulary/scripts/check-glossary.sh docs/GLOSSARY.md packages`.
+Smoke test: `bun skills/viz-explainer/scripts/build.mjs <spec.json> out.html` and `skills/ddd-vocabulary/scripts/check-domain-vocabulary.sh docs/DOMAIN-VOCABULARY.md packages`.

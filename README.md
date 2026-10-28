@@ -11,7 +11,7 @@ just up            # api + web locally; http://localhost:3000
 just test
 ```
 
-Read `AGENTS.md` first, then `docs/GLOSSARY.md` and `docs/ARCHITECTURE.md`. The checkpoints the workshop walks through are in `docs/CHECKPOINTS.md`; each is a git tag with a `just demo cp-NN` that proves it.
+Read `AGENTS.md` first, then `docs/DOMAIN-VOCABULARY.md` and `docs/ARCHITECTURE.md`. The checkpoints the workshop walks through are in `docs/CHECKPOINTS.md`; each is a git tag with a `just demo cp-NN` that proves it.
 
 | Where | What |
 |---|---|
@@ -21,6 +21,6 @@ Read `AGENTS.md` first, then `docs/GLOSSARY.md` and `docs/ARCHITECTURE.md`. The 
 | `packages/domain` | The decider: commands validate, events are facts, projections are pure. Expect tests read as a story. |
 | `packages/schema` | The vocabulary as types. |
 | `apps/*/wrangler.jsonc` | Each Worker's bindings as config. `just deploy` runs wrangler for api then web, passes a `git describe` label, and never runs migrations. |
-| `docs/` | Glossary, architecture and its map, release checklist, checkpoints, runbook, decisions, and `plans/`: each plan is JSON rendered to an HTML page by the create-plan skill. |
+| `docs/` | Domain vocabulary, architecture and its map, release checklist, checkpoints, runbook, decisions, and `plans/`: each plan is JSON rendered to an HTML page by the create-plan skill. |
 | `deck/`, `workshop-page/`, `reliable-products-workshop.html` | The talk itself. |
 | `skills/` | Loaded by Claude Code and pi. Ours in place; third-party vendored at pinned commits by `just skills`. |

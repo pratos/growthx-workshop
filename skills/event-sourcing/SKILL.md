@@ -17,7 +17,7 @@ Spreadsheets won because the data and its flow are visible. An event log gives a
 
 ## Rules
 
-1. **Commands validate; events are facts.** A command may be rejected. An event is never rejected, edited or deleted. Past tense, glossary word (load `ddd-vocabulary` for the word).
+1. **Commands validate; events are facts.** A command may be rejected. An event is never rejected, edited or deleted. Past tense, domain vocabulary word (load `ddd-vocabulary` for the word).
 2. **Decide, evolve, project.** `decide(state, command) → events[]` is the only place with rules. `evolve(state, event) → state` has none. `project(events) → readModel` is pure. Shape in `references/decider.md`.
 3. **One command, one append.** Every event a command emits is appended in one synchronous block. In a Durable Object that means no `await` between the writes. Partial appends do not exist.
 4. **Every command has an expect test.** Starting stream and command in, events out, snapshot read as prose. The scaffold writes the stub; the agent fills it; a human reviews the snapshot like a story. No unit tests of `evolve`, the snapshot already covers it.
@@ -30,7 +30,7 @@ Spreadsheets won because the data and its flow are visible. An event log gives a
 
 ## Build sequence
 
-1. **Name it** via `ddd-vocabulary`. Command imperative, events past tense, all in the glossary.
+1. **Name it** via `ddd-vocabulary`. Command imperative, events past tense, all in the domain vocabulary.
 2. **Scaffold** with `just new command Name`. You get the schema stub, the `decide` case, and the expect stub.
 3. **Write the expect test first.** The starting stream is a list of events; the expectation is the events that come out, or the rejection. Read it aloud. If it does not sound like something that happened, the model is wrong.
 4. **Fill `decide`**, then `evolve` if state changed, then any projection.

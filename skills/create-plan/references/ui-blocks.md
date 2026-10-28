@@ -40,7 +40,7 @@ Tokens become CSS variables inside every component frame: `--bg`, `--accent`, `-
 Rules:
 
 - **Every state the person will meet**: default, empty, loading, error, done, and the state a feature flag hides. A component with one state is a screenshot of the happy path.
-- **Real copy.** The words the product will ship, checked against the glossary. Errors name the problem and what to do.
+- **Real copy.** The words the product will ship, checked against the domain vocabulary. Errors name the problem and what to do.
 - **Static HTML and CSS, styled with the tokens.** Shared styles go in `css` as classes; states carry markup only, so an implementer reads one stylesheet and three short snippets. No inline style soup, no framework code, no scripts. The component shows the target; the phase's changes say where it lives in the code.
 - **Small.** One component is one piece of UI. A page is several components in the phase that builds it.
 - **Accessible from the start.** Labels on inputs, `role="alert"` on refusals, focus order that matches reading order.
