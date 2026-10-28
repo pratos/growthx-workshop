@@ -5,6 +5,8 @@
   // (greenhouse-demo.tarp.sh), with its own Workers, D1 and plan rooms. `just dev` and `just up` use the top level locally.
   "name": "greenhouse-api",
   "main": "src/index.ts",
+  // The account that owns the tarp.sh zone, the D1 databases and these Workers. Pinned so a cached account cannot win.
+  "account_id": "e36a0d53cbe993dac321c2ac8dea60f6",
   "compatibility_date": "2026-10-20",
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true, "logs": { "enabled": true, "head_sampling_rate": 1 }, "traces": { "enabled": true, "head_sampling_rate": 0.1 } },
