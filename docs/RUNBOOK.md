@@ -20,12 +20,12 @@ cmux panes: `just up` · a shell on main · `tail -f /tmp/gh-*.log` · the brows
 |---|---|---|---|
 | 0 · Out of the blocks | `git clone … && just up`; `/healthz`, sign up at `/signup`, sign in as the seeded admin, `/admin/flags`; `just agent-ready` | `just step 0` | the curls in `scripts/demo.sh` (cp-00) |
 | 1 · Plan the product | `/create_plan` for the coding agent in Claude Code; it turns "where should the agent's work run?" into a report | open `docs/decisions/agent-loop.html`: compare the three places, choose one; then `docs/plans/2026-10-28-resolve-thread.plan.html` | `just step 1` |
-| 2 · Name it, model it | ask pi: "add resolve thread"; watch the names | `cat packages/domain/src/session/__expect__/three-people.snap.txt`; `git checkout wrong/cp-02 && just domain-vocabulary-check` fails | `just step 2` |
+| 2 · Name it, model it | ask pi: "add resolve thread"; watch the names | `cat packages/domain/src/session/__expect__/three-people.snap.txt`; `just step 2` makes a first pass that names ThreadClosed and shows the check failing | `just step 2` |
 | 3 · Change a recorded event | ask Claude Code to "add rationale to decisions"; it edits the schema | `cat packages/domain/src/upcast/__expect__/*.snap.txt` | `just step 3` |
 | 4 · The API and the plan room | two terminals signed in as Sam and the agent: start a session, ask, the agent starts the run | `just step 4` | `cat packages/domain/src/session/__expect__/one-person.snap.txt` |
 | 5 · The screen, live | Claude Code with impeccable + animate on `/plans/gh-12`; one Agentation note; two tabs, open a thread in one | `just step 5` | `bun scripts/ws-check.ts <api url>` |
 | 6 · The durable agent | terminal 2: `just agent-watch`; terminal 1: `just agent-reset && just agent-demo`, at "service_status: 3s / 8s" run `pkill -9 -f src/demo.ts`, then `just agent-demo` twice | the three observed runs in `packages/agent/README.md` | read the README's output aloud |
-| 7 · Review with a second model | `HEAD_REF=wrong/cp-02 just review cp-02` live, about ninety seconds; `scripts/review.sh cp-02 --prompt` shows what the model receives | `cat demo/review-fallback.md` | `just step 7` |
+| 7 · Review with a second model | on a branch where pi wrote resolve thread: `just review main`, about ninety seconds; `scripts/review.sh main --prompt` shows what the model receives | `cat demo/review-fallback.md` | `just step 7` |
 | 8 · Release behind a flag | `just deploy`; on `/plans/gh-12` as yourself the Resolve button is missing; `GH_REMOTE=1 just flag user resolve-thread <you>`, switch back to the tab, it appears; `GH_REMOTE=1 just flag off resolve-thread`, it goes; `just rollback api <id>` | `just step 8` (local: admin sees Resolve, Sam does not) | `curl …/participants/<you>/flags` |
 
 ## The map
@@ -50,7 +50,7 @@ just user-add EMAIL NAME admin           # asks for the password; GH_REMOTE=1 fo
 just replay gh-12                        # the stream as a story (api must be up on :8787, or GH_API=<url>)
 just plan docs/plans/2026-10-28-resolve-thread.plan.json   # the plan page; a hook rebuilds it on edit
 just plans                               # every plan with status and progress
-HEAD_REF=wrong/cp-02 just review cp-02   # model inversion, live
+just review main                         # model inversion, live, on the branch the agent wrote
 just deploy                              # wrangler: api then web; refuses if a D1 migration is pending
 GH_REMOTE=1 just flag user resolve-thread pratos
 GH_REMOTE=1 just flag off resolve-thread

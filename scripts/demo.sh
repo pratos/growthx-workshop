@@ -19,6 +19,17 @@ api_up() {
   for _ in $(seq 1 60); do curl -sf localhost:8799/healthz >/dev/null 2>&1 && return; sleep 0.5; done
   fail "the api did not start (see /tmp/gh-demo-api.log)"
 }
+# The mistake the check and the reviewer must catch, made on the spot in a throwaway worktree (no branch): the first
+# pass at "resolve thread" names the event ThreadClosed with a verdict, and its own tests still pass.
+planted=""
+plant() {
+  planted=$(mktemp -d)/w; git worktree add -q --detach "$planted" HEAD
+  ( cd "$planted" && f=packages/domain/src/thread/decider.ts &&
+    sed -i.bak -e "s/export const ThreadResolved   = defineEvent('ThreadResolved',   { threadId: Id, by: ParticipantId });/export const ThreadClosed     = defineEvent('ThreadClosed',     { threadId: Id, by: ParticipantId, verdict: Text });/" \
+      -e "s/ReturnType<typeof ThreadResolved>/ReturnType<typeof ThreadClosed>/" "$f" && rm -f "$f.bak" &&
+    git -c user.name=demo -c user.email=demo@greenhouse.test commit -qam "resolve thread, first pass: ThreadClosed with a verdict" )
+  trap 'git worktree remove --force "$planted" >/dev/null 2>&1; pkill -f "wrangler dev --port 8799" >/dev/null 2>&1 || true' EXIT
+}
 login() { curl -sf -H 'content-type: application/json' -d "{\"email\":\"$1\",\"password\":\"$2\"}" localhost:8799/auth/sign-in | jq -r .token; }
 local_login() { local k="$1"; grep "^${k}_" .dev.vars.example | sed 's/^[^=]*=//' | tr '\n' ' '; }
 
@@ -39,12 +50,9 @@ case "$cp" in
   cp-02)
     skills/ddd-vocabulary/scripts/check-domain-vocabulary.sh docs/DOMAIN-VOCABULARY.md packages apps >/dev/null || fail "domain vocabulary check fails"
     bun test packages/domain/src/thread packages/domain/src/session >/dev/null 2>&1 || fail "Thread or Session expect tests fail"
-    if git show-ref --quiet refs/heads/wrong/cp-02; then
-      tmp=$(mktemp -d); git worktree add -q --detach "$tmp" wrong/cp-02
-      if (cd "$tmp" && skills/ddd-vocabulary/scripts/check-domain-vocabulary.sh docs/DOMAIN-VOCABULARY.md packages apps >/dev/null 2>&1); then git worktree remove --force "$tmp"; fail "wrong/cp-02 should fail the domain vocabulary check"; fi
-      git worktree remove --force "$tmp"
-    fi
-    pass "named and modelled: every command and event is in the vocabulary, Thread and Session stories pass, and wrong/cp-02 (ThreadClosed) fails the check" ;;
+    plant
+    if (cd "$planted" && skills/ddd-vocabulary/scripts/check-domain-vocabulary.sh docs/DOMAIN-VOCABULARY.md packages apps >/dev/null 2>&1); then fail "the check should reject ThreadClosed and verdict"; fi
+    pass "named and modelled: every command and event is in the vocabulary, Thread and Session stories pass, and a first pass naming ThreadClosed with a verdict fails the check" ;;
   cp-03) bun test packages/domain/src/upcast >/dev/null 2>&1 && pass "a recorded v1 DecisionRecorded reads as v2; nothing on disk changes" || fail "upcast test fails" ;;
   cp-04)
     bun test apps/api/test >/dev/null 2>&1 || fail "api tests fail"
@@ -64,9 +72,10 @@ case "$cp" in
     test -f packages/agent/README.md && (cd packages/agent && bunx tsc --noEmit -p . >/dev/null 2>&1) || fail "packages/agent does not typecheck"
     pass "the durable agent builds; kill -9 and resume live with just agent-demo (needs a model key)" ;;
   cp-07)
-    p=$(HEAD_REF=wrong/cp-02 scripts/review.sh cp-02 --prompt 2>/dev/null) || fail "review cannot build its prompt"
+    plant
+    p=$(cd "$planted" && scripts/review.sh HEAD~1 --prompt 2>/dev/null) || fail "review cannot build its prompt"
     grep -q "Not: resolution, verdict" <<<"$p" && grep -q "ThreadClosed" <<<"$p" || fail "the reviewer would not see both the vocabulary and the ThreadClosed diff"
-    pass "just review sends a different model the domain vocabulary first, then the planted branch's diff with ThreadClosed; recorded answer: demo/review-fallback.md" ;;
+    pass "just review sends a different model the domain vocabulary first, then a first pass's diff that names ThreadClosed; recorded answer: demo/review-fallback.md" ;;
   cp-08)
     grep -q 'data-flag-off="resolve-thread"' "apps/web/src/routes/plans.\$planId.tsx" || fail "the plan page does not gate Resolve on its flag"
     api_up
