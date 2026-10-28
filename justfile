@@ -112,6 +112,14 @@ user-add email name role="member":
 migrate-remote:
     cd apps/api && bunx wrangler d1 migrations list greenhouse --remote && bunx wrangler d1 migrations apply greenhouse --remote
 
+# End-to-end tests in a real browser against the local app (starts it if :3000 is free): just e2e [filter]
+e2e filter="":
+    cd e2e && bunx playwright test {{filter}}
+
+# One-time: the browser Playwright drives
+e2e-install:
+    bunx playwright install chromium
+
 # Can an agent clone, run, seed, log into, administer and browse this repo alone? ✓/✗ per item with the fix
 agent-ready:
     skills/agent-ready/scripts/check.sh

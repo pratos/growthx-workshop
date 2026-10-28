@@ -2,6 +2,7 @@ import { createFileRoute, Link, useRouter } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
 import { useState } from 'react';
 import { apiGetOrStatus, apiPut } from '#/lib/api';
+import { AdminNav } from '#/components/AdminGate';
 
 // Form fields are strings; a File here is a bug, so it reads as empty.
 const field = (f: FormData, name: string): string => { const v = f.get(name); return typeof v === 'string' ? v : ''; };
@@ -54,6 +55,7 @@ function FlagsPage() {
         <h1 className="text-2xl font-semibold tracking-tight">Flags</h1>
         <p className="text-sm text-gray-500">{flags.length} flags · default off</p>
       </header>
+      <AdminNav here="flags" />
       <p className="mt-1 text-sm text-gray-500">A flag is on for a participant when it is enabled, or they are on the allowlist, or their bucket is under the percent.</p>
       {error && <p role="alert" className="mt-4 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">{error}</p>}
 

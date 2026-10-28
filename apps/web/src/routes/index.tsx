@@ -19,7 +19,7 @@ function Home() {
         )}
       </p>
       <ul className="mt-8 space-y-2">
-        {account?.admin && <li><Link to="/admin/flags" className="underline">Flags</Link> · admin</li>}
+        {account?.admin && <li><Link to="/admin" className="underline">Admin</Link> · accounts, the event log, flags</li>}
       </ul>
     </main>
   )

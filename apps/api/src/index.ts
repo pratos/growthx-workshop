@@ -3,6 +3,7 @@ import { Effect, Schema } from 'effect';
 import { Commands, Flags, PlanRooms, readiness, runtimeFor, type Env } from './services';
 import { PlanRoom } from './plan-room';
 import { flagsAdmin } from './flags-admin';
+import { admin } from './admin';
 import { auth, requireSignIn } from './auth';
 import type { Account } from '@greenhouse/schema';
 
@@ -82,6 +83,9 @@ app.route('/auth', auth);
 
 // Flags admin: list and set the D1 flags that `decide()` reads. GET /flags, PUT /flags/:name. Admins only.
 app.route('/flags', flagsAdmin);
+
+// Admin dashboard: GET /admin/summary, /admin/accounts, /admin/events. Admins only.
+app.route('/admin', admin);
 
 app.notFound((c) => c.json({ error: 'not found' }, 404));
 app.onError((e, c) => {

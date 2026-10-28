@@ -14,6 +14,9 @@ import { Route as HealthzRouteImport } from './routes/healthz'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ReadyzRouteImport } from './routes/readyz'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminAccountsRouteImport } from './routes/admin.accounts'
+import { Route as AdminEventsRouteImport } from './routes/admin.events'
 import { Route as AdminFlagsRouteImport } from './routes/admin.flags'
 import { Route as PlansPlanIdRouteImport } from './routes/plans.$planId'
 import { Route as PlansPlanIdWsRouteImport } from './routes/plans.$planId.ws'
@@ -43,6 +46,21 @@ const SignupRoute = SignupRouteImport.update({
   path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminAccountsRoute = AdminAccountsRouteImport.update({
+  id: '/admin/accounts',
+  path: '/admin/accounts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminEventsRoute = AdminEventsRouteImport.update({
+  id: '/admin/events',
+  path: '/admin/events',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminFlagsRoute = AdminFlagsRouteImport.update({
   id: '/admin/flags',
   path: '/admin/flags',
@@ -65,8 +83,11 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/readyz': typeof ReadyzRoute
   '/signup': typeof SignupRoute
+  '/admin/accounts': typeof AdminAccountsRoute
+  '/admin/events': typeof AdminEventsRoute
   '/admin/flags': typeof AdminFlagsRoute
   '/plans/$planId': typeof PlansPlanIdRouteWithChildren
+  '/admin/': typeof AdminIndexRoute
   '/plans/$planId/ws': typeof PlansPlanIdWsRoute
 }
 export interface FileRoutesByTo {
@@ -75,8 +96,11 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/readyz': typeof ReadyzRoute
   '/signup': typeof SignupRoute
+  '/admin/accounts': typeof AdminAccountsRoute
+  '/admin/events': typeof AdminEventsRoute
   '/admin/flags': typeof AdminFlagsRoute
   '/plans/$planId': typeof PlansPlanIdRouteWithChildren
+  '/admin': typeof AdminIndexRoute
   '/plans/$planId/ws': typeof PlansPlanIdWsRoute
 }
 export interface FileRoutesById {
@@ -86,8 +110,11 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/readyz': typeof ReadyzRoute
   '/signup': typeof SignupRoute
+  '/admin/accounts': typeof AdminAccountsRoute
+  '/admin/events': typeof AdminEventsRoute
   '/admin/flags': typeof AdminFlagsRoute
   '/plans/$planId': typeof PlansPlanIdRouteWithChildren
+  '/admin/': typeof AdminIndexRoute
   '/plans/$planId/ws': typeof PlansPlanIdWsRoute
 }
 export interface FileRouteTypes {
@@ -98,8 +125,11 @@ export interface FileRouteTypes {
     | '/login'
     | '/readyz'
     | '/signup'
+    | '/admin/accounts'
+    | '/admin/events'
     | '/admin/flags'
     | '/plans/$planId'
+    | '/admin/'
     | '/plans/$planId/ws'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -108,8 +138,11 @@ export interface FileRouteTypes {
     | '/login'
     | '/readyz'
     | '/signup'
+    | '/admin/accounts'
+    | '/admin/events'
     | '/admin/flags'
     | '/plans/$planId'
+    | '/admin'
     | '/plans/$planId/ws'
   id:
     | '__root__'
@@ -118,8 +151,11 @@ export interface FileRouteTypes {
     | '/login'
     | '/readyz'
     | '/signup'
+    | '/admin/accounts'
+    | '/admin/events'
     | '/admin/flags'
     | '/plans/$planId'
+    | '/admin/'
     | '/plans/$planId/ws'
   fileRoutesById: FileRoutesById
 }
@@ -129,8 +165,11 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ReadyzRoute: typeof ReadyzRoute
   SignupRoute: typeof SignupRoute
+  AdminAccountsRoute: typeof AdminAccountsRoute
+  AdminEventsRoute: typeof AdminEventsRoute
   AdminFlagsRoute: typeof AdminFlagsRoute
   PlansPlanIdRoute: typeof PlansPlanIdRouteWithChildren
+  AdminIndexRoute: typeof AdminIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -168,6 +207,27 @@ declare module '@tanstack/react-router' {
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/accounts': {
+      id: '/admin/accounts'
+      path: '/admin/accounts'
+      fullPath: '/admin/accounts'
+      preLoaderRoute: typeof AdminAccountsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/events': {
+      id: '/admin/events'
+      path: '/admin/events'
+      fullPath: '/admin/events'
+      preLoaderRoute: typeof AdminEventsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/flags': {
@@ -212,8 +272,11 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ReadyzRoute: ReadyzRoute,
   SignupRoute: SignupRoute,
+  AdminAccountsRoute: AdminAccountsRoute,
+  AdminEventsRoute: AdminEventsRoute,
   AdminFlagsRoute: AdminFlagsRoute,
   PlansPlanIdRoute: PlansPlanIdRouteWithChildren,
+  AdminIndexRoute: AdminIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
