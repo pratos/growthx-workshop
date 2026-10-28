@@ -1,6 +1,6 @@
 # Run of show · runbook
 
-Every live beat has a deterministic twin. If the agent misbehaves on stage, run the twin and keep going. Tags are the safety net: `git checkout cp-NN` puts the repo exactly where that beat expects it, and `scripts/demo.sh cp-NN` proves it.
+Every live beat has a deterministic twin. If the agent misbehaves on stage, run the twin and keep going. Tags are the safety net: `just step N` opens checkpoint N in its own worktree, shows what that step added, and proves the beat. Main's folder, and the deck in it, is never touched.
 
 ## Before the show
 
@@ -9,26 +9,24 @@ git status                 # clean, on main
 just install               # bun workspaces + vendored skills + the artifact builder
 just reset                 # fresh local D1 and Durable Object state, migrated and seeded
 just up                    # api + web in one process; http://localhost:3000
-for c in cp-00 cp-02 cp-03 cp-04 cp-01 cp-05 cp-06 cp-07 cp-08; do scripts/demo.sh $c; done
+for n in 0 1 2 3 4 5 6 7 8; do just step $n; done   # every tag, in its own worktree
 ```
 
 cmux panes: `just up` · a shell on main · `tail -f /tmp/gh-*.log` · the browser on http://localhost:3000/plans/gh-12 with Agentation.
 
 ## The beats
 
-| Beat | Live | Twin (always works) | Fallback |
+| Step | Live | Twin (always works) | Fallback |
 |---|---|---|---|
-| Fresh clone, nobody at the keyboard | `git clone … && just up`, open `/login` and `/healthz` | `just demo cp-00` | the two curls in `scripts/demo.sh` |
-| A plan you look at | `/create_plan` for the coding agent in Claude Code; it turns "where should the agent's work run?" into a report | open `docs/decisions/agent-loop.html`: compare the three places, choose one | `just demo cp-01`; the full plan page is `docs/plans/2026-10-28-resolve-thread.plan.html` |
-| Agent names it ThreadClosed | ask pi: "add resolve thread"; watch the names | `git checkout wrong/cp-02 && just domain-vocabulary-check` fails; on `cp-02` it passes | `just demo cp-02` |
-| Tests the agent learns from | ask pi for a test; it writes a mock | `just test`, then `cat packages/domain/src/thread/__expect__/resolve.snap.txt` | `just demo cp-03` |
-| Changing a recorded event | ask Claude Code to "add rationale to decisions"; it edits the schema | `cat packages/domain/src/upcast/__expect__/*.snap.txt` | `just demo cp-04` |
-| UI half | Claude Code with impeccable + animate on `/plans/gh-12`; one Agentation note | open a thread, resolve it, see the decision | `just demo cp-05` |
-| Correct code that is wrong | `HEAD_REF=wrong/cp-02 just review cp-03` live, about ninety seconds | `cat demo/cp-06-review.md` | `just demo cp-06` |
-| Released, then changed | `just deploy`, `GH_REMOTE=1 just flag user resolve-thread <you>`, use it live, `just rollback api <id>` | `curl …/healthz` shows label and id; `GH_REMOTE=1 just flag list` | `just demo cp-07` |
-| Flags, as a panel | https://greenhouse-web.prthamesh-sarang.workers.dev/admin/flags: toggle, allowlist, percent; the same table `decide()` reads | `curl …/flags` on the api | `GH_REMOTE=1 just flag list` |
-| Two people, one room | two tabs on `/plans/gh-12`, open a thread in one, watch the other | `just demo cp-08` | the api socket directly: `bun scripts/ws-check.ts <api url>` |
-| A durable agent | terminal 2: `just agent-watch`; terminal 1: `just agent-reset && just agent-demo`, at "service_status: 3s / 8s" run `pkill -9 -f src/demo.ts`, then `just agent-demo` twice | the three observed runs in `packages/agent/README.md` | read the README's output aloud |
+| 0 · Out of the blocks | `git clone … && just up`; `/healthz`, sign up at `/signup`, sign in as the seeded admin, `/admin/flags`; `just agent-ready` | `just step 0` | the curls in `scripts/demo.sh` (cp-00) |
+| 1 · Plan the product | `/create_plan` for the coding agent in Claude Code; it turns "where should the agent's work run?" into a report | open `docs/decisions/agent-loop.html`: compare the three places, choose one; then `docs/plans/2026-10-28-resolve-thread.plan.html` | `just step 1` |
+| 2 · Name it, model it | ask pi: "add resolve thread"; watch the names | `cat packages/domain/src/session/__expect__/three-people.snap.txt`; `git checkout wrong/cp-02 && just domain-vocabulary-check` fails | `just step 2` |
+| 3 · Change a recorded event | ask Claude Code to "add rationale to decisions"; it edits the schema | `cat packages/domain/src/upcast/__expect__/*.snap.txt` | `just step 3` |
+| 4 · The API and the plan room | two terminals signed in as Sam and the agent: start a session, ask, the agent starts the run | `just step 4` | `cat packages/domain/src/session/__expect__/one-person.snap.txt` |
+| 5 · The screen, live | Claude Code with impeccable + animate on `/plans/gh-12`; one Agentation note; two tabs, open a thread in one | `just step 5` | `bun scripts/ws-check.ts <api url>` |
+| 6 · The durable agent | terminal 2: `just agent-watch`; terminal 1: `just agent-reset && just agent-demo`, at "service_status: 3s / 8s" run `pkill -9 -f src/demo.ts`, then `just agent-demo` twice | the three observed runs in `packages/agent/README.md` | read the README's output aloud |
+| 7 · Review with a second model | `HEAD_REF=wrong/cp-02 just review cp-02` live, about ninety seconds | `cat demo/review-fallback.md` | `just step 7` |
+| 8 · Release | `just deploy`, `GH_REMOTE=1 just flag user resolve-thread <you>`, use it live, `just rollback api <id>` | `curl …/healthz` shows label and id; `GH_REMOTE=1 just flag list` | `just step 8` |
 
 ## The map
 
@@ -46,11 +44,13 @@ cmux panes: `just up` · a shell on main · `tail -f /tmp/gh-*.log` · the brows
 ```sh
 just up                                  # api + web locally, D1 and DO in miniflare
 just test                                # expect tests then api tests
-just domain-vocabulary-check                      # cp-02
+just domain-vocabulary-check            # step 2
+just step 4                              # checkpoint 4 in its own worktree, what it added, its beat
+just user-add EMAIL NAME admin           # asks for the password; GH_REMOTE=1 for prod
 just replay gh-12                        # the stream as a story (api must be up on :8787, or GH_API=<url>)
 just plan docs/plans/2026-10-28-resolve-thread.plan.json   # the plan page; a hook rebuilds it on edit
 just plans                               # every plan with status and progress
-HEAD_REF=wrong/cp-02 just review cp-03   # model inversion, live
+HEAD_REF=wrong/cp-02 just review cp-02   # model inversion, live
 just deploy                              # wrangler: api then web; refuses if a D1 migration is pending
 GH_REMOTE=1 just flag user resolve-thread pratos
 GH_REMOTE=1 just flag off resolve-thread

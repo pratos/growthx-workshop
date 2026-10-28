@@ -1,33 +1,73 @@
 #!/usr/bin/env bash
-# One deterministic beat per checkpoint. Exit 0 means the checkpoint's promise holds.
+# One deterministic beat per checkpoint. Exit 0 means the checkpoint's promise holds. Run it inside that checkpoint:
+# `just step N` does, in a worktree of its own. Order: the parts every product needs first, then the plan, then the build.
 set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"; cd "$root"
 cp="${1:?usage: demo.sh cp-NN}"
 pass() { echo "✓ $cp: $1"; }
+fail() { echo "✗ $cp: $1"; exit 1; }
+
+# A real api on a private port with its own local state: migrated, seeded through the engine, stopped on exit.
+api=""
+api_up() {
+  export WRANGLER_SEND_METRICS=false
+  (cd apps/api && bunx wrangler d1 migrations apply greenhouse --local --persist-to .wrangler/demo >/dev/null 2>&1)
+  mkdir -p apps/api/.wrangler && bun packages/db/seed.ts > apps/api/.wrangler/demo-seed.sql
+  (cd apps/api && bunx wrangler d1 execute greenhouse --local --persist-to .wrangler/demo --file .wrangler/demo-seed.sql >/dev/null 2>&1)
+  (cd apps/api && exec bunx wrangler dev --port 8799 --persist-to .wrangler/demo >/tmp/gh-demo-api.log 2>&1) & api=$!
+  trap 'pkill -f "wrangler dev --port 8799" >/dev/null 2>&1 || true' EXIT
+  for _ in $(seq 1 60); do curl -sf localhost:8799/healthz >/dev/null 2>&1 && return; sleep 0.5; done
+  fail "the api did not start (see /tmp/gh-demo-api.log)"
+}
+login() { curl -sf -H 'content-type: application/json' -d "{\"email\":\"$1\",\"password\":\"$2\"}" localhost:8799/auth/sign-in | jq -r .token; }
+local_login() { local k="$1"; grep "^${k}_" .dev.vars.example | sed 's/^[^=]*=//' | tr '\n' ' '; }
+
 case "$cp" in
   cp-00)
-    (cd apps/api && bunx wrangler dev --port 8799 >/tmp/gh-cp00.log 2>&1 &) ; for i in $(seq 1 40); do curl -sf localhost:8799/healthz >/dev/null 2>&1 && break; sleep 0.5; done
-    curl -sf localhost:8799/healthz | grep -q '"ok":true' && curl -sf localhost:8799/readyz | grep -q '"ok":true'; pkill -f "wrangler dev --port 8799" || true
-    pass "api answers /healthz and /readyz from a fresh clone" ;;
+    bun test packages/engine packages/domain/src/account >/dev/null 2>&1 || fail "engine or sign-up/sign-in stories fail"
+    skills/agent-ready/scripts/check.sh --quiet >/dev/null || fail "agent-ready has gaps: just agent-ready"
+    api_up
+    curl -sf localhost:8799/readyz | jq -e '.ok' >/dev/null || fail "/readyz is not ok"
+    read -r ae ap <<<"$(local_login ADMIN)"; t=$(login "$ae" "$ap")
+    [ "$(curl -s -o /dev/null -w '%{http_code}' localhost:8799/flags)" = 401 ] || fail "/flags answers without a sign-in"
+    curl -sf -H "authorization: Bearer $t" localhost:8799/flags >/dev/null || fail "the seeded admin cannot read /flags"
+    pass "out of the blocks: health, readiness, the seeded admin signs in and reaches the admin API; sign-up and sign-in stories pass; agent-ready has no gaps" ;;
+  cp-01)
+    bun skills/viz-explainer/scripts/build.mjs docs/decisions/agent-loop.spec.json docs/decisions/agent-loop.html >/dev/null || fail "decision report does not build"
+    for f in docs/plans/*.plan.json; do bun skills/create-plan/scripts/build.mjs "$f" >/dev/null || fail "$f does not build"; done
+    pass "the product is planned: \"where should the agent's work run?\" and the plans build, every step validated" ;;
   cp-02)
-    scripts/../skills/ddd-vocabulary/scripts/check-domain-vocabulary.sh docs/DOMAIN-VOCABULARY.md packages apps >/dev/null && pass "every command and event in code has a domain vocabulary entry"
+    skills/ddd-vocabulary/scripts/check-domain-vocabulary.sh docs/DOMAIN-VOCABULARY.md packages apps >/dev/null || fail "domain vocabulary check fails"
+    bun test packages/domain/src/thread packages/domain/src/session >/dev/null 2>&1 || fail "Thread or Session expect tests fail"
     if git show-ref --quiet refs/heads/wrong/cp-02; then
-      tmp=$(mktemp -d); git worktree add -q "$tmp" wrong/cp-02
-      if (cd "$tmp" && skills/ddd-vocabulary/scripts/check-domain-vocabulary.sh docs/DOMAIN-VOCABULARY.md packages apps >/dev/null 2>&1); then echo "✗ wrong/cp-02 should fail the domain vocabulary check"; git worktree remove --force "$tmp"; exit 1; fi
-      git worktree remove --force "$tmp"; pass "and the branch with ThreadClosed fails it"
-    fi ;;
-  cp-03) bun test packages/domain >/dev/null 2>&1 && pass "Thread decider expect snapshots pass, read as prose: packages/domain/src/thread/__expect__/" ;;
-  cp-04) bun test packages/domain/src/upcast >/dev/null 2>&1 && pass "v1 DecisionRecorded upcasts to v2 with a defaulted rationale" ;;
-  cp-01) bun skills/viz-explainer/scripts/build.mjs docs/decisions/agent-loop.spec.json docs/decisions/agent-loop.html >/dev/null && pass "where should the agent's work run? report built, every step validated: docs/decisions/agent-loop.html" ;;
-  cp-05) test -f "apps/web/src/routes/plans.\$planId.tsx" && grep -q agentation apps/web/src/components/DevTools.tsx && grep -q DevTools apps/web/src/routes/__root.tsx && pass "plan page with resolve action exists; Agentation toolbar mounted in dev" ;;
-  cp-06) scripts/review.sh main --dry-run >/dev/null && pass "review runs with a different model than the author" ;;
-  cp-07)
-    api="https://greenhouse-api.prthamesh-sarang.workers.dev"
-    v=$(curl -sf --max-time 20 "$api/healthz" | jq -r '"\(.version.label) (\(.version.id))"'); [ -n "$v" ] && [ "$v" != "null (null)" ] || { echo "✗ no version from $api/healthz"; exit 1; }
-    n=$(cd apps/api && bunx wrangler deployments list 2>/dev/null | grep -c "Version(s)" || true)
-    GH_REMOTE=1 scripts/flag.sh list >/dev/null && pass "live api version $v; $n deployment(s) listed; flags readable. Rollback: just rollback api <previous id>" ;;
+      tmp=$(mktemp -d); git worktree add -q --detach "$tmp" wrong/cp-02
+      if (cd "$tmp" && skills/ddd-vocabulary/scripts/check-domain-vocabulary.sh docs/DOMAIN-VOCABULARY.md packages apps >/dev/null 2>&1); then git worktree remove --force "$tmp"; fail "wrong/cp-02 should fail the domain vocabulary check"; fi
+      git worktree remove --force "$tmp"
+    fi
+    pass "named and modelled: every command and event is in the vocabulary, Thread and Session stories pass, and wrong/cp-02 (ThreadClosed) fails the check" ;;
+  cp-03) bun test packages/domain/src/upcast >/dev/null 2>&1 && pass "a recorded v1 DecisionRecorded reads as v2; nothing on disk changes" || fail "upcast test fails" ;;
+  cp-04)
+    bun test apps/api/test >/dev/null 2>&1 || fail "api tests fail"
+    api_up
+    read -r ue up <<<"$(local_login USER)"; read -r ge gp <<<"$(local_login AGENT)"; ts=$(login "$ue" "$up"); ta=$(login "$ge" "$gp")
+    s=$(curl -sf -H 'content-type: application/json' -H "authorization: Bearer $ts" -d '{"type":"StartSession","data":{"title":"demo"}}' localhost:8799/plans/demo/sessions | jq -r '.events[0].data.sessionId')
+    r=$(curl -sf -H 'content-type: application/json' -H "authorization: Bearer $ts" -d "{\"type\":\"Ask\",\"data\":{\"sessionId\":\"$s\",\"asked\":\"ready?\"}}" localhost:8799/plans/demo/sessions | jq -r '.events[0].data.runId')
+    curl -sf -H 'content-type: application/json' -H "authorization: Bearer $ta" -d "{\"type\":\"StartRun\",\"data\":{\"sessionId\":\"$s\",\"runId\":\"$r\"}}" localhost:8799/plans/demo/sessions >/dev/null || fail "the agent cannot start the run"
+    curl -sf -H "authorization: Bearer $ts" "localhost:8799/plans/demo/sessions/$s" | jq -e '.runs[0].status == "running"' >/dev/null || fail "the session view does not show the run"
+    pass "the plan room: a signed-in person starts a session and asks, the agent signs in and starts the run, the view shows it running" ;;
+  cp-05)
+    test -f "apps/web/src/routes/plans.\$planId.tsx" && grep -q agentation apps/web/src/components/DevTools.tsx || fail "plan page or Agentation toolbar missing"
+    api_up
+    out=$(timeout 20 bun scripts/ws-check.ts http://localhost:8799 2>&1) && grep -q ThreadOpened <<<"$out" || fail "the socket heard nothing: $out"
+    pass "the screen, live: the plan page and Agentation exist, and a socket on the plan room hears an append ($out)" ;;
+  cp-06)
+    test -f packages/agent/README.md && (cd packages/agent && bunx tsc --noEmit -p . >/dev/null 2>&1) || fail "packages/agent does not typecheck"
+    pass "the durable agent builds; kill -9 and resume live with just agent-demo (needs a model key)" ;;
+  cp-07) scripts/review.sh main --dry-run >/dev/null && pass "review runs with a different model than the author; recorded fallback: demo/review-fallback.md" || fail "review dry run fails" ;;
   cp-08)
-    web="https://greenhouse-web.prthamesh-sarang.workers.dev"; api="https://greenhouse-api.prthamesh-sarang.workers.dev"
-    out=$(timeout 20 bun scripts/ws-check.ts "$web" "$api" 2>&1) && echo "$out" | grep -q "ThreadOpened" && pass "multiplayer: a socket on the web Worker hears an append made through the api ($out)" ;;
+    live="https://greenhouse-api.prthamesh-sarang.workers.dev"
+    v=$(curl -sf --max-time 20 "$live/healthz" | jq -r '"\(.version.label) (\(.version.id))"'); [ -n "$v" ] && [ "$v" != "null (null)" ] || fail "no version from $live/healthz"
+    GH_REMOTE=1 scripts/flag.sh list >/dev/null || fail "remote flags unreadable"
+    pass "released: live api version $v; flags readable remotely. Rollback: just rollback api <previous id>" ;;
   *) echo "unknown checkpoint $cp"; exit 2 ;;
 esac

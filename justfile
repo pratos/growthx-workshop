@@ -58,8 +58,6 @@ replay plan:
 new kind name:
     @scripts/new.sh {{kind}} {{name}}
 
-# Paste into the root justfile. Not wired in automatically; the root justfile is not edited by this package.
-
 # Durable agent demo: one input, a slow tool; kill -9 it mid-tool, run again, it resumes (packages/agent/README.md)
 agent-demo:
     cd packages/agent && bun run demo
@@ -138,6 +136,10 @@ rollback app version="":
 deck:
     python3 -m http.server 8777 --bind 127.0.0.1
 
-# Run one checkpoint's deterministic beat: just demo cp-03
+# Run one checkpoint's deterministic beat in this folder: just demo cp-03
 demo cp:
     @scripts/demo.sh {{cp}}
+
+# Open checkpoint N in its own worktree, show what it added since N-1, run its beat: just step 3
+step n:
+    @scripts/step.sh {{n}}

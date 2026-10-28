@@ -1,21 +1,21 @@
 # Checkpoints
 
-The architecture map is one page, `docs/architecture/index.html`, built from `docs/ARCHITECTURE.md` by `just arch` and kept current by a hook. It is plain language: the states a person works through, not the code.
+Rails gets you out of the blocks: `rails new` gives a running, deployable app with sign-in, a database, tests and an admin before anyone thinks about the product. Greenhouse does the same. cp-00 is everything any product needs, nothing specific to this one. cp-01 plans the product. From cp-02 on, every step builds the product.
 
-Each checkpoint is a git tag. Each has one deterministic beat (`scripts/demo.sh cp-NN`) that fails before the checkpoint's file exists and passes after, so the show works even when the live agent behaves. `demo/` holds recorded fallbacks.
+Each checkpoint is a git tag on one linear line. `just step N` opens it in a worktree of its own, prints what that step added since the one before, and runs its beat (`scripts/demo.sh cp-NN`), so the show works even when the live agent misbehaves. `demo/` holds recorded fallbacks.
 
-| Tag | Beat shown live | File that fixes it | `demo.sh` checks |
+| Tag | Step | What it adds | `demo.sh` checks |
 |---|---|---|---|
-| cp-00 | Fresh clone, nobody at the keyboard. `just up`, `/healthz`, `/login`. | justfile, flake.nix, both `wrangler.jsonc` | api answers `/healthz` and `/readyz` |
-| cp-01 | `/create_plan` for the coding agent returns a wall of Markdown. | `docs/decisions/agent-loop.spec.json` + viz-explainer: where should the agent's work run? | the decision report builds with every step validated |
-| cp-02 | "Add resolve thread." Agent names it ThreadClosed with a verdict. | `docs/DOMAIN-VOCABULARY.md` + `check-domain-vocabulary.sh` + the web import boundary in `.oxlintrc.json` | check passes on the tag, fails on branch `wrong/cp-02` |
-| cp-03 | Agent writes a unit test with a mock. | the expect harness in `packages/domain/src/kernel.ts` | `bun test` runs the Thread decider snapshots, read as prose |
-| cp-04 | Agent edits a recorded event's shape in place. | `packages/domain/src/upcast` | a verbatim v1 stream reads as v2 |
-| cp-05 | The resolve action looks generic. | `apps/web/src/routes/plans.$planId.tsx`, Agentation in `DevTools.tsx` | the route and the dev-only toolbar exist |
-| cp-06 | Correct code that is wrong. | `scripts/review.sh`, `demo/cp-06-review.md` | the review runs with a different model than the author |
-| cp-07 | Released, then changed under real users. | `scripts/deploy.sh`, `scripts/flag.sh`, `just rollback` | the live api returns a version label and id; flags are readable remotely |
-| cp-08 | Two people in one plan room. | WebSocket fan-out in `PlanRoom`, the socket proxied by the web Worker, the plan page subscription | a socket on the live web Worker hears an append made through the api (`scripts/ws-check.ts`) |
+| cp-00 | Out of the blocks | layout, Nix (flake and lock), `just`, oxlint, skills and hooks, the architecture map; two Workers with `/healthz` and `/readyz`; the event-sourcing engine (`packages/engine`); sign-up, sign-in and sign-out on it; seeded admin, person and agent; flags admin API and page, admins only; deploy, version, rollback; the review script | health and readiness; the seeded admin signs in and reaches `/flags`, which refuses everyone else; sign-up and sign-in stories pass; `just agent-ready` has no gaps |
+| cp-01 | Plan the product | `PRODUCT.md`, `DESIGN.md`; the decision report "where should the agent's work run?"; the plans (resolve a comment, the domain vocabulary); `docs/DOMAIN-VOCABULARY.md` with the product's words | the report and the plans build with every step validated |
+| cp-02 | Name it, model it | the product's schemas; the Thread and Session deciders; their expect stories, one person with the agent and three people with the agent | the vocabulary check passes, the stories pass, and branch `wrong/cp-02` (ThreadClosed) fails the check |
+| cp-03 | Change a recorded event | `packages/domain/src/upcast` | a verbatim v1 stream reads as v2 |
+| cp-04 | The API and the plan room | the PlanRoom Durable Object (comments, and sessions on the engine over its SQLite), command and session routes, Effect services behind Hono | a signed-in person starts a session and asks; the agent signs in and starts the run |
+| cp-05 | The screen, live | the plan page, WebSocket fan-out through the web Worker, Agentation in dev | a socket on the plan room hears an append |
+| cp-06 | The durable agent | `packages/agent` on pi-durable: kill -9 mid tool call, run again, it resumes | the agent typechecks; the kill and resume run live |
+| cp-07 | Review with a second model | `demo/review-fallback.md` | the review runs with a different model than the author |
+| cp-08 | Release | nothing new in code: deploy, flag on for a named slice, then a percentage, flag off, roll back | the live api returns a version label and id; flags are readable remotely |
 
-The planted branch `wrong/cp-02` forks from cp-03: domain vocabulary and tests exist, the first pass still names the event ThreadClosed and makes its own tests pass. cp-02 proves the check catches it; cp-06 proves a second model catches it too.
+The planted branch `wrong/cp-02` forks from cp-02: the first pass names the event ThreadClosed with a verdict and makes its own tests pass. cp-02 shows the check catching it; cp-07 shows a second model catching it too.
 
-Build order was 00, 01, 02, 03, 04, 05, 06, 07, 08. Between cp-07 and cp-08 the schema and domain moved from zod to Effect Schema and the api gained Effect services (Flags, PlanRooms, Commands) behind Hono; every earlier tag still passes its demo. The domain decider ships in cp-00 because the api needs it; the tests that explain it come at cp-03.
+The tags are snapshots of main, not its history: each is main's tree with the later steps taken out, so every tag runs the final architecture and its lockfile, Worker types and route tree are regenerated inside it. Main also holds the workshop's own files (the deck, the check-in Worker, the workshop page), which no tag carries.
