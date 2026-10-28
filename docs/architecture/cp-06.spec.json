@@ -1,0 +1,46 @@
+{
+  "kind": "architecture-map",
+  "question": "How does cp-06 catch correct code that is wrong?",
+  "meta": {
+    "builtBy": "agent · docs/architecture",
+    "builtAt": "2026-10-28",
+    "source": "git tag cp-06"
+  },
+  "diagram": "flowchart LR\n  subgraph git[\"git\"]\n    WB[\"branch wrong/cp-01 · ThreadClosed · verdict\"]\n    BASE[\"cp-02 · base\"]\n  end\n  subgraph review[\"scripts/review.sh · just review\"]\n    DIFF[\"git diff base...head\"]\n    PR[\"prompt · glossary first, then diff\"]\n  end\n  subgraph ctx[\"Context\"]\n    GL[\"docs/GLOSSARY.md\"]\n  end\n  subgraph model[\"A different model\"]\n    M[\"claude -p --model opus · or pi\"]\n  end\n  subgraph out[\"Output\"]\n    MD[\"demo/cp-06-review.md\"]\n  end\n  WB -- \"HEAD_REF\" --> DIFF\n  BASE -- \"base\" --> DIFF\n  DIFF --> PR\n  GL -- \"cat into the prompt\" --> PR\n  PR -- \"REVIEWER=claude or pi\" --> M\n  M -- \"violations · wrong code · two bugs · one question\" --> MD",
+  "steps": [
+    {
+      "id": "branch",
+      "caption": "The planted branch renames ThreadResolved to ThreadClosed, and every test passes.",
+      "focus": ["git", "WB"],
+      "evidence": ["branch wrong/cp-01", "docs/CHECKPOINTS.md"]
+    },
+    {
+      "id": "diff",
+      "caption": "review.sh diffs the branch against cp-02 and skips the lockfile and snapshots.",
+      "focus": ["DIFF"],
+      "edges": ["L_WB_DIFF_0", "L_BASE_DIFF_0"],
+      "evidence": ["scripts/review.sh", "docs/RUNBOOK.md"]
+    },
+    {
+      "id": "glossary",
+      "caption": "The glossary goes into the prompt before the diff does.",
+      "focus": ["GL", "PR"],
+      "edges": ["L_GL_PR_0", "L_DIFF_PR_0"],
+      "evidence": ["scripts/review.sh", "docs/GLOSSARY.md"]
+    },
+    {
+      "id": "model",
+      "caption": "A model other than the author's reads it, and REVIEWER picks claude or pi.",
+      "focus": ["model", "M"],
+      "edges": ["L_PR_M_0"],
+      "evidence": ["scripts/review.sh", "justfile"]
+    },
+    {
+      "id": "output",
+      "caption": "The review names ThreadClosed and verdict as defects and asks one question.",
+      "focus": ["MD"],
+      "edges": ["L_M_MD_0"],
+      "evidence": ["demo/cp-06-review.md"]
+    }
+  ]
+}

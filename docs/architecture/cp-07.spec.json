@@ -1,0 +1,67 @@
+{
+  "kind": "architecture-map",
+  "question": "How does cp-07 release, flag and roll back the two Workers?",
+  "meta": {
+    "builtBy": "agent · docs/architecture",
+    "builtAt": "2026-10-28",
+    "source": "git tag cp-07"
+  },
+  "diagram": "flowchart LR\n  subgraph ci[\"GitHub Actions · deploy.yml\"]\n    CK[\"check · lint · test · types · migration guard\"]\n    PV[\"preview · versions upload on PRs\"]\n    DP[\"deploy · on main\"]\n    MG[\"migrate · workflow_dispatch only\"]\n  end\n  subgraph dep[\"scripts/deploy.sh · just deploy\"]\n    PM[\"pending D1 migration? stop\"]\n    WA[\"wrangler deploy · apps/api\"]\n    WW[\"wrangler deploy · apps/web\"]\n  end\n  subgraph live[\"Cloudflare\"]\n    HZ[\"/healthz · version id\"]\n    FT[(\"D1 · flags table\")]\n  end\n  subgraph back[\"Rollback\"]\n    FO[\"just flag off NAME\"]\n    RB[\"just rollback api or web · wrangler rollback\"]\n  end\n  CK --> PV\n  CK --> DP\n  DP -- \"runs\" --> PM\n  PM -- \"none pending\" --> WA\n  WA -- \"then\" --> WW\n  WA -- \"version_metadata\" --> HZ\n  DP -- \"smoke · curl\" --> HZ\n  FO -- \"GH_REMOTE=1 · SQL\" --> FT\n  RB -- \"previous version id\" --> HZ\n  MG -. \"by hand\" .-> FT",
+  "steps": [
+    {
+      "id": "check",
+      "caption": "CI runs lint, tests, type freshness and a destructive migration guard first.",
+      "focus": ["ci", "CK"],
+      "evidence": [".github/workflows/deploy.yml"]
+    },
+    {
+      "id": "jobs",
+      "caption": "Pull requests upload a version with no traffic, and main deploys.",
+      "focus": ["PV", "DP"],
+      "edges": ["L_CK_PV_0", "L_CK_DP_0"],
+      "evidence": [".github/workflows/deploy.yml"]
+    },
+    {
+      "id": "pending",
+      "caption": "deploy.sh stops cold if any D1 migration is pending on remote.",
+      "focus": ["PM"],
+      "edges": ["L_DP_PM_0"],
+      "evidence": ["scripts/deploy.sh", "docs/ARCHITECTURE.md"]
+    },
+    {
+      "id": "wrangler",
+      "caption": "wrangler deploys the api first, then the web Worker that binds to it.",
+      "focus": ["WA", "WW"],
+      "edges": ["L_PM_WA_0", "L_WA_WW_0"],
+      "evidence": ["scripts/deploy.sh", "justfile"]
+    },
+    {
+      "id": "healthz",
+      "caption": "/healthz returns the Workers version id, which is the rollback handle.",
+      "focus": ["HZ"],
+      "edges": ["L_WA_HZ_0", "L_DP_HZ_0"],
+      "evidence": ["apps/api/src/index.ts", "apps/api/wrangler.jsonc", "scripts/demo.sh"]
+    },
+    {
+      "id": "flags",
+      "caption": "Flags live in one D1 table and flip with SQL, with no deploy needed.",
+      "focus": ["FT", "FO"],
+      "edges": ["L_FO_FT_0"],
+      "evidence": ["scripts/flag.sh", "apps/api/migrations/0001_flags_and_projections.sql"]
+    },
+    {
+      "id": "rollback",
+      "caption": "Rollback is flag off first, then wrangler rollback to the previous id.",
+      "focus": ["back", "RB"],
+      "edges": ["L_RB_HZ_0"],
+      "evidence": ["justfile", "docs/RELEASE.md", "docs/RUNBOOK.md"]
+    },
+    {
+      "id": "migrate",
+      "caption": "Migrations never run on deploy, and a manual workflow applies them by hand.",
+      "focus": ["MG", "FT"],
+      "edges": ["L_MG_FT_0"],
+      "evidence": [".github/workflows/deploy.yml", "docs/RELEASE.md"]
+    }
+  ]
+}

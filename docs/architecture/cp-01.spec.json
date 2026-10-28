@@ -1,0 +1,51 @@
+{
+  "kind": "architecture-map",
+  "question": "How does cp-01 keep one vocabulary across the glossary, the code and the web?",
+  "meta": {
+    "builtBy": "agent · docs/architecture",
+    "builtAt": "2026-10-28",
+    "source": "git tag cp-01"
+  },
+  "diagram": "flowchart LR\n  subgraph gate[\"Vocabulary gate\"]\n    G[\"docs/GLOSSARY.md\"]\n    CK[\"check-glossary.sh · just glossary-check\"]\n    OX[\".oxlintrc.json · no-restricted-imports\"]\n  end\n  subgraph web[\"apps/web · Worker\"]\n    WR[\"routes\"]\n    WA[\"lib/api.ts · env.API\"]\n  end\n  subgraph api[\"apps/api · Worker\"]\n    H[\"Hono\"]\n    DO[(\"PlanRoom DO · event log\")]\n    D1[(\"D1 · flags\")]\n  end\n  subgraph dom[\"packages/domain\"]\n    DEC[\"defineCommand · defineEvent\"]\n  end\n  subgraph sch[\"packages/schema\"]\n    S[\"exports · fields\"]\n  end\n  G -- \"listed names · banned synonyms\" --> CK\n  CK -- \"scans define* names\" --> DEC\n  CK -- \"scans exports and fields\" --> S\n  OX -- \"lints\" --> WR\n  WR -. \"import @greenhouse/domain · forbidden\" .-> DEC\n  WR --> WA\n  WA -- \"service binding\" --> H\n  H -- \"RPC\" --> DO\n  H -- \"SQL\" --> D1\n  DO -- \"import\" --> DEC\n  DEC -- \"import\" --> S",
+  "steps": [
+    {
+      "id": "gate",
+      "caption": "Everything from cp-00 is still here, and one gate is added beside it.",
+      "focus": ["gate"],
+      "evidence": ["docs/GLOSSARY.md", ".oxlintrc.json", "skills/ddd-vocabulary/scripts/check-glossary.sh"]
+    },
+    {
+      "id": "glossary",
+      "caption": "The glossary lists every noun, what carries it, and the synonyms it bans.",
+      "focus": ["G"],
+      "evidence": ["docs/GLOSSARY.md"]
+    },
+    {
+      "id": "check",
+      "caption": "The check reads the commands and events declared in packages/domain and packages/schema.",
+      "focus": ["CK", "DEC", "S"],
+      "edges": ["L_G_CK_0", "L_CK_DEC_0", "L_CK_S_0"],
+      "evidence": ["skills/ddd-vocabulary/scripts/check-glossary.sh", "justfile"]
+    },
+    {
+      "id": "fails",
+      "caption": "A missing name or a banned synonym fails the build.",
+      "focus": ["CK"],
+      "evidence": ["skills/ddd-vocabulary/scripts/check-glossary.sh", "scripts/demo.sh", "docs/CHECKPOINTS.md"]
+    },
+    {
+      "id": "oxlint",
+      "caption": "oxlint stops apps/web from importing the domain or any database client.",
+      "focus": ["OX", "WR", "DEC"],
+      "edges": ["L_OX_WR_0", "L_WR_DEC_0"],
+      "evidence": [".oxlintrc.json", "docs/ARCHITECTURE.md"]
+    },
+    {
+      "id": "binding",
+      "caption": "That leaves the web Worker one path to data, the service binding.",
+      "focus": ["WA", "H"],
+      "edges": ["L_WR_WA_0", "L_WA_H_0"],
+      "evidence": ["apps/web/src/lib/api.ts", "apps/web/wrangler.jsonc"]
+    }
+  ]
+}

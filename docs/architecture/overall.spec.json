@@ -1,0 +1,60 @@
+{
+  "kind": "architecture-map",
+  "question": "What is Greenhouse today, and what talks to what?",
+  "meta": {
+    "builtBy": "agent · docs/architecture",
+    "builtAt": "2026-10-28",
+    "source": "main · cp-08 plus Effect services"
+  },
+  "diagram": "flowchart LR\n  subgraph browser[\"Browser\"]\n    BR[\"plan page · WebSocket\"]\n  end\n  subgraph web[\"apps/web · Worker · TanStack Start\"]\n    WR[\"routes · /plans/$planId · /ws · /healthz · /readyz\"]\n    WA[\"lib/api.ts · env.API\"]\n  end\n  subgraph api[\"apps/api · Worker\"]\n    H[\"Hono · routing, status codes, JSON\"]\n    subgraph fx[\"Effect · ManagedRuntime per env\"]\n      CM[\"Commands\"]\n      FL[\"Flags\"]\n      PR[\"PlanRooms\"]\n    end\n    DO[(\"PlanRoom DO · SQLite event log · sockets\")]\n    D1[(\"D1 · flags · decisions projection\")]\n  end\n  subgraph dom[\"packages/domain\"]\n    DEC[\"thread decider · route · project · upcast\"]\n  end\n  subgraph sch[\"packages/schema\"]\n    S[\"Effect Schema · CommandEnvelope · PlanView\"]\n  end\n  subgraph ck[\"apps/checkin · Worker\"]\n    CI[\"standalone · shares the toolchain\"]\n  end\n  BR -- \"HTTP · ws\" --> WR\n  WR --> WA\n  WA -- \"service binding\" --> H\n  H -- \"runPromise\" --> CM\n  CM --> FL\n  CM --> PR\n  FL -- \"SQL\" --> D1\n  PR -- \"RPC\" --> DO\n  H -- \"ws upgrade · fetch\" --> DO\n  DO -- \"route · project\" --> DEC\n  DEC -- \"import\" --> S\n  WR -- \"import types\" --> S\n  CM -- \"decode CommandEnvelope\" --> S",
+  "steps": [
+    {
+      "id": "browser",
+      "caption": "A browser tab loads the plan page and holds one WebSocket to the web Worker.",
+      "focus": ["browser", "BR"],
+      "edges": ["L_BR_WR_0"],
+      "evidence": ["apps/web/src/routes/plans.$planId.tsx"]
+    },
+    {
+      "id": "web",
+      "caption": "The web Worker renders routes and reaches data only over the service binding.",
+      "focus": ["web", "WR", "WA"],
+      "edges": ["L_WR_WA_0", "L_WA_H_0"],
+      "evidence": ["apps/web/wrangler.jsonc", "apps/web/src/lib/api.ts", "apps/web/src/routes/plans.$planId.ws.ts", "apps/web/src/routes/readyz.ts"]
+    },
+    {
+      "id": "api",
+      "caption": "Hono is the edge of the api Worker and owns routing, status codes and JSON.",
+      "focus": ["api", "H"],
+      "edges": ["L_H_CM_0", "L_H_DO_0"],
+      "evidence": ["apps/api/src/index.ts", "apps/api/wrangler.jsonc"]
+    },
+    {
+      "id": "effect",
+      "caption": "Behind Hono, Commands, Flags and PlanRooms are Effect services in one ManagedRuntime.",
+      "focus": ["fx", "CM", "FL", "PR"],
+      "edges": ["L_CM_FL_0", "L_CM_PR_0", "L_FL_D1_0", "L_PR_DO_0", "L_CM_S_0"],
+      "evidence": ["apps/api/src/services.ts", "apps/api/src/plan-room.ts", "apps/api/migrations/0001_flags_and_projections.sql"]
+    },
+    {
+      "id": "domain",
+      "caption": "packages/domain decides, evolves and projects, and the upcaster still waits unwired.",
+      "focus": ["dom", "DEC"],
+      "edges": ["L_DO_DEC_0"],
+      "evidence": ["packages/domain/src/kernel.ts", "packages/domain/src/thread/decider.ts", "packages/domain/src/index.ts", "packages/domain/src/upcast/index.ts"]
+    },
+    {
+      "id": "schema",
+      "caption": "packages/schema is the glossary as Effect Schema, imported by web, api and domain.",
+      "focus": ["sch", "S"],
+      "edges": ["L_DEC_S_0", "L_WR_S_0", "L_CM_S_0"],
+      "evidence": ["packages/schema/src/index.ts", "docs/GLOSSARY.md"]
+    },
+    {
+      "id": "checkin",
+      "caption": "apps/checkin is a standalone Worker that shares the toolchain and imports nothing.",
+      "focus": ["ck", "CI"],
+      "evidence": ["apps/checkin/wrangler.jsonc", "apps/checkin/src/index.js", "docs/ARCHITECTURE.md"]
+    }
+  ]
+}

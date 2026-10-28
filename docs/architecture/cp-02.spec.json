@@ -1,0 +1,53 @@
+{
+  "kind": "architecture-map",
+  "question": "How does a command become events and a snapshot in packages/domain?",
+  "meta": {
+    "builtBy": "agent · docs/architecture",
+    "builtAt": "2026-10-28",
+    "source": "git tag cp-02"
+  },
+  "diagram": "flowchart LR\n  subgraph test[\"thread.expect.test.ts\"]\n    EX[\"expectDecider · given · when\"]\n    CMD[\"ResolveThread\"]\n  end\n  subgraph dom[\"packages/domain · thread/decider.ts\"]\n    EV[\"evolve(state, event)\"]\n    DE[\"decide(state, command, ctx)\"]\n    EVS[\"ThreadResolved · DecisionRecorded\"]\n    PJ[\"project(events) · PlanView\"]\n  end\n  subgraph harness[\"kernel.ts · expect harness\"]\n    SNAP[\"__expect__/*.snap.txt\"]\n  end\n  subgraph sch[\"packages/schema\"]\n    S[\"Id · ParticipantId · Text\"]\n  end\n  EX -- \"given events · replay\" --> EV\n  EV -- \"state\" --> DE\n  CMD -- \"when\" --> DE\n  DE -- \"then\" --> EVS\n  EVS -- \"fold\" --> PJ\n  EX -- \"describeMessage · snapshot(name)\" --> SNAP\n  DE -- \"zod\" --> S",
+  "steps": [
+    {
+      "id": "given",
+      "caption": "A test gives a history, then sends one command.",
+      "focus": ["test", "EX", "CMD"],
+      "evidence": ["packages/domain/src/thread/thread.expect.test.ts"]
+    },
+    {
+      "id": "evolve",
+      "caption": "evolve folds the given events into the current state and holds no rules.",
+      "focus": ["EV"],
+      "edges": ["L_EX_EV_0", "L_EV_DE_0"],
+      "evidence": ["packages/domain/src/kernel.ts", "packages/domain/src/thread/decider.ts"]
+    },
+    {
+      "id": "decide",
+      "caption": "decide checks the flag and the state, then returns events or a rejection.",
+      "focus": ["DE"],
+      "edges": ["L_CMD_DE_0", "L_DE_S_0"],
+      "evidence": ["packages/domain/src/thread/decider.ts", "packages/schema/src/index.ts"]
+    },
+    {
+      "id": "events",
+      "caption": "ResolveThread yields two facts, ThreadResolved and then DecisionRecorded.",
+      "focus": ["EVS"],
+      "edges": ["L_DE_EVS_0"],
+      "evidence": ["packages/domain/src/thread/decider.ts", "packages/domain/src/thread/__expect__/resolve.snap.txt"]
+    },
+    {
+      "id": "project",
+      "caption": "project folds the stored events into the PlanView the api returns.",
+      "focus": ["PJ"],
+      "edges": ["L_EVS_PJ_0"],
+      "evidence": ["packages/domain/src/index.ts"]
+    },
+    {
+      "id": "snapshot",
+      "caption": "expectDecider writes each run as prose, and a changed snapshot fails the test.",
+      "focus": ["harness", "SNAP"],
+      "edges": ["L_EX_SNAP_0"],
+      "evidence": ["packages/domain/src/kernel.ts", "packages/domain/src/thread/__expect__/resolve-twice.snap.txt", "packages/domain/src/thread/__expect__/resolve-flag-off.snap.txt"]
+    }
+  ]
+}

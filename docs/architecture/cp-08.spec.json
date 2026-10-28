@@ -1,0 +1,60 @@
+{
+  "kind": "architecture-map",
+  "question": "How does a second tab see an append at cp-08?",
+  "meta": {
+    "builtBy": "agent · docs/architecture",
+    "builtAt": "2026-10-28",
+    "source": "git tag cp-08"
+  },
+  "diagram": "flowchart LR\n  subgraph tabA[\"Browser tab A\"]\n    A[\"plan page · WebSocket · router.invalidate\"]\n  end\n  subgraph tabB[\"Browser tab B\"]\n    B[\"plan page · Resolve form\"]\n  end\n  subgraph web[\"apps/web · Worker\"]\n    WS[\"route /plans/$planId/ws\"]\n    SF[\"server fn · apiCommand\"]\n  end\n  subgraph api[\"apps/api · Worker\"]\n    H[\"Hono · GET /plans/:planId/ws\"]\n    HC[\"Hono · POST /plans/:planId/commands\"]\n    DO[(\"PlanRoom DO · acceptWebSocket · broadcast\")]\n  end\n  A -- \"ws upgrade · same origin\" --> WS\n  WS -- \"proxied over the service binding\" --> H\n  H -- \"fetch(request) · upgrade\" --> DO\n  B -- \"ResolveThread\" --> SF\n  SF -- \"service binding\" --> HC\n  HC -- \"RPC · dispatch\" --> DO\n  DO -- \"events frame\" --> A",
+  "steps": [
+    {
+      "id": "open",
+      "caption": "Tab A opens a WebSocket to its own origin and never to the api.",
+      "focus": ["tabA", "A"],
+      "edges": ["L_A_WS_0"],
+      "evidence": ["apps/web/src/routes/plans.$planId.tsx"]
+    },
+    {
+      "id": "proxy",
+      "caption": "The web route forwards the upgrade request over the service binding.",
+      "focus": ["WS", "H"],
+      "edges": ["L_WS_H_0"],
+      "evidence": ["apps/web/src/routes/plans.$planId.ws.ts", "apps/web/wrangler.jsonc"]
+    },
+    {
+      "id": "route",
+      "caption": "Hono hands the raw request to the plan's Durable Object.",
+      "focus": ["H", "DO"],
+      "edges": ["L_H_DO_0"],
+      "evidence": ["apps/api/src/index.ts"]
+    },
+    {
+      "id": "accept",
+      "caption": "The Durable Object accepts the socket and lets it hibernate.",
+      "focus": ["DO"],
+      "evidence": ["apps/api/src/plan-room.ts"]
+    },
+    {
+      "id": "command",
+      "caption": "Tab B resolves a thread through the same command path as cp-05.",
+      "focus": ["tabB", "B", "SF", "HC"],
+      "edges": ["L_B_SF_0", "L_SF_HC_0", "L_HC_DO_0"],
+      "evidence": ["apps/web/src/routes/plans.$planId.tsx", "apps/web/src/lib/api.ts", "apps/api/src/index.ts"]
+    },
+    {
+      "id": "broadcast",
+      "caption": "After the append, dispatch broadcasts the new events to every open socket.",
+      "focus": ["DO"],
+      "edges": ["L_DO_A_0"],
+      "evidence": ["apps/api/src/plan-room.ts"]
+    },
+    {
+      "id": "reload",
+      "caption": "Tab A hears the frame and reloads its data, and nothing polls.",
+      "focus": ["A"],
+      "edges": ["L_DO_A_0"],
+      "evidence": ["apps/web/src/routes/plans.$planId.tsx", "scripts/ws-check.ts", "apps/web/src/routes/readyz.ts"]
+    }
+  ]
+}
