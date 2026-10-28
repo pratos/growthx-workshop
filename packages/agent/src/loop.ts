@@ -13,6 +13,7 @@ export type SessionsApi = {
   post?(planId: string, sessionId: string, body: string): Promise<{ ok: boolean; rejected?: string }>;
   partial?(planId: string, sessionId: string, runId: string, text: string): Promise<void>;
   readPlan?(planId: string): Promise<string>;
+  myName?(): Promise<string>;
 };
 
 // What the agent can do in the room while it answers one Run. The loop builds one per Run; the tools act through it.
@@ -139,7 +140,7 @@ export async function tick(planId: string, me: string, api: SessionsApi, brain: 
           post: async (body) => { const p = await api.post!(planId, s.sessionId, body); return p.ok ? "posted to the session" : `not posted: ${p.rejected}`; },
         } : undefined;
         const framed = api.readPlan
-          ? `${run.asked}\n\n<run>Asked by ${run.askedBy} in the Session "${s.title ?? s.sessionId}" on plan ${planId}.</run>\n<plan_text>\n${planText(await api.readPlan(planId))}\n</plan_text>`
+          ? `${run.asked}\n\n<you>Your name in this room is ${(await api.myName?.()) ?? "agent"}; people mention you as @agent.</you>\n<run>Asked by ${run.askedBy} in the Session "${s.title ?? s.sessionId}" on plan ${planId}.</run>\n<plan_text>\n${planText(await api.readPlan(planId))}\n</plan_text>`
           : run.asked;
         const result = await brain.answer(s.sessionId, run.runId, framed, room);
         const finished = await api.command(planId, "FinishRun", { sessionId: s.sessionId, runId: run.runId, result });

@@ -64,6 +64,10 @@ const api: SessionsApi = {
   async partial(planId, sessionId, runId, text) {
     await call(`/plans/${encodeURIComponent(planId)}/sessions/${sessionId}/runs/${runId}/partial`, { method: "POST", body: JSON.stringify({ text }) }).catch(() => undefined);
   },
+  async myName() {
+    const r = await call("/auth/me");
+    return r.ok ? (((await r.json()) as { account?: { name?: string } }).account?.name ?? "agent") : "agent";
+  },
   async readPlan(planId) {
     const r = await call(`/plans/${encodeURIComponent(planId)}`);
     return r.ok ? (((await r.json()) as { body?: { content?: string } }).body?.content ?? "") : "";

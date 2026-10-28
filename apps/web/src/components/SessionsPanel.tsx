@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { SessionView } from '@greenhouse/schema';
-import { listSessions, sessionCommand } from '#/lib/sessions';
+import { listParticipants, listSessions, sessionCommand } from '#/lib/sessions';
 import { CopyLink } from '#/components/Share';
 
 // The chat beside the plan. A Session is a conversation of Messages between people; mentioning @agent turns a message
@@ -13,11 +13,14 @@ type Line =
   | { kind: 'run'; at: string; run: SessionView['runs'][number] };
 
 const AGENT = 'agent';
-const initials = (who: string) => (who === AGENT ? 'AI' : who.slice(0, 2).toUpperCase());
+// Display names by participant id (the agent's is whatever an admin named it); ids are what @mentions use.
+let names: Record<string, string> = {};
+const nameOf = (who: string) => names[who] ?? who;
+const initials = (who: string) => nameOf(who).split(/\s+/).map((w) => w[0] ?? '').join('').slice(0, 2).toUpperCase() || '?';
 
 function Face({ who, online }: { who: string; online?: boolean }) {
   return (
-    <span className="gh-face" data-agent={who === AGENT || undefined} title={`${who}${online ? ', here now' : ''}`}>
+    <span className="gh-face" data-agent={who === AGENT || undefined} title={`${nameOf(who)}${who === AGENT ? ' (the agent)' : ''}${online ? ', here now' : ''}`}>
       {initials(who)}{online && <span className="gh-face-dot" aria-hidden="true" />}
     </span>
   );
@@ -41,6 +44,8 @@ export function SessionsPanel({ planId, me, tick, here = [], partials = {} }: Pr
     if (r.data) { setSessions(r.data.sessions); setSelected((s) => s ?? (r.data!.sessions.some((x) => x.sessionId === linked) ? linked : r.data!.sessions.at(-1)?.sessionId ?? null)); }
   }, [planId]);
   useEffect(() => { void refresh(); }, [refresh, tick, me]);
+  const [, setNamesTick] = useState(0);
+  useEffect(() => { void listParticipants().then((r) => { names = Object.fromEntries((r.data?.participants ?? []).map((p) => [p.id, p.name])); setNamesTick((n) => n + 1); }); }, [me, tick]);
 
   const current = sessions?.find((s) => s.sessionId === selected) ?? null;
   const lines: Line[] = useMemo(() => !current ? [] : [
@@ -118,7 +123,7 @@ export function SessionsPanel({ planId, me, tick, here = [], partials = {} }: Pr
       <div className="gh-slash gh-mentions" role="listbox" aria-label="Mention">
         {candidates.map((p, i) => (
           <button key={p} type="button" role="option" aria-selected={i === mention.index} className="gh-slash-item" onMouseDown={(ev) => { ev.preventDefault(); pick(p); }}>
-            <span className="flex items-center gap-2"><Face who={p} />{p === AGENT ? 'agent' : p}</span>
+            <span className="flex items-center gap-2"><Face who={p} />{nameOf(p)} <span className="gh-slash-hint">@{p}</span></span>
             <span className="gh-slash-hint">{p === AGENT ? 'asks the agent' : here.includes(p) ? 'here now' : 'in this session'}</span>
           </button>
         ))}
@@ -175,21 +180,21 @@ export function SessionsPanel({ planId, me, tick, here = [], partials = {} }: Pr
             {lines.map((l) => l.kind === 'message' ? (
               <li key={l.id} className="gh-arrive gh-line" data-mine={l.by === me || undefined}>
                 <Face who={l.by} />
-                <div className="min-w-0"><p className="gh-meta"><span>{l.by}</span></p><p className="gh-said">{l.body}</p></div>
+                <div className="min-w-0"><p className="gh-meta"><span>{nameOf(l.by)}</span></p><p className="gh-said">{l.body}</p></div>
               </li>
             ) : (
               <li key={l.run.runId} data-run={l.run.runId} data-status={l.run.status} className="gh-arrive flex flex-col gap-2">
                 <div className="gh-line" data-mine={l.run.askedBy === me || undefined}>
                   <Face who={l.run.askedBy} />
-                  <div className="min-w-0"><p className="gh-meta"><span>{l.run.askedBy}</span><span>asked the agent</span></p><p className="gh-said"><span className="gh-mention">@agent</span> {l.run.asked}</p></div>
+                  <div className="min-w-0"><p className="gh-meta"><span>{nameOf(l.run.askedBy)}</span><span>asked {nameOf(AGENT)}</span></p><p className="gh-said"><span className="gh-mention">@agent</span> {l.run.asked}</p></div>
                 </div>
                 <div className="gh-line">
                   <Face who={AGENT} />
                   <div className="min-w-0">
-                    {l.run.status === 'queued' && <p className="gh-meta">Queued. The agent takes questions in order.</p>}
+                    {l.run.status === 'queued' && <p className="gh-meta">Queued. {nameOf(AGENT)} takes questions in order.</p>}
                     {l.run.status === 'running' && (partials[l.run.runId]
                       ? <p className="gh-said gh-streaming" data-streaming>{partials[l.run.runId]}</p>
-                      : <p className="gh-meta gh-working">{l.run.runBy === AGENT ? 'The agent is working on it' : `${l.run.runBy} is working on it`}{l.run.steers ? `, steered ${l.run.steers} time${l.run.steers === 1 ? '' : 's'}` : ''}</p>)}
+                      : <p className="gh-meta gh-working">{l.run.runBy === AGENT ? `${nameOf(AGENT)} is working on it` : `${nameOf(l.run.runBy ?? '')} is working on it`}{l.run.steers ? `, steered ${l.run.steers} time${l.run.steers === 1 ? '' : 's'}` : ''}</p>)}
                     {l.run.status === 'finished' && <p data-result className="gh-said gh-arrive">{l.run.result}</p>}
                     {l.run.status === 'failed' && <p data-result className="gh-said gh-failed gh-arrive"><span className="gh-meta !text-inherit">The agent could not answer</span>{l.run.result}</p>}
                   </div>

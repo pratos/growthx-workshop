@@ -13,6 +13,7 @@ export const accountsView: Projection = {
       case 'AccountOpened': return [stmt('INSERT INTO accounts (account_id, email, name, admin, password_hash, opened_at) VALUES (?, ?, ?, ?, ?, ?)', d.accountId, d.email, d.name, d.admin ? 1 : 0, d.passwordHash, e.at)];
       case 'SignedIn':      return [stmt('INSERT INTO sign_ins (token_hash, account_id, signed_in_at, expires_at) VALUES (?, ?, ?, ?)', d.tokenHash, d.accountId, e.at, d.expiresAt)];
       case 'SignedOut':     return [stmt('DELETE FROM sign_ins WHERE token_hash = ?', d.tokenHash)];
+      case 'AccountRenamed': return [stmt('UPDATE accounts SET name = ? WHERE account_id = ?', d.name, d.accountId)];
       default:              return [];
     }
   },

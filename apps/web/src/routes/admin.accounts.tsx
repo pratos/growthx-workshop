@@ -8,6 +8,9 @@ import { AdminNav, AdminRefusal } from '#/components/AdminGate';
 type Row = { accountId: string; email: string; name: string; admin: boolean; openedAt: string; liveSignIns: number };
 type NewAccount = { email: string; name: string; password: string; admin: boolean };
 const loadAccounts = createServerFn({ method: 'GET' }).handler(() => apiGetOrStatus<{ accounts: Row[] }>('/admin/accounts'));
+const renameAccount = createServerFn({ method: 'POST' })
+  .validator((d: { accountId: string; name: string }) => d)
+  .handler(({ data }) => apiPost<{ account?: { name: string }; rejected?: string }>(`/admin/accounts/${encodeURIComponent(data.accountId)}/name`, { name: data.name }));
 const openAccount = createServerFn({ method: 'POST' })
   .validator((d: NewAccount) => d)
   .handler(({ data }) => apiPost<{ account?: { accountId: string }; rejected?: string }>('/admin/accounts', data));
@@ -42,8 +45,27 @@ function Accounts() {
           </tbody>
         </table>
       )}
+      {rows.some((a) => a.accountId === 'agent') && <NameTheAgent current={rows.find((a) => a.accountId === 'agent')!.name} />}
       <AddAccount />
     </main>
+  );
+}
+
+// The agent's name, as everyone sees it in chat. @agent still reaches it; only the name changes (AccountRenamed).
+function NameTheAgent({ current }: { current: string }) {
+  const router = useRouter();
+  const [name, setName] = useState(current);
+  const [said, setSaid] = useState('');
+  return (
+    <section aria-labelledby="agent-name" className="mt-10 border-t border-[var(--line)] pt-6">
+      <h2 id="agent-name" className="text-lg font-semibold">Name the agent</h2>
+      <p className={`mt-1 text-sm ${muted}`}>What everyone sees in chat. People still mention it as @agent.</p>
+      <form className="mt-3 flex max-w-md gap-2" onSubmit={async (e) => { e.preventDefault(); const r = await renameAccount({ data: { accountId: 'agent', name } }); setSaid(r.account ? `The agent is now ${r.account.name}.` : r.rejected ?? `Not renamed (${r.status}).`); await router.invalidate(); }}>
+        <input value={name} onChange={(e) => setName(e.target.value)} required maxLength={80} aria-label="Agent name" className={field} />
+        <button type="submit" className="rounded-[10px] bg-[var(--lagoon)] px-4 py-2 text-sm font-semibold text-white">Save</button>
+      </form>
+      <p role="status" className={`mt-2 text-sm ${muted}`}>{said}</p>
+    </section>
   );
 }
 

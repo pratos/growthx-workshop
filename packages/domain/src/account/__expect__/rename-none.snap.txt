@@ -1,0 +1,2 @@
+when   RenameAccount      ghost name="Ghost"
+then   rejected           no such account

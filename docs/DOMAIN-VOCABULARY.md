@@ -82,7 +82,7 @@ Paths: packages/domain/src/account
 ### Account
 How a Participant signs in: an email, a name, a password hash, and whether they are an admin. One stream per email, so two sign-ups for one email cannot both win.
 Example: "Sam signed up with sam@greenhouse.test, so a second sign-up with that email is refused."
-Carried by: `Account` schema · Events: `AccountOpened` · Commands: `SignUp`, `OpenAccount` (seeds and `just user-add`)
+Carried by: `Account` schema · Events: `AccountOpened`, `AccountRenamed` · Commands: `SignUp`, `OpenAccount` (seeds and `just user-add`), `RenameAccount` (an admin names the agent; the participant id never changes)
 Not: profile, login, identity, credentials
 
 ### Sign-in
@@ -102,4 +102,4 @@ One line per relationship: upstream → downstream, the pattern, what crosses, a
 
 ## Verbs
 
-Open, Reply, Resolve, Edit, Attach, Request, Fork, Start, Join, Ask, Steer, Finish, Fail, End, Post, Sign up, Sign in, Sign out. Imperative in a command, past tense in an event. No other verbs name a command.
+Open, Reply, Resolve, Edit, Attach, Request, Fork, Start, Join, Ask, Steer, Finish, Fail, End, Post, Rename, Sign up, Sign in, Sign out. Imperative in a command, past tense in an event. No other verbs name a command.

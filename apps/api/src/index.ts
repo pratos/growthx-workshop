@@ -139,6 +139,12 @@ app.get('/plans/:planId/events', async (c) => {
   return c.json(await runtimeFor(c.env).runPromise(PlanRooms.use((r) => r.events(id))));
 });
 
+// Who is who: participant ids and the names people see (the agent's name included). Signed-in only.
+app.get('/participants', requireSignIn, async (c) => {
+  const { results } = await c.env.DB.prepare('SELECT account_id, name FROM accounts ORDER BY account_id').all<{ account_id: string; name: string }>();
+  return c.json({ participants: results.map((r) => ({ id: r.account_id, name: r.name })) });
+});
+
 // The orchestrator: every plan room anyone has opened, newest activity first, with who is in each now.
 app.get('/plans', requireSignIn, async (c) => {
   const { results } = await c.env.DB.prepare('SELECT plan_id, opened_by, opened_at, last_active_at, here FROM plans ORDER BY last_active_at DESC LIMIT 100')

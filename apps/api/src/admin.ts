@@ -60,6 +60,17 @@ admin.post('/accounts', async (c) => {
   return outcome.ok ? c.json({ account: outcome.account }, 201) : c.json({ rejected: outcome.message }, 409);
 });
 
+// Rename an account, the agent included: POST /admin/accounts/:accountId/name { name }. Recorded as AccountRenamed.
+admin.post('/accounts/:accountId/name', async (c) => {
+  const body = (await c.req.json().catch(() => null)) as { name?: unknown } | null;
+  if (typeof body?.name !== 'string') return c.json({ rejected: 'a name is required' }, 400);
+  const outcome = await run(c.env, Accounts.use((a) => a.rename(c.req.param('accountId'), body.name as string, c.get('account').accountId)).pipe(
+    Effect.map((account) => ({ ok: true as const, account })),
+    Effect.catchTag('SignUpRefused', (e) => Effect.succeed({ ok: false as const, message: e.message })),
+  ));
+  return outcome.ok ? c.json({ account: outcome.account }) : c.json({ rejected: outcome.message }, 409);
+});
+
 // The newest events first, optionally one stream. Data is shown as recorded, with secrets masked.
 admin.get('/events', async (c) => {
   const stream = c.req.query('stream')?.trim();

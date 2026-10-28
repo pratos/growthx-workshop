@@ -8,6 +8,10 @@ export const listSessions = createServerFn({ method: 'GET' })
   .handler(({ data: planId }) => apiGetOrStatus<{ sessions: SessionView[] }>(`/plans/${encodeURIComponent(planId)}/sessions`));
 
 type Command = { planId: string; type: string; data: Record<string, unknown> };
+// Who is who: participant ids and the names people see, the agent's included.
+export const listParticipants = createServerFn({ method: 'GET' })
+  .handler(() => apiGetOrStatus<{ participants: { id: string; name: string }[] }>('/participants'));
+
 export const sessionCommand = createServerFn({ method: 'POST' })
   .validator((d: Command) => d)
   .handler(({ data: { planId, type, data } }) => apiPost<{ events?: unknown[]; rejected?: string }>(`/plans/${encodeURIComponent(planId)}/sessions`, { type, data }));

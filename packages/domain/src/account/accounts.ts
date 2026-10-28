@@ -1,7 +1,7 @@
 import { Context, Effect, Layer, Schema } from 'effect';
 import { EventStore, Sql, replay, type Ctx } from '@greenhouse/engine';
 import type { Account } from '@greenhouse/schema';
-import { account, accountStream, OpenAccount, SignIn, SignOut, SignUp, WRONG } from './decider';
+import { account, accountStream, OpenAccount, SignIn, SignOut, SignUp, WRONG, RenameAccount } from './decider';
 import { DECOY, hashPassword, newToken, tokenHash, verifyPassword } from './password';
 
 // The Identity use cases on the engine: decode at the boundary, hash outside the decider, execute against the
@@ -35,6 +35,7 @@ const fromRow = (r: Row): Account => ({ accountId: r.account_id, email: r.email,
 
 export class Accounts extends Context.Service<Accounts, {
   signUp(body: unknown): Effect.Effect<Account, SignUpRefused>;
+  rename(accountId: string, name: string, by: string): Effect.Effect<Account, SignUpRefused>;
   open(input: { email: string; name: string; password: string; admin: boolean }): Effect.Effect<Account, SignUpRefused>;
   signIn(body: unknown): Effect.Effect<{ token: string; account: Account }, SignInFailed>;
   accountFor(token: string): Effect.Effect<Account | undefined>;
@@ -100,6 +101,18 @@ export class Accounts extends Context.Service<Accounts, {
       yield* store.execute(account, accountStream(row.email), SignOut({ accountId: row.account_id, tokenHash: hash }), ctx, row.account_id).pipe(Effect.orDie);
     });
 
-    return Accounts.of({ signUp, open, signIn, accountFor, signOut });
+    // Rename an account (the agent, by an admin): the stream is the account's email, found from its id.
+    const rename = Effect.fn('Accounts.rename')(function* (accountId: string, name: string, by: string) {
+      const rows = yield* sql.query<Row>('SELECT account_id, email, name, admin FROM accounts WHERE account_id = ?', [accountId]);
+      const row = rows[0];
+      if (!row) return yield* new SignUpRefused({ message: `no account ${accountId}` });
+      const trimmed = name.trim();
+      if (!trimmed || trimmed.length > 80) return yield* new SignUpRefused({ message: 'a name of 1 to 80 characters' });
+      const result = yield* store.execute(account, accountStream(row.email), RenameAccount({ accountId, name: trimmed }), ctx, by).pipe(Effect.orDie);
+      if ('rejected' in result) return yield* new SignUpRefused({ message: result.rejected });
+      return fromRow({ ...row, name: trimmed });
+    });
+
+    return Accounts.of({ signUp, open, signIn, accountFor, signOut, rename });
   }));
 }
