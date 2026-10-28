@@ -1,0 +1,13 @@
+when   Pratos starts a session and asks
+then   SessionStarted     s1 gh-12 by pratos title="retry policy"
+       RunQueued          s1 r1 by pratos asked="client or wrapper?"
+when   the model fails three times in one pass
+then   RunStarted         s1 r1 by agent
+       RunFailed          s1 r1 by agent reason="could not answer after 3 tries: model unavailable"
+when   Pratos asks again
+then   RunQueued          s1 r2 by pratos asked="client or wrapper, again?"
+when   the model recovers on the second try
+then   RunStarted         s1 r2 by agent
+       RunFinished        s1 r2 by agent result="wrapper"
+read   runs               r1  pratos  failed  agent  could not answer after 3 tries: model unavailable
+                          r2  pratos  finished  agent  wrapper

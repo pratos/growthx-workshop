@@ -33,8 +33,8 @@ export const Account = Schema.Struct({ accountId: ParticipantId, email: Email, n
 export type Account = typeof Account.Type;
 
 // ---- Agent work: a Session is where Participants ask the agent and its Runs happen. Becomes the agent's Thread at the rename.
-export const RunStatus = Schema.Literals(['queued', 'running', 'finished']);
-export const Run = Schema.Struct({ runId: Id, sessionId: Id, askedBy: ParticipantId, asked: Text, status: RunStatus, steers: Schema.Int, result: Schema.optionalKey(Text) });
+export const RunStatus = Schema.Literals(['queued', 'running', 'finished', 'failed']);
+export const Run = Schema.Struct({ runId: Id, sessionId: Id, askedBy: ParticipantId, asked: Text, status: RunStatus, runBy: Schema.optionalKey(ParticipantId), steers: Schema.Int, result: Schema.optionalKey(Text) });
 export type Run = typeof Run.Type;
 export const SessionView = Schema.Struct({
   sessionId: Id, planId: Id, title: Text, startedBy: ParticipantId, status: Schema.Literals(['open', 'ended']),

@@ -22,6 +22,7 @@ export const sessionsView: Projection = {
       case 'RunStarted':  return [stmt("UPDATE runs SET status = 'running', run_by = ? WHERE run_id = ?", d.by, d.runId)];
       case 'RunSteered':  return [stmt('UPDATE runs SET steers = steers + 1 WHERE run_id = ?', d.runId)];
       case 'RunFinished': return [stmt("UPDATE runs SET status = 'finished', result = ? WHERE run_id = ?", d.result, d.runId)];
+      case 'RunFailed':   return [stmt("UPDATE runs SET status = 'failed', result = ? WHERE run_id = ?", d.reason, d.runId)];
       case 'SessionEnded': return [stmt("UPDATE sessions SET status = 'ended' WHERE session_id = ?", d.sessionId)];
       default: return [];
     }
@@ -29,17 +30,26 @@ export const sessionsView: Projection = {
 };
 
 type SessionRow = { session_id: string; plan_id: string; title: string; started_by: string; status: 'open' | 'ended' };
-type RunRow = { run_id: string; session_id: string; asked_by: string; asked: string; status: 'queued' | 'running' | 'finished'; steers: number; result: string | null };
+type RunRow = { run_id: string; session_id: string; asked_by: string; asked: string; status: 'queued' | 'running' | 'finished' | 'failed'; run_by: string | null; steers: number; result: string | null };
 
 export const readSession = (sessionId: string) => Effect.gen(function* () {
   const sql = yield* Sql;
   const [s] = yield* sql.query<SessionRow>('SELECT session_id, plan_id, title, started_by, status FROM sessions WHERE session_id = ?', [sessionId]);
   if (!s) return undefined;
   const people = yield* sql.query<{ participant: string }>('SELECT participant FROM session_participants WHERE session_id = ? ORDER BY joined_at, participant', [sessionId]);
-  const runs = yield* sql.query<RunRow>('SELECT run_id, session_id, asked_by, asked, status, steers, result FROM runs WHERE session_id = ? ORDER BY queued_at, run_id', [sessionId]);
+  const runs = yield* sql.query<RunRow>('SELECT run_id, session_id, asked_by, asked, status, run_by, steers, result FROM runs WHERE session_id = ? ORDER BY queued_at, run_id', [sessionId]);
   return {
     sessionId: s.session_id, planId: s.plan_id, title: s.title, startedBy: s.started_by, status: s.status,
     participants: people.map((p) => p.participant),
-    runs: runs.map((r) => ({ runId: r.run_id, sessionId: r.session_id, askedBy: r.asked_by, asked: r.asked, status: r.status, steers: Number(r.steers), ...(r.result ? { result: r.result } : {}) })),
+    runs: runs.map((r) => ({ runId: r.run_id, sessionId: r.session_id, askedBy: r.asked_by, asked: r.asked, status: r.status, ...(r.run_by ? { runBy: r.run_by } : {}), steers: Number(r.steers), ...(r.result ? { result: r.result } : {}) })),
   } satisfies SessionView;
+});
+
+// Every session in this store (one plan room holds one plan's sessions), oldest first.
+export const listSessions = () => Effect.gen(function* () {
+  const sql = yield* Sql;
+  const ids = yield* sql.query<{ session_id: string }>("SELECT s.session_id FROM sessions s JOIN session_participants p ON p.session_id = s.session_id AND p.participant = s.started_by ORDER BY p.joined_at, s.session_id");
+  const out: SessionView[] = [];
+  for (const { session_id } of ids) { const v = yield* readSession(session_id); if (v) out.push(v); }
+  return out;
 });

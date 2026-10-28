@@ -3,6 +3,8 @@ import { createServerFn } from '@tanstack/react-start';
 import { useEffect, useState } from 'react';
 import type { PlanView } from '@greenhouse/schema';
 import { apiGet, apiCommand } from '#/lib/api';
+import { currentAccount } from '#/lib/session';
+import { SessionsPanel } from '#/components/SessionsPanel';
 
 // Form fields are strings; a File here is a bug, so it reads as empty.
 const field = (f: FormData, name: string): string => { const v = f.get(name); return typeof v === 'string' ? v : ''; };
@@ -28,12 +30,16 @@ const loadFlags = createServerFn({ method: 'GET' })
   .handler(({ data: by }) => apiGet<{ participant: string; on: string[] }>(`/participants/${encodeURIComponent(by)}/flags`));
 
 export const Route = createFileRoute('/plans/$planId')({
-  loader: ({ params }) => loadPlan({ data: params.planId }),
+  loader: async ({ params }) => {
+    const [plan, { account }] = await Promise.all([loadPlan({ data: params.planId }), currentAccount()]);
+    return { plan, account };
+  },
   component: PlanPage,
 });
 
 function PlanPage() {
-  const plan = Route.useLoaderData();
+  const { plan, account } = Route.useLoaderData();
+  const [sessionTick, setSessionTick] = useState(0);
   const { planId } = Route.useParams();
   const router = useRouter();
   const [by, setBy] = useState('pratos');
@@ -59,7 +65,13 @@ function PlanPage() {
     ws.onopen = () => setLive('live');
     ws.onclose = () => setLive('off');
     ws.onerror = () => setLive('off');
-    ws.onmessage = (m) => { try { if (JSON.parse(String(m.data)).type === 'events') void router.invalidate(); } catch {} };
+    ws.onmessage = (m) => {
+      try {
+        const type = (JSON.parse(String(m.data)) as { type?: string }).type;
+        if (type === 'events') void router.invalidate();
+        if (type === 'session') setSessionTick((n) => n + 1);
+      } catch {}
+    };
     return () => ws.close();
   }, [planId, router]);
 
@@ -71,7 +83,8 @@ function PlanPage() {
   }
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10">
+    <main className="mx-auto grid max-w-6xl gap-8 px-4 py-10 lg:grid-cols-[minmax(0,1fr)_380px]">
+      <div>
       <header className="flex items-baseline justify-between gap-4">
         <h1 className="text-2xl font-semibold tracking-tight">Plan {planId}</h1>
         <label className="text-sm text-gray-500">as <input value={by} onChange={(e) => setBy(e.target.value)} className="ml-1 w-28 rounded border border-gray-300 px-2 py-1 text-gray-900" /></label>
@@ -109,6 +122,8 @@ function PlanPage() {
           <button type="submit" className="rounded border border-gray-300 px-3 py-2 text-sm">Open</button>
         </div>
       </form>
+      </div>
+      <SessionsPanel planId={planId} me={account?.accountId ?? null} tick={sessionTick} />
     </main>
   );
 }

@@ -18,6 +18,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminAccountsRouteImport } from './routes/admin.accounts'
 import { Route as AdminEventsRouteImport } from './routes/admin.events'
 import { Route as AdminFlagsRouteImport } from './routes/admin.flags'
+import { Route as ApiSplatRouteImport } from './routes/api.$'
 import { Route as PlansPlanIdRouteImport } from './routes/plans.$planId'
 import { Route as PlansPlanIdWsRouteImport } from './routes/plans.$planId.ws'
 
@@ -66,6 +67,11 @@ const AdminFlagsRoute = AdminFlagsRouteImport.update({
   path: '/admin/flags',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiSplatRoute = ApiSplatRouteImport.update({
+  id: '/api/$',
+  path: '/api/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlansPlanIdRoute = PlansPlanIdRouteImport.update({
   id: '/plans/$planId',
   path: '/plans/$planId',
@@ -86,6 +92,7 @@ export interface FileRoutesByFullPath {
   '/admin/accounts': typeof AdminAccountsRoute
   '/admin/events': typeof AdminEventsRoute
   '/admin/flags': typeof AdminFlagsRoute
+  '/api/$': typeof ApiSplatRoute
   '/plans/$planId': typeof PlansPlanIdRouteWithChildren
   '/admin/': typeof AdminIndexRoute
   '/plans/$planId/ws': typeof PlansPlanIdWsRoute
@@ -99,6 +106,7 @@ export interface FileRoutesByTo {
   '/admin/accounts': typeof AdminAccountsRoute
   '/admin/events': typeof AdminEventsRoute
   '/admin/flags': typeof AdminFlagsRoute
+  '/api/$': typeof ApiSplatRoute
   '/plans/$planId': typeof PlansPlanIdRouteWithChildren
   '/admin': typeof AdminIndexRoute
   '/plans/$planId/ws': typeof PlansPlanIdWsRoute
@@ -113,6 +121,7 @@ export interface FileRoutesById {
   '/admin/accounts': typeof AdminAccountsRoute
   '/admin/events': typeof AdminEventsRoute
   '/admin/flags': typeof AdminFlagsRoute
+  '/api/$': typeof ApiSplatRoute
   '/plans/$planId': typeof PlansPlanIdRouteWithChildren
   '/admin/': typeof AdminIndexRoute
   '/plans/$planId/ws': typeof PlansPlanIdWsRoute
@@ -128,6 +137,7 @@ export interface FileRouteTypes {
     | '/admin/accounts'
     | '/admin/events'
     | '/admin/flags'
+    | '/api/$'
     | '/plans/$planId'
     | '/admin/'
     | '/plans/$planId/ws'
@@ -141,6 +151,7 @@ export interface FileRouteTypes {
     | '/admin/accounts'
     | '/admin/events'
     | '/admin/flags'
+    | '/api/$'
     | '/plans/$planId'
     | '/admin'
     | '/plans/$planId/ws'
@@ -154,6 +165,7 @@ export interface FileRouteTypes {
     | '/admin/accounts'
     | '/admin/events'
     | '/admin/flags'
+    | '/api/$'
     | '/plans/$planId'
     | '/admin/'
     | '/plans/$planId/ws'
@@ -168,6 +180,7 @@ export interface RootRouteChildren {
   AdminAccountsRoute: typeof AdminAccountsRoute
   AdminEventsRoute: typeof AdminEventsRoute
   AdminFlagsRoute: typeof AdminFlagsRoute
+  ApiSplatRoute: typeof ApiSplatRoute
   PlansPlanIdRoute: typeof PlansPlanIdRouteWithChildren
   AdminIndexRoute: typeof AdminIndexRoute
 }
@@ -237,6 +250,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminFlagsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/$': {
+      id: '/api/$'
+      path: '/api/$'
+      fullPath: '/api/$'
+      preLoaderRoute: typeof ApiSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/plans/$planId': {
       id: '/plans/$planId'
       path: '/plans/$planId'
@@ -275,6 +295,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminAccountsRoute: AdminAccountsRoute,
   AdminEventsRoute: AdminEventsRoute,
   AdminFlagsRoute: AdminFlagsRoute,
+  ApiSplatRoute: ApiSplatRoute,
   PlansPlanIdRoute: PlansPlanIdRouteWithChildren,
   AdminIndexRoute: AdminIndexRoute,
 }

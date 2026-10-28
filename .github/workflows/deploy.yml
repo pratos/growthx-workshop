@@ -19,7 +19,7 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - run: bun run lint
-      - run: bun test packages/engine packages/domain packages/schema apps/api/test
+      - run: bun test packages/engine packages/domain packages/schema packages/agent/test apps/api/test
       - name: architecture map covers every app and package and is current
         run: bun scripts/arch.ts --coverage && bun scripts/arch.ts --check
       - name: generated types are current

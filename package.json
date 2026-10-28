@@ -10,7 +10,7 @@
     "lint": "oxlint -c .oxlintrc.json --type-aware --tsconfig apps/api/tsconfig.json --disable-nested-config apps packages && tsc -p apps/api/tsconfig.json --noEmit",
     "fmt": "oxfmt .",
     "typecheck": "tsc -b",
-    "test": "bun test packages/engine packages/domain packages/schema apps/api/test"
+    "test": "bun test packages/engine packages/domain packages/schema packages/agent/test apps/api/test"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20261027.1",

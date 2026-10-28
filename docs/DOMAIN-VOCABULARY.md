@@ -47,8 +47,8 @@ Carried by: `SessionView` schema · Events: `SessionStarted`, `ParticipantJoined
 Not: chat, conversation, call, meeting, workspace
 
 ### Run
-One Ask, from queued to its result (pi-durable's word). One Run at a time per Session; others queue in order. Any Participant in the Session can steer a running Run; only whoever started it finishes it.
-Carried by: `Run` schema · Events: `RunQueued`, `RunStarted`, `RunSteered`, `RunFinished` · Commands: `Ask`, `StartRun`, `Steer`, `FinishRun`
+One Ask, from queued to its result (pi-durable's word). One Run at a time per Session; others queue in order. Any Participant in the Session can steer a running Run; only whoever started it finishes it, or fails it with a reason.
+Carried by: `Run` schema · Events: `RunQueued`, `RunStarted`, `RunSteered`, `RunFinished`, `RunFailed` · Commands: `Ask`, `StartRun`, `Steer`, `FinishRun`, `FailRun`
 Not: job, task, prompt
 
 ## Context: Identity
@@ -70,4 +70,4 @@ Not: cookie, login
 
 ## Verbs
 
-Open, Reply, Resolve, Edit, Attach, Request, Fork, Start, Join, Ask, Steer, Finish, End, Sign up, Sign in, Sign out. Imperative in a command, past tense in an event. No other verbs name a command.
+Open, Reply, Resolve, Edit, Attach, Request, Fork, Start, Join, Ask, Steer, Finish, Fail, End, Sign up, Sign in, Sign out. Imperative in a command, past tense in an event. No other verbs name a command.

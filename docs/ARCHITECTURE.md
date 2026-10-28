@@ -70,7 +70,7 @@ The map's parts, and the folders that hold them. `just arch` refuses a folder un
 |---|---|---|
 | apps/web | packages/schema, the API over `env.API` | packages/domain, packages/db, any database client |
 | apps/api | packages/domain, packages/engine, packages/schema | apps/web |
-| packages/agent | @earendil-works/pi-durable, pi-ai, chord; bun:sqlite | apps/*, packages/domain (for now: a standalone harness demo) |
+| packages/agent | @earendil-works/pi-durable, pi-ai, chord; bun:sqlite; the API over HTTP as the agent account. Its tests use packages/domain and packages/engine in place of the API | apps/*; packages/domain outside tests |
 | apps/checkin | nothing; a standalone Worker that shares the toolchain | packages/* |
 | packages/domain | packages/schema, packages/engine, effect | anything with I/O outside the engine's Sql port |
 | packages/engine | effect; bun:sqlite and PGlite in its adapters and tests | packages/domain, packages/schema, apps/* |

@@ -1,0 +1,18 @@
+when   Pratos starts a session on plan gh-12
+then   SessionStarted     s1 gh-12 by pratos title="retry policy"
+when   Pratos asks
+then   RunQueued          s1 r1 by pratos asked="client or wrapper for retries?"
+when   the agent starts the run
+then   RunStarted         s1 r1 by agent
+when   Pratos tries to fail the agent’s run
+then   rejected           only agent, who started r1, can fail it
+when   the model errors three times; the agent fails the run
+then   RunFailed          s1 r1 by agent reason="model unavailable after 3 tries"
+when   the agent tries to finish it anyway
+then   rejected           r1 is not running
+when   Pratos asks again
+then   RunQueued          s1 r2 by pratos asked="client or wrapper, second try?"
+when   the agent starts the new run
+then   RunStarted         s1 r2 by agent
+read   runs               r1  pratos  failed  agent  0  model unavailable after 3 tries
+                          r2  pratos  running  agent  0  -

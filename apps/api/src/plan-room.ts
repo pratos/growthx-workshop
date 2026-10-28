@@ -3,10 +3,10 @@ import { Effect, Layer, ManagedRuntime } from 'effect';
 import { EventStore, type Recorded } from '@greenhouse/engine';
 import { durableObject } from '@greenhouse/engine/adapters/durable-object';
 import { route, type Command, type DomainEvent, type Rejection, type StoredEvent, project } from '@greenhouse/domain';
-import { session, sessionStream, sessionsView, readSession, StartSession, JoinSession, Ask, StartRun, Steer, FinishRun, EndSession } from '@greenhouse/domain';
+import { session, sessionStream, sessionsView, readSession, listSessions, StartSession, JoinSession, Ask, StartRun, Steer, FinishRun, FailRun, EndSession } from '@greenhouse/domain';
 import type { Env } from './services';
 
-const sessionCommands = { StartSession, JoinSession, Ask, StartRun, Steer, FinishRun, EndSession } as const;
+const sessionCommands = { StartSession, JoinSession, Ask, StartRun, Steer, FinishRun, FailRun, EndSession } as const;
 export type SessionResult = { events: Recorded[] } | Rejection;
 
 // One Durable Object per Plan. Its SQLite is the plan's event log: the system of record.
@@ -36,6 +36,10 @@ export class PlanRoom extends DurableObject<Env> {
     if ('rejected' in result) return result;
     this.broadcastFrame({ type: 'session', events: result });
     return { events: result };
+  }
+
+  async sessionList() {
+    return this.sessions.runPromise(listSessions().pipe(Effect.provide(durableObject(this.ctx.storage))));
   }
 
   async sessionView(sessionId: string) {

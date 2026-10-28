@@ -4,7 +4,7 @@ import { Layer } from 'effect';
 import { EventStore, testCtx } from '@greenhouse/engine';
 import { bunSqlite } from '@greenhouse/engine/adapters/bun-sqlite';
 import { story } from '@greenhouse/engine/story';
-import { session, sessionStream, StartSession, JoinSession, Ask, StartRun, Steer, FinishRun, EndSession, AGENT, type SessionCommand } from './decider';
+import { session, sessionStream, StartSession, JoinSession, Ask, StartRun, Steer, FinishRun, FailRun, EndSession, AGENT, type SessionCommand } from './decider';
 import { sessionsView } from './view';
 
 // Agent work as stories through the real engine: one person with the agent, then three people with the agent.
@@ -61,4 +61,18 @@ test('three people and the agent', async () => {
   await s.read('participants', people);
   await s.read('runs', runs);
   s.snapshot('three-people');
+});
+
+test('the agent cannot finish, and says why', async () => {
+  const { s, exec, setup } = world(); await setup();
+  await s.step('Pratos starts a session on plan gh-12', exec(StartSession({ ...S, planId: 'gh-12', by: 'pratos', title: 'retry policy' })));
+  await s.step('Pratos asks', exec(Ask({ ...S, by: 'pratos', asked: 'client or wrapper for retries?' })));
+  await s.step('the agent starts the run', exec(StartRun({ ...S, runId: 'r1', by: AGENT })));
+  await s.step('Pratos tries to fail the agent’s run', exec(FailRun({ ...S, runId: 'r1', by: 'pratos', reason: 'too slow' })));
+  await s.step('the model errors three times; the agent fails the run', exec(FailRun({ ...S, runId: 'r1', by: AGENT, reason: 'model unavailable after 3 tries' })));
+  await s.step('the agent tries to finish it anyway', exec(FinishRun({ ...S, runId: 'r1', by: AGENT, result: 'late answer' })));
+  await s.step('Pratos asks again', exec(Ask({ ...S, by: 'pratos', asked: 'client or wrapper, second try?' })));
+  await s.step('the agent starts the new run', exec(StartRun({ ...S, runId: 'r2', by: AGENT })));
+  await s.read('runs', runs);
+  s.snapshot('agent-fails');
 });

@@ -25,7 +25,7 @@ checkin action:
 
 # Expect tests (ms), then api tests
 test:
-    bun test packages/engine packages/domain packages/schema apps/api/test
+    bun test packages/engine packages/domain packages/schema packages/agent/test apps/api/test
 
 # Lint and typecheck: oxlint (type-aware, repo config), tsc. `just fmt` formats; the format check is not enforced yet.
 lint:
@@ -69,6 +69,15 @@ agent-watch:
 # Delete the agent demo's SQLite file so the next agent-demo starts from nothing
 agent-reset:
     cd packages/agent && bun run reset
+
+# The agent as a Participant: signs in as the agent and answers every question in the plan's sessions. PLAN=gh-12 by default;
+# with no model key it answers with a faux model. Kill it mid-answer and run it again: the run resumes, answered once.
+agent-serve plan="gh-12":
+    cd packages/agent && PLAN={{plan}} bun run serve
+
+# Forget what agent-serve has stored (its pi-durable SQLite and the session map)
+agent-serve-reset:
+    cd packages/agent && bun run serve-reset
 
 # Rebuild the architecture map from docs/ARCHITECTURE.md (a hook does this on every edit)
 arch:

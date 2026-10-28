@@ -3,7 +3,7 @@ import { defineCommand, defineEvent, reject, type Decider } from '../kernel';
 
 // Agent work. A Session belongs to a Plan; Participants join it and Ask; each Ask queues a Run; the agent (or anyone:
 // the agent holds no command a person cannot issue) Starts the oldest queued Run, others can Steer it while it runs,
-// and whoever started it Finishes it with a result. One Run at a time per Session. One stream per Session.
+// and whoever started it Finishes it with a result, or Fails it with a reason. One Run at a time per Session.
 
 export const AGENT = 'agent';
 
@@ -13,6 +13,7 @@ export const Ask          = defineCommand('Ask',          { sessionId: Id, by: P
 export const StartRun     = defineCommand('StartRun',     { sessionId: Id, runId: Id, by: ParticipantId });
 export const Steer        = defineCommand('Steer',        { sessionId: Id, runId: Id, by: ParticipantId, steer: Text });
 export const FinishRun    = defineCommand('FinishRun',    { sessionId: Id, runId: Id, by: ParticipantId, result: Text });
+export const FailRun      = defineCommand('FailRun',      { sessionId: Id, runId: Id, by: ParticipantId, reason: Text });
 export const EndSession   = defineCommand('EndSession',   { sessionId: Id, by: ParticipantId });
 
 export const SessionStarted    = defineEvent('SessionStarted',    { sessionId: Id, planId: Id, by: ParticipantId, title: Text });
@@ -21,14 +22,15 @@ export const RunQueued         = defineEvent('RunQueued',         { sessionId: I
 export const RunStarted        = defineEvent('RunStarted',        { sessionId: Id, runId: Id, by: ParticipantId });
 export const RunSteered        = defineEvent('RunSteered',        { sessionId: Id, runId: Id, by: ParticipantId, steer: Text });
 export const RunFinished       = defineEvent('RunFinished',       { sessionId: Id, runId: Id, by: ParticipantId, result: Text });
+export const RunFailed         = defineEvent('RunFailed',         { sessionId: Id, runId: Id, by: ParticipantId, reason: Text });
 export const SessionEnded      = defineEvent('SessionEnded',      { sessionId: Id, by: ParticipantId });
 
 export type SessionCommand = ReturnType<typeof StartSession> | ReturnType<typeof JoinSession> | ReturnType<typeof Ask> | ReturnType<typeof StartRun>
-  | ReturnType<typeof Steer> | ReturnType<typeof FinishRun> | ReturnType<typeof EndSession>;
+  | ReturnType<typeof Steer> | ReturnType<typeof FinishRun> | ReturnType<typeof FailRun> | ReturnType<typeof EndSession>;
 export type SessionEvent = ReturnType<typeof SessionStarted> | ReturnType<typeof ParticipantJoined> | ReturnType<typeof RunQueued> | ReturnType<typeof RunStarted>
-  | ReturnType<typeof RunSteered> | ReturnType<typeof RunFinished> | ReturnType<typeof SessionEnded>;
+  | ReturnType<typeof RunSteered> | ReturnType<typeof RunFinished> | ReturnType<typeof RunFailed> | ReturnType<typeof SessionEnded>;
 
-type RunState = { runId: string; status: 'queued' | 'running' | 'finished'; startedBy?: string };
+type RunState = { runId: string; status: 'queued' | 'running' | 'finished' | 'failed'; startedBy?: string };
 export type SessionState =
   | { kind: 'none' }
   | { kind: 'open' | 'ended'; startedBy: string; participants: ReadonlyArray<string>; runs: ReadonlyArray<RunState> };
@@ -45,6 +47,7 @@ export const session: Decider<SessionState, SessionCommand, SessionEvent> = {
       case 'RunQueued':         return { ...state, runs: [...state.runs, { runId: event.data.runId, status: 'queued' }] };
       case 'RunStarted':        return { ...state, runs: setRun(state.runs, event.data.runId, { status: 'running', startedBy: event.data.by }) };
       case 'RunFinished':       return { ...state, runs: setRun(state.runs, event.data.runId, { status: 'finished' }) };
+      case 'RunFailed':         return { ...state, runs: setRun(state.runs, event.data.runId, { status: 'failed' }) };
       case 'SessionEnded':      return { ...state, kind: 'ended' };
       default:                  return state;
     }
@@ -81,6 +84,11 @@ export const session: Decider<SessionState, SessionCommand, SessionEvent> = {
         if (running?.runId !== command.data.runId) return reject(`${command.data.runId} is not running`);
         if (running.startedBy !== by) return reject(`only ${running.startedBy}, who started ${running.runId}, can finish it`);
         return [RunFinished(command.data)];
+      // A run that cannot finish ends as a fact too, with the reason, so nobody waits on it forever.
+      case 'FailRun':
+        if (running?.runId !== command.data.runId) return reject(`${command.data.runId} is not running`);
+        if (running.startedBy !== by) return reject(`only ${running.startedBy}, who started ${running.runId}, can fail it`);
+        return [RunFailed(command.data)];
       case 'EndSession':
         if (by !== state.startedBy) return reject(`only ${state.startedBy}, who started the session, can end it`);
         if (running) return reject(`${running.runId} is still running`);

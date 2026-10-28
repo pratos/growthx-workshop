@@ -52,6 +52,10 @@ app.post('/plans/:planId/sessions', requireSignIn, async (c) => {
   return 'rejected' in result ? c.json(result, 409) : c.json(result, 201);
 });
 
+app.get('/plans/:planId/sessions', requireSignIn, async (c) => {
+  return c.json({ sessions: await c.env.PLAN_ROOM.getByName(planId(c.req.param('planId'))).sessionList() });
+});
+
 app.get('/plans/:planId/sessions/:sessionId', requireSignIn, async (c) => {
   const view = await c.env.PLAN_ROOM.getByName(planId(c.req.param('planId'))).sessionView(c.req.param('sessionId'));
   return view ? c.json(view) : c.json({ error: 'no such session' }, 404);
