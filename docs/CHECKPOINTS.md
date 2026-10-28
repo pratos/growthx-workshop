@@ -1,5 +1,7 @@
 # Checkpoints
 
+Each checkpoint has an architecture map at `docs/architecture/cp-NN.html` (built by viz-explainer, one step per unit); `docs/architecture/overall.html` is the whole system today.
+
 Each checkpoint is a git tag. Each has one deterministic beat (`scripts/demo.sh cp-NN`) that fails before the checkpoint's file exists and passes after, so the show works even when the live agent behaves. `demo/` holds recorded fallbacks.
 
 | Tag | Beat shown live | File that fixes it | `demo.sh` checks |
