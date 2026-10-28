@@ -28,7 +28,7 @@ plant() {
   ( cd "$planted" && f=packages/domain/src/thread/decider.ts &&
     sed -i.bak -e "s/export const ThreadResolved   = defineEvent('ThreadResolved',   { threadId: Id, by: ParticipantId });/export const ThreadClosed     = defineEvent('ThreadClosed',     { threadId: Id, by: ParticipantId, verdict: Text });/" \
       -e "s/ReturnType<typeof ThreadResolved>/ReturnType<typeof ThreadClosed>/" "$f" && rm -f "$f.bak" &&
-    git -c user.name=demo -c user.email=demo@greenhouse.test commit -qam "resolve thread, first pass: ThreadClosed with a verdict" )
+    git -c user.name=demo -c user.email=demo@greenhouse.test commit --no-verify -qam "resolve thread, first pass: ThreadClosed with a verdict" )
   trap 'git worktree remove --force "$planted" >/dev/null 2>&1; pkill -f "wrangler dev --port 8799" >/dev/null 2>&1 || true' EXIT
 }
 login() { curl -sf -H 'content-type: application/json' -d "{\"email\":\"$1\",\"password\":\"$2\"}" localhost:8799/auth/sign-in | jq -r .token; }
