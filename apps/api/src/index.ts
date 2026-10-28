@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
 import { Schema } from 'effect';
 import type { Env } from './services';
-import type { Account } from '@greenhouse/schema';
 // <cp-03>
+import type { Account } from '@greenhouse/schema';
 import { auth } from './auth';
 // </cp-03>
 // <cp-04>
@@ -26,7 +26,13 @@ import { Flags } from './services';
 // built from main by keeping only what each stage has. On main they are plain comments.
 
 // Hono is the edge: routing, status codes, JSON. Everything behind it is an Effect program run through one runtime per env.
-const app = new Hono<{ Bindings: Env; Variables: { account: Account } }>();
+// What a handler can read off the request: the signed-in account, once sign-in exists.
+type RequestVars =
+  // <cp-03>
+  { account: Account } &
+  // </cp-03>
+  Record<never, never>;
+const app = new Hono<{ Bindings: Env; Variables: RequestVars }>();
 const planId = Schema.decodeUnknownSync(Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(64)));
 
 // Health: public, dumb. `label` is what a person reads (git describe, passed in at deploy); `id` is what rollback needs.
