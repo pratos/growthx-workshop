@@ -7,6 +7,7 @@
 //   bun history.mjs list <plan.json>            one line per version
 //   bun history.mjs at <plan.json> <v>          that version's plan JSON on stdout (pipe to a file, then `just plan` it)
 //   bun history.mjs diff <plan.json> <a> <b>    what changed between two versions, in words
+//   bun history.mjs resummarize <plan.json>     recompute every version's `changes` after the summariser improves
 //
 // Recording happens in build.mjs: a build whose plan differs from the last version appends one. Where the facts come from:
 //   PLAN_VIA        manual | claude-code | pi | …       (the Claude Code hook sets it; default manual)
@@ -73,6 +74,15 @@ export function summarize(prev, next) {
     if (notes.length) out.push(`phase ${id}: ${notes.join('; ')}`);
   }
   for (const id of pp.keys()) if (!np.has(id)) out.push(`phase ${id} removed`);
+  const pv = new Map((prev.vocabulary ?? []).map((t) => [t.term, t])), nv = new Map((next.vocabulary ?? []).map((t) => [t.term, t]));
+  const vAdded = [...nv.keys()].filter((t) => !pv.has(t)), vRemoved = [...pv.keys()].filter((t) => !nv.has(t));
+  const vChanged = [...nv.keys()].filter((t) => pv.has(t) && JSON.stringify(pv.get(t)) !== JSON.stringify(nv.get(t)));
+  if (vAdded.length && !pv.size) out.push(`vocabulary listed: ${vAdded.length} words`);
+  else {
+    if (vAdded.length) out.push(`vocabulary +${vAdded.join(', +')}`);
+    if (vRemoved.length) out.push(`vocabulary −${vRemoved.join(', −')}`);
+    if (vChanged.length) out.push(`vocabulary edited: ${vChanged.join(', ')}`);
+  }
   if (JSON.stringify(prev.design) !== JSON.stringify(next.design)) out.push('design language edited');
   if (JSON.stringify(prev.diagrams) !== JSON.stringify(next.diagrams)) out.push('diagrams edited');
   return out.length ? out : ['wording only'];
@@ -94,7 +104,10 @@ export function record(planPath, plan, env = process.env) {
     }
     return null;
   }
-  const intent = env.PLAN_INTENT || (plan.change?.intent && plan.change.intent !== last?.intent ? plan.change.intent : '') || '';
+  // One change often takes several edits: the same note from the same agent session keeps its intent; anything else needs a new one.
+  const note = plan.change?.intent;
+  const sameSession = env.PLAN_SESSION && last?.session?.id === env.PLAN_SESSION;
+  const intent = env.PLAN_INTENT || (note && (note !== last?.intent || sameSession) ? note : '') || '';
   const v = {
     v: (last?.v ?? 0) + 1,
     at: new Date().toISOString(),
@@ -216,6 +229,8 @@ if (import.meta.main) {
   if (!cmd || !file) { console.error('usage: history.mjs backfill|list|at|diff <plan.json> [v] [v]'); process.exit(2); }
   const row = (v) => `v${v.v}  ${v.at.slice(0, 16).replace('T', ' ')}  ${v.by} via ${v.via}${v.session ? ` (${v.session.id.slice(0, 8)})` : ''}  ${v.intent || '—'}\n      ${v.changes.join(' · ')}`;
   if (cmd === 'backfill') { for (const v of backfill(file)) console.log(row(v)); }
+  // The summaries are derived from the stored plans, so a better summariser can recompute them; nothing else changes.
+  else if (cmd === 'resummarize') { const vs = load(file); vs.forEach((v, i) => { v.changes = summarize(vs[i - 1]?.plan, v.plan); }); writeFileSync(versionsPath(file), vs.map((v) => JSON.stringify(v)).join('\n') + '\n'); for (const v of vs) console.log(row(v)); }
   else if (cmd === 'list') { for (const v of load(file)) console.log(row(v)); }
   else if (cmd === 'at') { const v = load(file).find((x) => x.v === Number(String(a).replace(/^v/, ''))); if (!v) { console.error(`no version ${a}`); process.exit(1); } console.log(JSON.stringify(v.plan, null, 2)); }
   else if (cmd === 'diff') { const vs = load(file); const pick = (x) => vs.find((y) => y.v === Number(String(x).replace(/^v/, ''))); const [x, y] = [pick(a), pick(b)]; if (!x || !y) { console.error('no such version'); process.exit(1); } console.log(summarize(x.plan, y.plan).join('\n')); }

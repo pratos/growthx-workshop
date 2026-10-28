@@ -173,6 +173,20 @@ body.has-expanded { overflow: hidden; }
 .v-origin > summary { color: var(--accent); cursor: pointer; width: fit-content; }
 .v-origin blockquote { margin: 8px 0 4px; padding: 8px 12px; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; white-space: pre-wrap; max-width: var(--measure); }
 .v-session { margin: 4px 0 0; color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+
+/* Vocabulary: one table per context; the status is a quiet tag, the word reads first. */
+.term-counts { color: var(--muted); font-size: 14px; display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; }
+.term-context { margin: 26px 0 6px; font-size: 15px; letter-spacing: 0.02em; color: var(--muted); }
+.table-wrap { overflow-x: auto; }
+.terms th[scope="row"] { color: var(--fg); font-size: 15px; font-weight: 600; white-space: nowrap; }
+.terms td { font-size: 14.5px; }
+.terms thead th:first-child { width: 9.5em; } .terms thead th:nth-child(2) { width: 6.5em; } .terms thead th:last-child { width: 13em; }
+.term-from, .term-not { color: var(--muted); }
+.term-not { font-size: 13.5px; }
+.term-status { display: inline-block; font-size: 11.5px; line-height: 1.5; padding: 0 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+.term-status.is-new { color: var(--ok); border-color: color-mix(in oklab, var(--ok) 45%, transparent); }
+.term-status.is-adopted { color: var(--accent); border-color: color-mix(in oklab, var(--accent) 45%, transparent); }
+.term-status.is-renamed, .term-status.is-changed { color: var(--warn); border-color: color-mix(in oklab, var(--warn) 45%, transparent); }
 </style>
 </head>
 <body>
@@ -194,6 +208,7 @@ body.has-expanded { overflow: hidden; }
 <ul class="discoveries"><li>The plan room appends every event a command produces in one synchronous block, so two events from one command land together or not at all.</li><li>Flags are read once per request and passed to the plan room as names; a function would arrive as a promise and read as true.</li><li>The domain vocabulary already names <strong>Decision</strong> and bans <em>resolution</em>, <em>verdict</em> and <em>outcome</em>.</li></ul></section>
   <section id="end"><h2>Where we end up</h2><p>Resolving a thread records two facts, <code>ThreadResolved</code> and <code>DecisionRecorded</code>. A second resolve is refused. The plan page shows the decision on the thread, and every open tab sees it at once. People without the flag see the thread as before.</p>
 </section>
+  
   <section id="not"><h2>Not doing</h2><ul><li>Reopening a resolved thread; nobody has asked for it yet.</li><li>Editing a recorded decision; a change of mind is a new thread.</li><li>Notifications outside the plan page.</li></ul></section>
   <section id="approach"><h2>Approach</h2><p>Domain first, because event shapes are the contract everything else reads. Then the flag and API, so the behaviour exists and is off. Then the page, with every state shown first.</p>
 <iframe class="viz" title="How does a thread move from open to decided?" allow="fullscreen" allowfullscreen srcdoc="&lt;!doctype html&gt;

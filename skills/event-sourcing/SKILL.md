@@ -1,6 +1,6 @@
 ---
 name: event-sourcing
-description: Build and change an event-sourced domain the Greenhouse way: commands validate, events are facts, projections are pure, every command has an expect test. Use for anything under packages/domain, for a new command, event or projection, for "add a field to an event", for replaying or debugging a stream, and for explaining what happened or how an aggregate's lifecycle works. Explains with viz-explainer artifacts (event-stream story, state explorer, decision report), never with Markdown.
+description: "Build and change an event-sourced domain the Greenhouse way: commands validate, events are facts, projections are pure, every command has an expect test. Use for anything under packages/domain, for a new command, event or projection, for \"add a field to an event\", for replaying or debugging a stream, and for explaining what happened or how an aggregate's lifecycle works. Explains with viz-explainer artifacts (event-stream story, state explorer, decision report), never with Markdown."
 ---
 
 # event-sourcing

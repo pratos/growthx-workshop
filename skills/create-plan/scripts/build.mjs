@@ -71,9 +71,24 @@ if (uiTouched && !plan.design) warnings.push('the plan changes UI files but has 
 
 // ---------- word budgets: a plan is read at 240 words a minute, so every field earns its words
 const words = (s) => String(s ?? '').replace(/`[^`]*`/g, 'x').split(/\s+/).filter(Boolean).length;
-const BUDGET = { summary: 50, current: 50, endState: 40, approach: 35, discovery: 25, discoveries: 5, notDoing: 15, why: 35, goal: 25, intent: 15, check: 15, option: 15, caption: 15, component: 20, total: 1000 };
+const BUDGET = { summary: 50, current: 50, endState: 40, approach: 35, discovery: 25, discoveries: 5, notDoing: 15, why: 35, goal: 25, intent: 15, check: 15, option: 15, caption: 15, component: 20, term: 20, total: 1000 };
 const over = (label, text, max) => { const n = words(text); if (n > max) warnings.push(`${label} is ${n} words; budget ${max}`); };
 for (const k of ['summary', 'current', 'endState', 'approach']) over(k, plan[k], BUDGET[k]);
+// Vocabulary: every word the plan adds, renames or redefines, in one list. Reference material, so it sits outside the
+// page budget, but each meaning has its own.
+const STATUS = ['new', 'adopted', 'renamed', 'changed', 'kept', 'internal', 'translated'];
+if (plan.vocabulary) {
+  need(Array.isArray(plan.vocabulary), 'vocabulary must be a list of { term, context, status, meaning }');
+  const seen = new Set();
+  for (const [i, t] of (plan.vocabulary ?? []).entries()) {
+    const where = `vocabulary ${i + 1}${t?.term ? ` (${t.term})` : ''}`;
+    need(t?.term && t?.context && t?.meaning, `${where}: every word needs term, context and meaning`);
+    need(STATUS.includes(t?.status), `${where}: status must be one of ${STATUS.join(', ')}`);
+    need(!seen.has(t?.term), `${where}: listed twice`); seen.add(t?.term);
+    if (t?.status === 'renamed') need(t.from, `${where}: a renamed word says what it was (from)`);
+    over(`${where}: meaning`, t?.meaning, BUDGET.term);
+  }
+}
 if ((plan.discoveries ?? []).length > BUDGET.discoveries) warnings.push(`${plan.discoveries.length} discoveries; keep the ${BUDGET.discoveries} that change a decision`);
 (plan.discoveries ?? []).forEach((x, i) => over(`discovery ${i + 1}`, x, BUDGET.discovery));
 (plan.notDoing ?? []).forEach((x, i) => over(`not doing ${i + 1}`, x, BUDGET.notDoing));
@@ -244,7 +259,9 @@ function decision(d) {
 }
 
 const nav = [
-  ['summary', 'Summary'], ['current', 'Where we are'], ['end', 'Where we end up'], ['not', 'Not doing'],
+  ['summary', 'Summary'], ['current', 'Where we are'], ['end', 'Where we end up'],
+  ...(plan.vocabulary?.length ? [['vocabulary', `Vocabulary · ${plan.vocabulary.length} words`]] : []),
+  ['not', 'Not doing'],
   ...(plan.approach ? [['approach', 'Approach']] : []),
   ...((plan.decisions ?? []).length ? [['decisions', 'Decisions']] : []),
   ...(plan.design ? [['design', 'Design language']] : []),
@@ -254,6 +271,18 @@ const nav = [
 ];
 
 const source = relative(process.cwd(), planPath);
+// One table per context, in the order the plan lists them, with a count per status on top.
+function vocabularySection(terms) {
+  if (!terms?.length) return '';
+  const contexts = [...new Set(terms.map((t) => t.context))];
+  const counts = STATUS.map((st) => [st, terms.filter((t) => t.status === st).length]).filter(([, n]) => n);
+  const row = (t) => `<tr><th scope="row">${esc(t.term)}</th><td><span class="term-status is-${esc(t.status)}">${esc(t.status)}</span></td><td>${mdi(t.meaning)}${t.from ? `<span class="term-from"> · ${t.status === 'renamed' ? 'was' : 'from'} ${mdi(t.from)}</span>` : ''}</td><td class="term-not">${(t.not ?? []).map(esc).join(', ')}</td></tr>`;
+  return `<section id="vocabulary"><h2>Vocabulary</h2>
+    <p class="term-counts">${terms.length} words · ${counts.map(([st, n]) => `<span class="term-status is-${st}">${n} ${st}</span>`).join(' ')}</p>
+    ${contexts.map((c) => `<h3 class="term-context">${esc(c)}</h3><div class="table-wrap"><table class="terms"><thead><tr><th>Word</th><th>Status</th><th>Meaning</th><th>Not</th></tr></thead><tbody>${terms.filter((t) => t.context === c).map(row).join('')}</tbody></table></div>`).join('')}
+  </section>`;
+}
+
 // Newest first. Each version says who changed the plan, through what, why, what changed, and the prompt and session behind it.
 const VIA = { manual: 'by hand', 'claude-code': 'Claude Code', pi: 'pi' };
 function versionsSection(vs) {
@@ -297,6 +326,7 @@ const html = `<!doctype html>
   <section id="summary" class="lede">${md(plan.summary)}</section>
   <section id="current"><h2>Where we are</h2>${md(plan.current ?? '')}${(plan.discoveries ?? []).length ? `<ul class="discoveries">${plan.discoveries.map((x) => `<li>${mdi(x)}</li>`).join('')}</ul>` : ''}</section>
   <section id="end"><h2>Where we end up</h2>${md(plan.endState ?? '')}</section>
+  ${vocabularySection(plan.vocabulary)}
   <section id="not"><h2>Not doing</h2><ul>${plan.notDoing.map((x) => `<li>${mdi(x)}</li>`).join('')}</ul></section>
   ${plan.approach ? `<section id="approach"><h2>Approach</h2>${md(plan.approach)}${plan.approachDiagram && diagrams.has(plan.approachDiagram) ? vizFrame(diagrams.get(plan.approachDiagram).spec, plan.approachDiagram) : ''}</section>` : ''}
   ${(plan.decisions ?? []).length ? `<section id="decisions"><h2>Decisions</h2>${plan.decisions.map(decision).join('')}</section>` : ''}

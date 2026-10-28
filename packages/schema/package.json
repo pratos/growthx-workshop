@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./slug": "./src/slug.ts"
   },
   "dependencies": {
     "effect": "4.0.7"

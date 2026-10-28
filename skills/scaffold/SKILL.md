@@ -1,6 +1,6 @@
 ---
 name: scaffold
-description: Create or restructure a package, app, Worker, route, command, migration, just recipe, CI job or deployment in this repo the Greenhouse way: two Workers joined by a service binding, health before login before auth, every runnable thing a just recipe, flags default off, migrations by hand. Load before any mkdir under apps/ or packages/, before a new wrangler.jsonc, a new route, a new recipe, a new skill, or a change to scripts/deploy.sh, the CI workflow, flake.nix, .oxlintrc.json or tsconfig.base.json. Pairs with event-sourcing for the domain and ddd-vocabulary for names.
+description: "Create or restructure a package, app, Worker, route, command, migration, just recipe, CI job or deployment in this repo the Greenhouse way: two Workers joined by a service binding, health before login before auth, every runnable thing a just recipe, flags default off, migrations by hand. Load before any mkdir under apps/ or packages/, before a new wrangler.jsonc, a new route, a new recipe, a new skill, or a change to scripts/deploy.sh, the CI workflow, flake.nix, .oxlintrc.json or tsconfig.base.json. Pairs with event-sourcing for the domain and ddd-vocabulary for names."
 ---
 
 # scaffold

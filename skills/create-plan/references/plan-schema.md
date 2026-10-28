@@ -17,6 +17,12 @@ One JSON object. Prose fields are Markdown and are rendered; keep them to short 
   "approach": "Why the phases are in this order.",
   "approachDiagram": "lifecycle",                        // optional: id from diagrams
 
+  "vocabulary": [                                        // required when the plan adds, renames or redefines a word
+    { "term": "Comment", "context": "Planning", "status": "renamed", "from": "the comment Thread",
+      "meaning": "A comment on one Block. Collects Replies, ends in a Decision.", "not": ["discussion", "issue"] },
+    { "term": "Run", "context": "Agent work", "status": "adopted", "from": "pi-durable", "meaning": "The Turns from one input to its final answer." }
+  ],
+
   "diagrams": [
     { "id": "lifecycle", "spec": { /* a viz-explainer spec: state-explorer, event-stream or architecture-map */ } }
   ],
@@ -74,6 +80,7 @@ One JSON object. Prose fields are Markdown and are rendered; keep them to short 
 | status other than `draft` ⇒ every decision has `chosen` | No open questions in a plan someone will implement |
 | every phase has `verify.automated` and `verify.manual` | Done must be checkable |
 | `diagram` and `approachDiagram` refer to real ids | A broken reference is a silent gap |
+| each `vocabulary` word has term, context, meaning and a known status, once; a `renamed` word says `from` | A word without its old name or meaning cannot be checked |
 
 Warnings: an intent longer than two sentences, more than 40 contract lines in a phase, UI files changed without a component or without a design block, and every field over its word budget.
 
@@ -86,6 +93,7 @@ Warnings: an intent longer than two sentences, more than 40 contract lines in a 
 | approach | 35 |
 | discoveries | 5 items, 25 each |
 | notDoing item, change intent, manual check, caption, option summary | 15 |
+| vocabulary meaning (the list itself is outside the page budget) | 20 |
 | phase goal | 25 |
 | decision why | 35 |
 | component notes | 20 |

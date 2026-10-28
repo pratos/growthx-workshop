@@ -1091,7 +1091,7 @@
       "changes": [
         {
           "file": "docs/DOMAIN-VOCABULARY.md",
-          "intent": "Add the nineteen new words with Seen in and Not lines."
+          "intent": "Add the Vocabulary list's new and adopted words, with Seen in and Not lines."
         },
         {
           "file": "packages/schema/src/index.ts",
@@ -1282,6 +1282,45 @@
       ]
     }
   ],
+  "vocabulary": [
+    { "term": "Plan", "context": "Planning", "status": "changed", "meaning": "What a team writes and decides about one change in one repo, held as one stream.", "not": ["document", "doc", "page", "spec"] },
+    { "term": "Block", "context": "Planning", "status": "kept", "meaning": "One unit of a Plan: prose, an artifact or research.", "not": ["section", "paragraph", "cell"] },
+    { "term": "Comment", "context": "Planning", "status": "renamed", "from": "the comment Thread", "meaning": "A comment on one Block. Collects Replies, ends in a Decision.", "not": ["discussion", "comment chain", "issue", "ticket"] },
+    { "term": "Reply", "context": "Planning", "status": "kept", "meaning": "A message added to an open Comment by a Participant.", "not": ["message", "response", "answer"] },
+    { "term": "Decision", "context": "Planning", "status": "changed", "meaning": "How a Comment ended: who chose what, when, which Block it changed, and now *why*.", "not": ["resolution", "verdict", "outcome"] },
+    { "term": "Exploration", "context": "Planning", "status": "kept", "meaning": "An agent Thread implementing one option and reporting back into the Plan.", "not": ["experiment", "spike", "branch"] },
+    { "term": "Finding", "context": "Planning", "status": "new", "meaning": "What an Exploration reports: research, a spike or an ask.", "not": ["result", "insight"] },
+    { "term": "Artifact", "context": "Planning", "status": "kept", "meaning": "An interactive page the agent built, embedded in a Block.", "not": ["widget", "embed", "iframe"] },
+    { "term": "Room", "context": "Working together", "status": "new", "meaning": "Where people and the agent meet live on one Plan; one per Plan.", "not": ["channel", "space", "lobby"] },
+    { "term": "Presence", "context": "Working together", "status": "new", "meaning": "Who is in a Room now and what they are looking at.", "not": ["status", "online"] },
+    { "term": "Participant", "context": "Working together", "status": "kept", "meaning": "A person or the Agent in a Room. Same commands, same rights.", "not": ["user", "member", "bot", "actor"] },
+    { "term": "Agent", "context": "Working together", "status": "changed", "meaning": "The actor: a Participant that works in Threads. Not its configuration.", "not": ["assistant", "bot", "AI"] },
+    { "term": "Thread", "context": "Agent work", "status": "changed", "from": "pi-durable Conversation", "meaning": "One conversation with the agent, where Runs happen; Amp's sense. In code today: Session, until the rename.", "not": ["chat", "session", "conversation"] },
+    { "term": "Run", "context": "Agent work", "status": "adopted", "from": "pi-durable", "meaning": "The Turns from one input to its final answer." },
+    { "term": "Turn", "context": "Agent work", "status": "adopted", "from": "pi-durable", "meaning": "One model response and its tool calls." },
+    { "term": "Tool call", "context": "Agent work", "status": "new", "meaning": "One tool the model asked for inside a Turn, with its result." },
+    { "term": "Entry", "context": "Agent work", "status": "adopted", "from": "pi-durable", "meaning": "One immutable record in a Thread's transcript." },
+    { "term": "Submission", "context": "Agent work", "status": "adopted", "from": "pi-durable", "meaning": "What someone hands a Thread, an input or an entry to write, which can be waited on." },
+    { "term": "Task", "context": "Agent work", "status": "adopted", "from": "pi-durable", "meaning": "A durable step machine that checkpoints every step, so a restart continues." },
+    { "term": "Checkpoint", "context": "Agent work", "status": "adopted", "from": "pi-durable", "meaning": "The saved state a Task resumes from." },
+    { "term": "Steer", "context": "Agent work", "status": "adopted", "from": "pi-durable", "meaning": "Input given to a running Run, changing its course." },
+    { "term": "Follow-up", "context": "Agent work", "status": "adopted", "from": "pi-durable", "meaning": "Input that waits until the current Run ends." },
+    { "term": "Fork", "context": "Agent work", "status": "adopted", "from": "pi-durable", "meaning": "A new Thread started from one Entry of another." },
+    { "term": "Compaction", "context": "Agent work", "status": "adopted", "from": "pi-durable", "meaning": "Summarising older Entries so the model sees less; nothing is deleted." },
+    { "term": "Setup", "context": "Agent work", "status": "renamed", "from": "pi-durable Agent", "meaning": "What the agent runs with: model, tools, instructions, working directory.", "not": ["config", "profile"] },
+    { "term": "Workspace", "context": "Workspace", "status": "new", "meaning": "Where the agent changes code for one Plan.", "not": ["sandbox", "container"] },
+    { "term": "Repo", "context": "Workspace", "status": "new", "meaning": "The repository a Plan is tied to.", "not": ["project", "codebase"] },
+    { "term": "Branch", "context": "Workspace", "status": "new", "meaning": "The line of commits a Thread's changes land on." },
+    { "term": "Preview", "context": "Workspace", "status": "new", "meaning": "A running build of a Branch that people can open.", "not": ["staging", "deploy"] },
+    { "term": "Harness", "context": "Internal: only in packages/agent", "status": "internal", "from": "pi-durable", "meaning": "One open store plus the machinery that runs agents on it." },
+    { "term": "Registry", "context": "Internal: only in packages/agent", "status": "internal", "from": "pi-durable", "meaning": "The extensions this process installed." },
+    { "term": "Session", "context": "Internal: only in packages/agent", "status": "internal", "from": "pi-durable", "meaning": "The provider-facing session id. Today's code also names the agent's Thread Session, until the rename." },
+    { "term": "Document", "context": "Internal: only in packages/agent", "status": "internal", "from": "pi-durable", "meaning": "Typed JSON state kept next to a transcript." },
+    { "term": "Durable Object", "context": "Cloudflare: translated at the edge", "status": "translated", "meaning": "Becomes Room in the domain: one per Plan, holding its stream." },
+    { "term": "Container", "context": "Cloudflare: translated at the edge", "status": "translated", "meaning": "Becomes Workspace in the domain: where code runs." },
+    { "term": "Sandbox", "context": "Cloudflare: translated at the edge", "status": "translated", "meaning": "Becomes Workspace in the domain, like a Container." }
+  ],
+  "change": { "intent": "List every word in one Vocabulary table, by context, with status, meaning and banned synonyms." },
   "references": [
     "`docs/DOMAIN-VOCABULARY.md`, `packages/schema/src/index.ts`, `skills/ddd-vocabulary/SKILL.md`",
     "githubnext/chopin: `docs/architecture.md`, `docs/decisions.md`",
