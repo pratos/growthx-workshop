@@ -8,6 +8,9 @@ root="$(cd "$(dirname "$0")/.." && pwd)"; cd "$root"
 target="${1:-prod}"
 case "$target" in prod) env_flag=(); site="greenhouse.tarp.sh" ;; demo) env_flag=(--env demo); site="greenhouse-demo.tarp.sh" ;; *) echo "usage: deploy.sh prod|demo"; exit 2 ;; esac
 echo "→ deploying to $site ($target)"
+# The security and spending audit is not optional: a failing check stops the deploy.
+bun scripts/cf-audit.ts | grep -E "^✗|fix:|failed|pass" || true
+bun scripts/cf-audit.ts >/dev/null || { echo "✗ cf-audit failed: deploy stopped (just cf-audit for the details)"; exit 1; }
 
 # Pending migrations. If wrangler cannot even list them (credentials, network), stop: unknown is not "none".
 if ! list="$(cd apps/api && bunx wrangler d1 migrations list DB --remote "${env_flag[@]}" 2>&1)"; then

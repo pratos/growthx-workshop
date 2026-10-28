@@ -54,12 +54,30 @@ const me = await signIn();
 const brain = await openBrain(process.env.AGENT_STORE ?? new URL("../agent-serve.sqlite", import.meta.url).pathname, log);
 log(`pid ${process.pid} · signed in as ${me} · model ${brain.model} · watching ${plans.join(", ")} at ${base}`);
 let stopping = false;
-process.on("SIGINT", () => { stopping = true; });
+process.on("SIGINT", () => { stopping = true; nudge(); });
+
+// Waking the plan room costs money, so the agent does not poll it hard. It listens on each plan's socket (hibernating on
+// the room's side, so an idle connection is free) and looks the moment a session changes; otherwise it backs off from
+// 1.5 s to 30 s while nothing is happening.
+let nudge = () => {};
+const pause = (ms: number) => new Promise<void>((resolve) => { const t = setTimeout(resolve, ms); nudge = () => { clearTimeout(t); resolve(); }; });
+function listen(plan: string) {
+  const url = `${base.replace(/\/api$/, "").replace(/^http/, "ws")}/plans/${encodeURIComponent(plan)}/ws`;
+  const ws = new WebSocket(url, { headers: { authorization: `Bearer ${token}` } } as never);
+  const ping = setInterval(() => { try { ws.send("ping"); } catch {} }, 30_000); // answered by the runtime, never wakes the room
+  ws.onmessage = (m) => { try { if ((JSON.parse(String(m.data)) as { type?: string }).type === "session") nudge(); } catch {} };
+  ws.onclose = () => { clearInterval(ping); if (!stopping) setTimeout(() => listen(plan), 5_000); };
+}
+for (const plan of plans) listen(plan);
+
+let delay = 1_500;
 while (!stopping) {
+  let done = 0;
   for (const plan of plans) {
-    try { await tick(plan, me, api, brain, log); } catch (e) { log(`tick on ${plan}: ${e instanceof Error ? e.message : String(e)}`); }
+    try { done += await tick(plan, me, api, brain, log); } catch (e) { log(`tick on ${plan}: ${e instanceof Error ? e.message : String(e)}`); }
   }
-  await new Promise((r) => setTimeout(r, 1500));
+  delay = done > 0 ? 1_500 : Math.min(delay * 2, 30_000);
+  await pause(delay);
 }
 await brain.close();
 log("closed");

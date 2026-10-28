@@ -75,8 +75,13 @@ test('two people in one room see each other, and the agent answers in their sess
   await adminCtx.close(); await samCtx.close();
 });
 
-test('signed out, the plan asks you to sign in before talking to the agent', async ({ page }) => {
+test('signed out, a plan asks you to sign in, and a malformed plan id is refused', async ({ page }) => {
   await signOut(page);
   await openPlan(page);
-  await expect(page.getByRole('complementary', { name: 'Sessions' })).toContainText('Sign in');
+  await expect(page.getByRole('alert')).toContainText('Sign in');
+  await expect(page.getByRole('button', { name: 'Open', exact: true })).toHaveCount(0);
+  await signIn(page, logins.sam);
+  await ready(page, '/plans/Not_A_Plan');
+  await expect(page.getByRole('alert')).toContainText('lowercase');
+  await signOut(page);
 });

@@ -1,8 +1,8 @@
-import { createFileRoute, useRouter } from '@tanstack/react-router';
+import { createFileRoute, Link, useRouter } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
 import { useEffect, useState } from 'react';
 import type { PlanView } from '@greenhouse/schema';
-import { apiGet, apiCommand } from '#/lib/api';
+import { apiGet, apiGetOrStatus, apiCommand } from '#/lib/api';
 import { currentAccount } from '#/lib/session';
 import { SessionsPanel } from '#/components/SessionsPanel';
 
@@ -12,7 +12,7 @@ const field = (f: FormData, name: string): string => { const v = f.get(name); re
 // The plan page: threads on blocks, each ending in a decision. All data comes over the API binding; nothing here touches storage.
 const loadPlan = createServerFn({ method: 'GET' })
   .validator((planId: string) => planId)
-  .handler(({ data: planId }) => apiGet<PlanView>(`/plans/${planId}`));
+  .handler(({ data: planId }) => apiGetOrStatus<PlanView>(`/plans/${planId}`));
 
 type Resolve = { planId: string; threadId: string; decision: string; by: string };
 const resolveThread = createServerFn({ method: 'POST' })
@@ -33,19 +33,28 @@ const loadFlags = createServerFn({ method: 'GET' })
 
 export const Route = createFileRoute('/plans/$planId')({
   loader: async ({ params }) => {
-    const [plan, { account }] = await Promise.all([loadPlan({ data: params.planId }), currentAccount()]);
-    return { plan, account };
+    const [r, { account }] = await Promise.all([loadPlan({ data: params.planId }), currentAccount()]);
+    return { plan: r.data ?? null, status: r.status, account };
   },
-  component: PlanPage,
+  component: PlanGate,
 });
 
+// Plan rooms are for signed-in participants: signed out, the page says how to get in instead of failing.
+function PlanGate() {
+  const { plan, status } = Route.useLoaderData();
+  const { planId } = Route.useParams();
+  if (!plan) return <main className="mx-auto max-w-3xl px-4 py-16"><p className="gh-kicker">Plan</p><h1 className="text-3xl font-semibold tracking-tight">{planId}</h1><p role="alert" className="gh-muted mt-4 text-sm">{status === 401 ? <><Link to="/login" className="underline">Sign in</Link> to open this plan. Plans are for the people working on them.</> : status === 400 ? 'A plan id is 1 to 40 lowercase letters, digits or dashes.' : `This plan could not be opened (${status}).`}</p></main>;
+  return <PlanPage />;
+}
+
 function PlanPage() {
-  const { plan, account } = Route.useLoaderData();
+  const { plan: loaded, account } = Route.useLoaderData();
+  const plan = loaded!;
   const [sessionTick, setSessionTick] = useState(0);
   const { planId } = Route.useParams();
   const router = useRouter();
-  // Who acts on the comments: the signed-in account, changeable here so one laptop can play several participants.
-  const [by, setBy] = useState(account?.accountId ?? 'pratos');
+  // Comments are written as the signed-in account; the API sets `by` from the sign-in.
+  const by = account?.accountId ?? '';
   const [error, setError] = useState<string | null>(null);
   const [live, setLive] = useState<'connecting' | 'live' | 'off'>('connecting');
   // <cp-10>
@@ -95,9 +104,7 @@ function PlanPage() {
           <p className="gh-kicker">Plan</p>
           <h1 className="text-3xl font-semibold tracking-tight">{planId}</h1>
         </div>
-        <label className="gh-muted flex items-center gap-2 text-sm" title="Comments are written as this participant. It starts as your account.">
-          acting as <input value={by} onChange={(e) => setBy(e.target.value)} className="gh-input !w-28 !py-1" />
-        </label>
+        <p className="gh-muted text-sm">as {by}</p>
       </header>
       <p className="mt-3 flex flex-wrap items-center gap-2 text-sm">
         <span className="gh-pill">{plan.threads.length} thread{plan.threads.length === 1 ? '' : 's'}</span>

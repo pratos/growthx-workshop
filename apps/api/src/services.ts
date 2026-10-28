@@ -5,7 +5,8 @@ import type { PlanRoom } from './plan-room';
 
 // Everything behind the Hono edge is a service with a Layer. Hono handlers run programs through one ManagedRuntime per env.
 
-export type Env = { DB: D1Database; PLAN_ROOM: DurableObjectNamespace<PlanRoom>; VERSION?: { id: string; tag: string }; GIT_DESCRIBE?: string };
+// AUTH_LIMIT and WRITE_LIMIT are Workers rate-limit bindings (optional: tests and a bare `wrangler dev` run without them).
+export type Env = { DB: D1Database; PLAN_ROOM: DurableObjectNamespace<PlanRoom>; VERSION?: { id: string; tag: string }; GIT_DESCRIBE?: string; AUTH_LIMIT?: RateLimit; WRITE_LIMIT?: RateLimit };
 
 export class NotReady extends Schema.TaggedError<NotReady>()('NotReady', { dependency: Schema.String, message: Schema.String }) {}
 

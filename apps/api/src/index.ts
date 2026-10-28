@@ -15,11 +15,9 @@ import { admin } from './admin';
 import { Effect } from 'effect';
 import { Commands, PlanRooms, readiness, runtimeFor } from './services';
 import { PlanRoom } from './plan-room';
+import { rateLimit, requireSignIn } from './auth';
 export { PlanRoom };
 // </cp-05>
-// <cp-06>
-import { requireSignIn } from './auth';
-// </cp-06>
 // <cp-10>
 import { Flags } from './services';
 // </cp-10>
@@ -36,7 +34,17 @@ type RequestVars =
   Record<never, never>;
 const app = new Hono<{ Bindings: Env; Variables: RequestVars }>();
 // <cp-05>
-const planId = Schema.decodeUnknownSync(Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(64)));
+const planId = Schema.decodeUnknownSync(Schema.String.check(Schema.isPattern(/^[a-z0-9][a-z0-9-]{0,39}$/)));
+// Plan rooms are Durable Objects, billed per request and while awake, and the first touch of a new id creates one.
+// So only a signed-in Participant reaches a room, by a short lowercase id, and writes are rate-limited per account.
+const PLAN_ID = /^[a-z0-9][a-z0-9-]{0,39}$/;
+const roomGuard = async (c: { req: { param(k: 'planId'): string } }, next: () => Promise<void>) =>
+  PLAN_ID.test(c.req.param('planId')) ? next() : undefined;
+const byAccount = rateLimit('WRITE_LIMIT', (c) => `account:${c.get('account')?.accountId ?? 'none'}`);
+app.use('/plans/:planId', requireSignIn);
+app.use('/plans/:planId/*', requireSignIn);
+app.use('/plans/:planId/*', async (c, next) => (await roomGuard(c, next)) ?? c.json({ rejected: 'a plan id is 1 to 40 lowercase letters, digits or dashes' }, 400));
+app.use('/plans/:planId', async (c, next) => (await roomGuard(c, next)) ?? c.json({ rejected: 'a plan id is 1 to 40 lowercase letters, digits or dashes' }, 400));
 // </cp-05>
 
 // Health: public, dumb. `label` is what a person reads (git describe, passed in at deploy); `id` is what rollback needs.
@@ -63,9 +71,11 @@ app.get('/readyz', async (c) => {
 });
 // <cp-05>
 
-app.post('/plans/:planId/commands', async (c) => {
+app.post('/plans/:planId/commands', byAccount, async (c) => {
   const id = planId(c.req.param('planId'));
-  const body = await c.req.json().catch(() => null);
+  // `by` is the signed-in account; whatever the body says is ignored, so nobody can write as someone else.
+  const raw = (await c.req.json().catch(() => null)) as Record<string, unknown> | null;
+  const body = raw && typeof raw === 'object' ? { ...raw, by: c.get('account').accountId } : raw;
   const outcome = await runtimeFor(c.env).runPromise(
     Commands.use((cmds) => cmds.dispatch(id, body)).pipe(
       Effect.map((events) => ({ status: 201 as const, body: { events } })),
@@ -81,7 +91,7 @@ app.post('/plans/:planId/commands', async (c) => {
 // </cp-05>
 // <cp-06>
 // Sessions: a signed-in Participant starts, joins, asks, steers. `by` is the signed-in account; the body never sets it.
-app.post('/plans/:planId/sessions', requireSignIn, async (c) => {
+app.post('/plans/:planId/sessions', byAccount, async (c) => {
   const id = planId(c.req.param('planId'));
   const body = (await c.req.json().catch(() => null)) as { type?: unknown; data?: unknown } | null;
   const result = await c.env.PLAN_ROOM.getByName(id).sessionCommand(id, typeof body?.type === 'string' ? body.type : '', body?.data ?? {}, c.get('account').accountId);

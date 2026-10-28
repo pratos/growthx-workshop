@@ -156,6 +156,10 @@ secret action name:
     @read -rs -p "{{name}}: " v; echo; [ -n "$v" ] || { echo "empty, nothing written"; exit 1; }; \
     touch .dev.vars; grep -v "^{{name}}=" .dev.vars > .dev.vars.tmp || true; printf '%s=%s\n' "{{name}}" "$v" >> .dev.vars.tmp; mv .dev.vars.tmp .dev.vars; chmod 600 .dev.vars; echo "{{name}} stored in .dev.vars"
 
+# Cloudflare security and spending audit (Durable Object wake-ups, rate limits, sign-in on plan rooms, secrets); deploy runs it first
+cf-audit:
+    @bun scripts/cf-audit.ts
+
 # Deploy api then web: just deploy prod (greenhouse.tarp.sh, by hand from cp-10) | demo (greenhouse-demo.tarp.sh; GitHub does
 # this on every merge to main). Stops if a D1 migration is pending.
 deploy env="prod":

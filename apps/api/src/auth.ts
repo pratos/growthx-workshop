@@ -46,11 +46,21 @@ export const requireAdmin: MiddlewareHandler<Vars> = async (c, next) => {
 const bodyOf = async (c: { req: { header(n: string): string | undefined; formData(): Promise<FormData>; json(): Promise<unknown> } }) =>
   (c.req.header('content-type') ?? '').includes('form') ? Object.fromEntries(await c.req.formData()) : await c.req.json().catch(() => null);
 
+// Abuse costs money on Workers: every request, D1 row and Durable Object wake is billed. A rate-limit binding caps them
+// per key (an IP for sign-in, an account for writes); with no binding (tests, bare dev) it lets everything through.
+export const rateLimit = (binding: 'AUTH_LIMIT' | 'WRITE_LIMIT', keyOf: (c: { req: { header(n: string): string | undefined }; get(k: 'account'): Account | undefined }) => string): MiddlewareHandler<Vars> =>
+  async (c, next) => {
+    const limiter = c.env[binding];
+    if (limiter && !(await limiter.limit({ key: keyOf(c as never) })).success) return c.json({ rejected: 'too many requests; try again in a minute' }, 429);
+    return next();
+  };
+const byIp = rateLimit('AUTH_LIMIT', (c) => `ip:${c.req.header('cf-connecting-ip') ?? 'local'}`);
+
 // ---- POST /auth/sign-up, POST /auth/sign-in (JSON or a form), POST /auth/sign-out, GET /auth/me.
 
 export const auth = new Hono<Vars>();
 
-auth.post('/sign-up', async (c) => {
+auth.post('/sign-up', byIp, async (c) => {
   const body = await bodyOf(c);
   const outcome = await run(c.env, Accounts.use((a) => a.signUp(body)).pipe(
     Effect.map((account) => ({ ok: true as const, account })),
@@ -59,7 +69,7 @@ auth.post('/sign-up', async (c) => {
   return outcome.ok ? c.json({ account: outcome.account }, 201) : c.json({ rejected: outcome.message }, 409);
 });
 
-auth.post('/sign-in', async (c) => {
+auth.post('/sign-in', byIp, async (c) => {
   const body = await bodyOf(c);
   const outcome = await run(c.env, Accounts.use((a) => a.signIn(body)).pipe(
     Effect.map((s) => ({ ok: true as const, ...s })),

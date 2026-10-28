@@ -22,6 +22,8 @@ jobs:
       - run: scripts/test.sh
       - name: architecture map covers every app and package and is current
         run: bun scripts/arch.ts --coverage && bun scripts/arch.ts --check
+      - name: Cloudflare security and spending audit
+        run: bun scripts/cf-audit.ts
       - name: generated types are current
         run: cd apps/api && bunx wrangler types && git diff --exit-code worker-configuration.d.ts
       - name: no destructive migration without a flag

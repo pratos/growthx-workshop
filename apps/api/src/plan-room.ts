@@ -30,6 +30,8 @@ export class PlanRoom extends DurableObject<Env> {
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
+    // A client's "ping" is answered by the runtime without waking this object: keep-alives cost nothing.
+    ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('ping', 'pong'));
     // <cp-06>
     this.sessions = ManagedRuntime.make(EventStore.layer([sessionsView]).pipe(Layer.provide(durableObject(ctx.storage))));
     // </cp-06>
