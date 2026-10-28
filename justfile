@@ -41,8 +41,8 @@ reset:
     rm -rf apps/api/.wrangler/state apps/web/.wrangler/state
     just migrate-local seed
 
-# Flags: just flag on NAME | just flag off NAME | just flag user NAME participant-id
-flag action name id="":
+# Flags: just flag list | on NAME | off NAME | user NAME participant | pct NAME 25. GH_REMOTE=1 for prod.
+flag action name="" id="":
     @scripts/flag.sh {{action}} {{name}} {{id}}
 
 # Replay a plan's stream from the local DO and print it as a story
@@ -81,6 +81,10 @@ secret action name:
 # Deploy api then web with wrangler. Stops if a D1 migration is pending. `just deploy staging` uses the wrangler env of that name.
 deploy env="prod":
     @scripts/deploy.sh {{env}}
+
+# Roll a Worker back to its previous version: just rollback api | web [version-id]
+rollback app version="":
+    cd apps/{{app}} && bunx wrangler rollback {{version}}
 
 # Run one checkpoint's deterministic beat: just demo cp-02
 demo cp:

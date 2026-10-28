@@ -15,6 +15,12 @@ Before the show: `just install`, `just reset`, `just up` in one cmux pane, `git 
 | Correct code that is wrong | `HEAD_REF=wrong/cp-01 just review cp-02` live (90 s) | `cat demo/cp-06-review.md` | `just demo cp-06` |
 | Released, then changed | `just deploy`, flag on for you, `wrangler rollback` | `GH_REMOTE=1 just flag list`, `docs/RELEASE.md` | the check-in Worker, same commands |
 
+## Live URLs
+
+- api: https://greenhouse-api.prthamesh-sarang.workers.dev (`/healthz` carries the version id)
+- web: https://greenhouse-web.prthamesh-sarang.workers.dev
+- rollback: `just rollback api <previous version id>` (ids from `cd apps/api && bunx wrangler deployments list`)
+
 ## Timings that matter
 
 - `just up` from a fresh clone: measure the morning of. Over three minutes means attendees watch Run 1 and follow in Run 2.

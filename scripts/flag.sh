@@ -2,7 +2,8 @@
 # just flag on NAME | off NAME | user NAME participant | pct NAME 25   (local D1 unless GH_REMOTE=1)
 set -euo pipefail
 cd "$(dirname "$0")/../apps/api"
-action="${1:?}"; name="${2:?}"; arg="${3:-}"
+action="${1:?}"; name="${2:-}"; arg="${3:-}"
+[ "$action" = list ] || [ -n "$name" ] || { echo "usage: just flag on|off|user|pct NAME [arg]"; exit 2; }
 remote=""; [ "${GH_REMOTE:-}" = "1" ] && remote="--remote" || remote="--local"
 case "$action" in
   on)   sql="INSERT INTO flags (name, enabled) VALUES ('$name', 1) ON CONFLICT(name) DO UPDATE SET enabled=1" ;;

@@ -21,6 +21,10 @@ case "$cp" in
   cp-04) bun skills/viz-explainer/scripts/build.mjs docs/decisions/gh-12.spec.json docs/decisions/gh-12.html >/dev/null && pass "decision report built and every step validated: docs/decisions/gh-12.html" ;;
   cp-05) test -f "apps/web/src/routes/plans.\$planId.tsx" && grep -q agentation apps/web/src/components/DevTools.tsx && grep -q DevTools apps/web/src/routes/__root.tsx && pass "plan page with resolve action exists; Agentation toolbar mounted in dev" ;;
   cp-06) scripts/review.sh main --dry-run >/dev/null && pass "review runs with a different model than the author" ;;
-  cp-07) echo "cp-07 runs on the check-in Worker: see docs/RELEASE.md"; ;;
+  cp-07)
+    api="https://greenhouse-api.prthamesh-sarang.workers.dev"
+    v=$(curl -sf --max-time 20 "$api/healthz" | jq -r .version); [ -n "$v" ] && [ "$v" != "null" ] || { echo "✗ no version id from $api/healthz"; exit 1; }
+    n=$(cd apps/api && bunx wrangler deployments list 2>/dev/null | grep -c "Version(s)" || true)
+    GH_REMOTE=1 scripts/flag.sh list >/dev/null && pass "live api version $v; $n deployment(s) listed; flags readable. Rollback: just rollback api <previous id>" ;;
   *) echo "unknown checkpoint $cp"; exit 2 ;;
 esac
