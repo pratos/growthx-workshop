@@ -1,0 +1,16 @@
+{
+  "kind": "event-stream",
+  "question": "How does a change reach people, and how do we take it back?",
+  "meta": { "builtBy": "viz-explainer", "builtAt": "2026-10-28" },
+  "diagram": "flowchart LR\n  D[\"Deploy: new code, flag off\"] --> F[(\"flags table in D1\")]\n  Me[\"just flag user NAME you\"] --> F\n  Pct[\"just flag pct NAME 25\"] --> F\n  On[\"just flag on NAME\"] --> F\n  Off[\"just flag off NAME\"] --> F\n  F --> C[\"decide: is it on for this person?\"]\n  F --> U[\"page: show the button?\"]\n  H[\"/healthz: live version id\"] --> R[\"just rollback api ID prod\"]\n",
+  "steps": [
+    { "id": "ship", "caption": "A deploy ships the new code with its flag off, so nobody can use it yet.", "focus": ["D", "F"], "edges": ["L_D_F_0"] },
+    { "id": "decide", "caption": "Every command asks the flags table whether it is on for that person, and is refused if not.", "focus": ["F", "C"], "edges": ["L_F_C_0"] },
+    { "id": "page", "caption": "The page asks the same table, so a button only shows where its command would work.", "focus": ["F", "U"], "edges": ["L_F_U_0"] },
+    { "id": "me", "caption": "You switch it on for yourself first, by adding your name to its allowlist.", "focus": ["Me", "F"], "edges": ["L_Me_F_0"] },
+    { "id": "pct", "caption": "Then a quarter of people get it; each person stays in or out, so nothing flickers.", "focus": ["Pct", "F"], "edges": ["L_Pct_F_0"] },
+    { "id": "on", "caption": "When it holds up, you switch it on for everyone. Still no deploy.", "focus": ["On", "F"], "edges": ["L_On_F_0"] },
+    { "id": "off", "caption": "If it misbehaves, you switch it off in seconds and the old behaviour is back.", "focus": ["Off", "F"], "edges": ["L_Off_F_0"] },
+    { "id": "rollback", "caption": "Only when the code itself is broken do you read the version id and roll back.", "focus": ["H", "R"], "edges": ["L_H_R_0"] }
+  ]
+}

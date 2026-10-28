@@ -13,6 +13,7 @@
     "deploy": "bun run build && wrangler deploy"
   },
   "dependencies": {
+    "@greenhouse/schema": "workspace:*",
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/react-devtools": "0.10.13",
     "@tanstack/react-router": "1.170.46",

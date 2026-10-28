@@ -8,6 +8,7 @@
     "types": "wrangler types"
   },
   "dependencies": {
+    "@greenhouse/schema": "workspace:*",
     "effect": "4.0.7",
     "hono": "^4.10.0"
   }
