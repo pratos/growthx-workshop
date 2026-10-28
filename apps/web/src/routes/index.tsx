@@ -19,7 +19,6 @@ function Home() {
         )}
       </p>
       <ul className="mt-8 space-y-2">
-        <li><Link to="/plans/$planId" params={{ planId: 'gh-12' }} className="underline">Plan GH-12</Link> · resolve a comment thread into a decision</li>
         {account?.admin && <li><Link to="/admin/flags" className="underline">Flags</Link> · admin</li>}
       </ul>
     </main>
