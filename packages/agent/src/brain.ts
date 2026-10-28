@@ -7,6 +7,8 @@ import { AssistantEntry, createRegistry, defineExtension, defineTool, Harness, w
 import { Type } from "@earendil-works/pi-ai";
 import { chooseModelOrFaux } from "./model.ts";
 import type { Room } from "./loop.ts";
+import { asSources, exaSearch } from "./exa.ts";
+import { asPage, firecrawlRead } from "./firecrawl.ts";
 import { openStorage } from "./storage.ts";
 
 export type Brain = {
@@ -16,13 +18,16 @@ export type Brain = {
 };
 
 // Shaped like pi's own system prompt: who the agent is and what it helps with, then its tools, then its rules.
-export const INSTRUCTIONS = `You are the agent in Greenhouse, a planning room where people and an agent write a plan together. You help them by answering their questions, writing into the plan, drawing diagrams of it, and asking when something is unclear. People decide; you explore, draft and answer.
+// Built when the brain opens, after agent-serve has read .dev.vars, so a key there (EXA_API_KEY) is seen.
+export const instructions = () => `You are the agent in Greenhouse, a planning room where people and an agent write a plan together. You help them by answering their questions, writing into the plan, drawing diagrams of it, and asking when something is unclear. People decide; you explore, draft and answer.
 
 <tools>
 - edit_plan: Write Markdown into the plan where you were asked (## headings, - lists, paragraphs). It is shown as written by the agent.
 - draw_diagram: Put a Mermaid diagram (flowchart, sequence or state) into the plan, with a one-line title.
 - ask_room: Post a question to everyone in the Session, when the answer needs someone's knowledge.
-- clarify: Ask the person who asked you, when their question can be read two ways. Then stop and say what you are waiting for.
+- clarify: Ask the person who asked you, when their question can be read two ways. Then stop and say what you are waiting for.${process.env.EXA_API_KEY ? `
+- web_search: Search the web (Exa) for current facts, documentation or prior art. Returns sources with URLs and passages.` : ""}${process.env.FIRECRAWL_API_KEY ? `
+- read_page: Read one web page in full, as Markdown (Firecrawl), when a source or a pasted link needs more than a passage.` : ""}
 </tools>
 
 <rules>
@@ -31,7 +36,9 @@ export const INSTRUCTIONS = `You are the agent in Greenhouse, a planning room wh
 - Use the plan's words: Plan, Block, Thread, Decision, Session, Run, Participant; never user, bot, document or chat
 - Write into the plan only when asked to write, draft or draw, or when the answer is a section the plan needs
 - Clarify instead of guessing when the question names no Block, option or person
-- The plan's current text arrives with each question in <plan_text>; quote it rather than restate it
+- The plan's current text arrives with each question in <plan_text>; quote it rather than restate it${process.env.EXA_API_KEY ? `
+- Search the web when the answer depends on facts outside the plan; cite the URL of every source you use` : ""}${process.env.FIRECRAWL_API_KEY ? `
+- Read a page in full only when a passage is not enough; cite its URL` : ""}
 - Be concise
 </rules>
 
@@ -43,7 +50,7 @@ A Session is where people ask you; a Run is one question, answered in order. Any
 let current: Room | undefined;
 const text = (t: string) => ({ output: [{ type: "text" as const, text: t }] });
 const inRoom = async (act: (room: Room) => Promise<string>) => (current ? text(await act(current)) : text("not in a run; nothing done"));
-const Greenhouse = defineExtension({
+const greenhouse = () => defineExtension({
   name: "greenhouse",
   tools: [
     defineTool({ name: "edit_plan", description: "Write Markdown into the plan where you were asked: ## headings, - lists, paragraphs.",
@@ -52,6 +59,18 @@ const Greenhouse = defineExtension({
       parameters: Type.Object({ title: Type.String(), mermaid: Type.String() }), execute: (a) => inRoom((r) => r.drawIntoPlan(a.title, a.mermaid)) }),
     defineTool({ name: "ask_room", description: "Post a question to everyone in the Session.",
       parameters: Type.Object({ question: Type.String() }), execute: (a) => inRoom((r) => r.post(a.question)) }),
+    ...(process.env.EXA_API_KEY ? [defineTool({ name: "web_search", description: "Search the web with Exa for current facts, docs or prior art; returns numbered sources with URLs and passages to cite.",
+      parameters: Type.Object({ query: Type.String(), numResults: Type.Optional(Type.Number()) }),
+      execute: async (a) => {
+        try { return text(asSources(await exaSearch(a.query, a.numResults ?? 5, process.env.EXA_API_KEY!))); }
+        catch (e) { return text(`search failed: ${e instanceof Error ? e.message : String(e)}`); }
+      } })] : []),
+    ...(process.env.FIRECRAWL_API_KEY ? [defineTool({ name: "read_page", description: "Read one web page in full as Markdown (Firecrawl); give its URL.",
+      parameters: Type.Object({ url: Type.String() }),
+      execute: async (a) => {
+        try { return text(asPage(await firecrawlRead(a.url, process.env.FIRECRAWL_API_KEY!))); }
+        catch (e) { return text(`could not read ${a.url}: ${e instanceof Error ? e.message : String(e)}`); }
+      } })] : []),
     defineTool({ name: "clarify", description: "Ask the person who asked you to clarify; then stop and say what you are waiting for.",
       parameters: Type.Object({ question: Type.String() }), execute: (a) => inRoom((r) => r.post(`@${r.askedBy} ${a.question}`)) }),
   ],
@@ -62,7 +81,7 @@ export async function openBrain(dbPath: string, log: (line: string) => void = ()
   const { models, model, faux } = chooseModelOrFaux();
   const storage = await openStorage(dbPath);
   const registry = createRegistry();
-  registry.install(Greenhouse);
+  registry.install(greenhouse());
   const harness = await Harness.open(storage, { models, registry, onReport: (e, info) => log(`report ${info.type}: ${String(e)}`) }, context);
   harness.resume(); // continue any run the last process left unfinished
 
@@ -72,7 +91,7 @@ export async function openBrain(dbPath: string, log: (line: string) => void = ()
   async function conversationFor(sessionId: string): Promise<Conversation> {
     const known = map[sessionId] ? await harness.conversation(map[sessionId] as never, context) : undefined;
     if (known) return known;
-    const created = await harness.createConversation({ ownership: { kind: "ownerless" }, agent: { model, instructions: INSTRUCTIONS } }, context);
+    const created = await harness.createConversation({ ownership: { kind: "ownerless" }, agent: { model, instructions: instructions() } }, context);
     map[sessionId] = String(created.id);
     writeFileSync(mapPath, JSON.stringify(map, null, 2));
     return created;
