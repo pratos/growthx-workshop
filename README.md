@@ -25,6 +25,10 @@ Read `AGENTS.md` first, then `docs/DOMAIN-VOCABULARY.md` and `docs/ARCHITECTURE.
 | `deck/`, `workshop-page/`, `reliable-products-workshop.html` | The talk itself. |
 | `skills/` | Loaded by Claude Code and pi. Ours in place; third-party vendored at pinned commits by `just skills`. |
 
+## Trying it
+
+Start it, sign in as the seeded accounts, and the things worth trying: [`docs/TESTING.md`](docs/TESTING.md).
+
 ## Deploying
 
 GitHub Actions deploys `main` to Cloudflare Workers; migrations are applied by hand. One-time setup, the first deploy, and what each failure means: [`docs/DEPLOY.md`](docs/DEPLOY.md).
