@@ -12,5 +12,7 @@ echo "── $cp · $(git tag -l --format='%(contents:subject)' "$cp")"
 if [ "$n" -gt 0 ]; then
   echo "   added since $prev:"; git diff --stat=100 "$prev" "$cp" -- . ':!**/bun.lock' ':!**/*.gen.ts' ':!**/worker-configuration.d.ts' ':!docs/architecture' | sed 's/^/   /'
 fi
-(cd "$dir" && bun install --frozen-lockfile >/dev/null 2>&1 && (cd skills/viz-explainer && bun install >/dev/null 2>&1); scripts/demo.sh "$cp")
+# What `just install` does on a fresh clone. Vendored skills come from main's copy, so no step downloads them again.
+[ -d skills/vendor ] && mkdir -p "$dir/skills/vendor" && rsync -a skills/vendor/ "$dir/skills/vendor/"
+(cd "$dir" && scripts/skills-sync.sh >/dev/null && bun install --frozen-lockfile >/dev/null 2>&1 && (cd skills/viz-explainer && bun install >/dev/null 2>&1); scripts/demo.sh "$cp")
 echo "   folder: $dir"
