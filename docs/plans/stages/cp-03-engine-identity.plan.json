@@ -434,7 +434,7 @@
         },
         {
           "file": "apps/api/src/auth.ts",
-          "intent": "Maps HTTP onto the `Accounts` service over D1; nothing else.",
+          "intent": "Maps HTTP onto the `Accounts` service over D1; nothing else. A rateLimit middleware over the AUTH_LIMIT binding on sign-up and sign-in (429 past 20 a minute per IP); exports run for the admin API.",
           "contract": {
             "lang": "ts",
             "code": "// POST /auth/sign-up  { email, name, password }  → 201 { account } | 409 { rejected }\n// POST /auth/sign-in  { email, password }        → 200 { account, token } + gh_session cookie | 401 { rejected }\n// POST /auth/sign-out                            → 200 { ok: true }; ends this sign-in only\n// GET  /auth/me                                  → 200 { account } | 401 { rejected: 'not signed in' }\nexport const tokenOf: (authorization?: string, cookie?: string) => string | undefined; // Bearer first\nexport const requireSignIn: MiddlewareHandler; // 401 without a live sign-in; sets c.var.account"
@@ -475,6 +475,10 @@
         {
           "file": "apps/web/src/components/Header.tsx",
           "intent": "Your name and Sign out, or Sign in and Sign up; rechecks on navigation."
+        },
+        {
+          "file": "apps/api/wrangler.jsonc",
+          "intent": "ratelimits: AUTH_LIMIT and WRITE_LIMIT, top level and env.demo; account_id pinned."
         }
       ],
       "components": [
@@ -581,6 +585,6 @@
     "`docs/DOMAIN-VOCABULARY.md`, Identity: Account and Sign-in"
   ],
   "change": {
-    "intent": "Write the cp-03 workshop stage plan: the event-sourcing engine, and sign-up and sign-in on it."
+    "intent": "Sign-in and sign-up are rate-limited per IP."
   }
 }

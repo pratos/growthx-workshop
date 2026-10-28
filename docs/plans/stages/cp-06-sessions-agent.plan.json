@@ -621,7 +621,7 @@
       "changes": [
         {
           "file": "apps/web/src/lib/sessions.ts",
-          "intent": "`listSessions` and `sessionCommand` server functions over the binding, as the signed-in account.",
+          "intent": "`listSessions` and `sessionCommand` server functions over the binding, as the signed-in account. askToWrite: the question goes to the plan's open \"Writing\" session, started or joined if needed.",
           "contract": {
             "lang": "ts",
             "code": "listSessions({ data: planId }) → { status, data?: { sessions: SessionView[] }, rejected? }\nsessionCommand({ data: { planId, type, data } }) → { status, events?, rejected? }"
@@ -633,7 +633,7 @@
         },
         {
           "file": "apps/web/src/routes/plans.$planId.tsx",
-          "intent": "Two columns, document and panel; a `session` frame on the socket refreshes the panel."
+          "intent": "Two columns, document and panel; a `session` frame on the socket refreshes the panel. \"/ask …\" in the editor saves first, then asks the agent to write."
         }
       ],
       "components": [
@@ -721,7 +721,7 @@
       "changes": [
         {
           "file": "packages/agent/src/loop.ts",
-          "intent": "`tick` starts each Session's oldest queued Run (or resumes its own), then answers and finishes.",
+          "intent": "`tick` starts each Session's oldest queued Run (or resumes its own), then answers and finishes. A finished run asked with \"Write into the plan: \" is written into the plan: intoPlan puts the answer (headings, lists, paragraphs) where \"Asked the agent to write: …\" was, credited.",
           "contract": {
             "lang": "ts",
             "code": "type SessionsApi = {\n  list(planId: string): Promise<SessionViewLite[]>;\n  command(planId: string, type: string, data: Record<string, unknown>): Promise<{ ok: boolean; rejected?: string }>;\n};\ntype Answerer = { answer(sessionId: string, runId: string, asked: string): Promise<string> };\ntick(planId: string, me: string, api: SessionsApi, brain: Answerer, log?: (line: string) => void): Promise<number>"
@@ -749,7 +749,7 @@
         },
         {
           "file": "packages/agent/src/serve.ts",
-          "intent": "Sign in as the agent, poll every 1.5 s, sign in again on a 401."
+          "intent": "Sign in as the agent, poll every 1.5 s, sign in again on a 401. writeIntoPlan: read the plan, intoPlan, EditPlan based on what was read, three tries; model keys from .dev.vars; listens on the room socket and backs off to 30s when idle."
         },
         {
           "file": "packages/agent/test/loop.expect.test.ts",
@@ -762,6 +762,10 @@
         {
           "file": "justfile",
           "intent": "Add `agent-serve plan=gh-12`, and `agent-serve-reset` to forget the agent's store."
+        },
+        {
+          "file": "packages/agent/test/write.test.ts",
+          "intent": "The answer replaces the /ask line (also inside a list), goes at the end when the line is gone, and only \"/ask\" runs are written."
         }
       ],
       "verify": {
@@ -798,6 +802,6 @@
     "`packages/agent/README.md`: pi-durable on Bun, and the kill -9 story"
   ],
   "change": {
-    "intent": "Replace a vague word and a three-item list that slop-guard flagged."
+    "intent": "The agent writes into the plan."
   }
 }

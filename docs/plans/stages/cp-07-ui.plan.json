@@ -216,7 +216,7 @@
       "changes": [
         {
           "file": "apps/web/src/styles.css",
-          "intent": "Add the `gh-*` classes in `@layer components`; no colour outside the theme tokens.",
+          "intent": "Add the `gh-*` classes in `@layer components`; no colour outside the theme tokens. Components in Chopin's language: gh-workspace (Chat 360px left, the sheet right), gh-sheet with a 40px title bar and Plan and Decisions views, 650px document measure, quiet buttons and fields, semantic pills, menus.",
           "contract": {
             "lang": "css",
             "code": "@layer components {\n  .gh-card, .gh-muted, .gh-kicker {}            /* var(--line), var(--surface), var(--sea-ink-soft) */\n  .gh-input {}                                 /* :focus-visible → 2px var(--lagoon) */\n  .gh-btn {} .gh-btn-primary {}                /* the one accent: var(--lagoon-deep) */\n  .gh-pill {} .gh-pill[data-tone=\"live\" | \"warn\"] {}\n  .gh-bubble-asked {} .gh-bubble-answer {} .gh-bubble-failed {}\n  .gh-arrive { animation: gh-arrive 180ms cubic-bezier(0.23, 1, 0.32, 1); }\n  @keyframes gh-arrive { from { opacity: 0; transform: translateY(4px); } }\n  @media (prefers-reduced-motion: reduce) { .gh-arrive { animation: none; } }\n}"
@@ -310,7 +310,7 @@
       "changes": [
         {
           "file": "apps/web/src/routes/plans.$planId.tsx",
-          "intent": "Acting as starts as the account; pills, an empty state, a decided pill.",
+          "intent": "Acting as starts as the account; pills, an empty state, a decided pill. The plan page as the workspace: title bar (id, counts, live, who), views (Plan, Decisions), the document, threads; no middle dots.",
           "contract": {
             "lang": "tsx",
             "code": "const [by, setBy] = useState(account?.accountId ?? 'pratos');"
@@ -385,7 +385,7 @@
       "changes": [
         {
           "file": "apps/web/src/components/SessionsPanel.tsx",
-          "intent": "Bubbles, a working line, empty copy; `gh-arrive` on runs keyed by `runId`."
+          "intent": "Bubbles, a working line, empty copy; `gh-arrive` on runs keyed by `runId`. Chat sits on the ground with no card; metadata separated by spacing, not dots."
         }
       ],
       "components": [
@@ -481,6 +481,6 @@
     "the `impeccable`, `animate` and `agentation` skills"
   ],
   "change": {
-    "intent": "Write the cp-07 stage plan: theme-token components, the top bar, and the critique-and-notes process."
+    "intent": "Chopin's workspace: Chat on the ground, the plan as a raised sheet."
   }
 }

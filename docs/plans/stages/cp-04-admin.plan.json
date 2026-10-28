@@ -374,7 +374,7 @@
         },
         {
           "file": "apps/api/src/admin.ts",
-          "intent": "Summary counts, accounts with live sign-ins, newest events with hash, password and token masked.",
+          "intent": "Summary counts, accounts with live sign-ins, newest events with hash, password and token masked. POST /admin/accounts: an admin opens an account (name, email, starting password, role) through Accounts.open, recorded as AccountOpened; 400 on bad input, 409 when taken.",
           "contract": {
             "lang": "ts",
             "code": "GET /admin/summary  → { accounts, admins, signIns, flags, flagsOn, events, streams }\nGET /admin/accounts → { accounts: { accountId, email, name, admin, openedAt, liveSignIns }[] }\nGET /admin/events?stream=&limit=50 → { events: { stream, version, type, by, at, data }[] }\n// in data, every key matching /hash|password|token/i is '•••'; limit is 1..200"
@@ -449,7 +449,7 @@
         },
         {
           "file": "apps/web/src/routes/admin.accounts.tsx",
-          "intent": "One row per account with its role and live sign-ins; `data-account` holds the participant id."
+          "intent": "One row per account with its role and live sign-ins; `data-account` holds the participant id. An \"Add an account\" form under the table, with adding, refused and done states; muted text from the theme tokens."
         },
         {
           "file": "apps/web/src/routes/admin.events.tsx",
@@ -596,7 +596,7 @@
         },
         {
           "file": "e2e/admin.spec.ts",
-          "intent": "Signed out gets sign in, Sam is refused, Admin sees every page with secrets masked."
+          "intent": "Signed out gets sign in, Sam is refused, Admin sees every page with secrets masked. An admin adds an account from the page, and it can sign in."
         },
         {
           "file": "justfile",
@@ -629,6 +629,6 @@
     "`docs/TESTING.md`, step 2: Admin"
   ],
   "change": {
-    "intent": "Match cp-04's tokens to the Tailwind greys the admin pages ship, and leave the account display to cp-07."
+    "intent": "Admins add accounts from the page."
   }
 }

@@ -559,6 +559,14 @@
         {
           "file": "docs/ARCHITECTURE.md",
           "intent": "Name `packages/schema` under \"Rules and shared words\" in \"Where it lives\"."
+        },
+        {
+          "file": "apps/web/src/styles.css",
+          "intent": "Chopin's tokens (warm olive ground, white page, petrol accent, Inter and Lora, radii, shadows, fluid type) as --ch-*, with Greenhouse's names pointed at them; light only."
+        },
+        {
+          "file": "apps/web/src/CHOPIN-LICENSE.md",
+          "intent": "Chopin's MIT licence, kept with the copied tokens."
         }
       ],
       "verify": {
@@ -604,7 +612,7 @@
         },
         {
           "file": "docs/DESIGN.md",
-          "intent": "The plan page: plan with threads on the left, sessions on the right."
+          "intent": "The plan page: plan with threads on the left, sessions on the right. The design brief in Chopin's terms: workspace, colour, type, shape, copy (no middle dots, no eyebrows), motion, states."
         }
       ],
       "verify": {
@@ -674,6 +682,6 @@
     "`docs/plans/2026-10-28-domain-vocabulary.plan.json`, the next round of words"
   ],
   "change": {
-    "intent": "Point the product and design notes at docs/, where Greenhouse keeps its own; the root files are the deck's."
+    "intent": "The design language is Chopin's (GitHub Next, MIT)."
   }
 }
