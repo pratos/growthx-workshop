@@ -6,7 +6,7 @@ import type { Env } from './services';
 export class PlanRoom extends DurableObject<Env> {
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
-    ctx.blockConcurrencyWhile(async () => {
+    void ctx.blockConcurrencyWhile(async () => {
       this.ctx.storage.sql.exec(`CREATE TABLE IF NOT EXISTS events (
         version INTEGER PRIMARY KEY, type TEXT NOT NULL, at TEXT NOT NULL, by TEXT NOT NULL, data TEXT NOT NULL)`);
     });

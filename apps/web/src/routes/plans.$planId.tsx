@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react';
 import type { PlanView } from '@greenhouse/schema';
 import { apiGet, apiCommand } from '#/lib/api';
 
+// Form fields are strings; a File here is a bug, so it reads as empty.
+const field = (f: FormData, name: string): string => { const v = f.get(name); return typeof v === 'string' ? v : ''; };
+
 // The plan page: threads on blocks, each ending in a decision. All data comes over the API binding; nothing here touches storage.
 const loadPlan = createServerFn({ method: 'GET' })
   .validator((planId: string) => planId)
@@ -69,7 +72,7 @@ function PlanPage() {
               {decision ? (
                 <p className="mt-3 text-sm text-emerald-800">Decided by {decision.by} · {decision.at.slice(0, 16).replace('T', ' ')} UTC · “{decision.decision}”</p>
               ) : (
-                <form className="mt-3 flex gap-2" onSubmit={(e) => { e.preventDefault(); const f = new FormData(e.currentTarget); void run(resolveThread({ data: { planId, threadId: t.threadId, decision: String(f.get('decision')), by } })); }}>
+                <form className="mt-3 flex gap-2" onSubmit={(e) => { e.preventDefault(); const f = new FormData(e.currentTarget); void run(resolveThread({ data: { planId, threadId: t.threadId, decision: field(f, 'decision'), by } })); }}>
                   <input name="decision" required placeholder="What was decided?" className="flex-1 rounded border border-gray-300 px-3 py-2 text-sm" />
                   <button type="submit" className="rounded bg-black px-3 py-2 text-sm text-white">Resolve</button>
                 </form>
@@ -79,7 +82,7 @@ function PlanPage() {
         })}
       </section>
 
-      <form className="mt-10 flex flex-col gap-2 rounded-lg border border-dashed border-gray-300 p-4" onSubmit={(e) => { e.preventDefault(); const f = new FormData(e.currentTarget); void run(openThread({ data: { planId, blockId: String(f.get('blockId')), body: String(f.get('body')), by } })); e.currentTarget.reset(); }}>
+      <form className="mt-10 flex flex-col gap-2 rounded-lg border border-dashed border-gray-300 p-4" onSubmit={(e) => { e.preventDefault(); const f = new FormData(e.currentTarget); void run(openThread({ data: { planId, blockId: field(f, 'blockId'), body: field(f, 'body'), by } })); e.currentTarget.reset(); }}>
         <p className="text-sm font-medium">Open a thread</p>
         <div className="flex gap-2">
           <input name="blockId" required placeholder="block id" className="w-32 rounded border border-gray-300 px-3 py-2 text-sm" />

@@ -81,6 +81,8 @@ export class PlanRooms extends Context.Service<PlanRooms, {
   }));
 }
 
+const typeName = (body: unknown): string => { const t = (body as { type?: unknown } | null)?.type; return typeof t === 'string' ? t : '?'; };
+
 // ---- Commands: the use case. Decode at the boundary, read flags, dispatch, turn a rejection into a typed error.
 
 export class Commands extends Context.Service<Commands, {
@@ -91,7 +93,7 @@ export class Commands extends Context.Service<Commands, {
     const rooms = yield* PlanRooms;
     const decode = Schema.decodeUnknownEffect(CommandEnvelope);
     const dispatch = Effect.fn('Commands.dispatch')(function* (planId: string, body: unknown) {
-      const envelope = yield* decode(body).pipe(Effect.mapError((e) => new InvalidCommand({ type: String((body as { type?: unknown })?.type ?? '?'), message: e.message })));
+      const envelope = yield* decode(body).pipe(Effect.mapError((e) => new InvalidCommand({ type: typeName(body), message: e.message })));
       const on = yield* flags.enabledFor(envelope.by);
       const result = yield* rooms.dispatch(planId, { type: envelope.type, data: envelope.data, by: envelope.by }, on);
       if ('rejected' in result) return yield* new CommandRejected({ reason: result.rejected });

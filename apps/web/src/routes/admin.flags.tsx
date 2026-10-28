@@ -3,6 +3,9 @@ import { createServerFn } from '@tanstack/react-start';
 import { useState } from 'react';
 import { apiGet, apiPut } from '#/lib/api';
 
+// Form fields are strings; a File here is a bug, so it reads as empty.
+const field = (f: FormData, name: string): string => { const v = f.get(name); return typeof v === 'string' ? v : ''; };
+
 // The flags admin page: every flag in D1 with its three switches. All data comes over the API binding; nothing here touches storage.
 type Flag = { name: string; enabled: boolean; allowlist: ReadonlyArray<string>; percent: number };
 
@@ -63,7 +66,7 @@ function FlagsPage() {
               onSubmit={(e) => {
                 e.preventDefault();
                 const d = new FormData(e.currentTarget);
-                void run(setFlag({ data: { name: f.name, allowlist: splitList(String(d.get('allowlist'))), percent: Number(d.get('percent')) } }));
+                void run(setFlag({ data: { name: f.name, allowlist: splitList(field(d, 'allowlist')), percent: Number(d.get('percent')) } }));
               }}
             >
               <label className="flex flex-1 items-center gap-2 text-sm text-gray-500">
@@ -85,7 +88,7 @@ function FlagsPage() {
         onSubmit={(e) => {
           e.preventDefault();
           const d = new FormData(e.currentTarget);
-          void run(setFlag({ data: { name: String(d.get('name')).trim(), enabled: false } }));
+          void run(setFlag({ data: { name: field(d, 'name').trim(), enabled: false } }));
           e.currentTarget.reset();
         }}
       >
