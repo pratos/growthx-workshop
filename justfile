@@ -162,6 +162,12 @@ secret action name:
     @read -rs -p "{{name}}: " v; echo; [ -n "$v" ] || { echo "empty, nothing written"; exit 1; }; \
     touch .dev.vars; grep -v "^{{name}}=" .dev.vars > .dev.vars.tmp || true; printf '%s=%s\n' "{{name}}" "$v" >> .dev.vars.tmp; mv .dev.vars.tmp .dev.vars; chmod 600 .dev.vars; echo "{{name}} stored in .dev.vars"
 
+# Every explainer, the architecture map and every plan on one page: http://localhost:8781
+docs:
+    bun scripts/docs-index.ts
+    @echo "http://localhost:8781"
+    cd docs && python3 -m http.server 8781 --bind 127.0.0.1
+
 # Cloudflare security and spending audit (Durable Object wake-ups, rate limits, sign-in on plan rooms, secrets); deploy runs it first
 cf-audit:
     @bun scripts/cf-audit.ts

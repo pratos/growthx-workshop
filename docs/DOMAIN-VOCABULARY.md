@@ -3,7 +3,7 @@
 The ubiquitous language. The person says it, the code says it, the agent says it back. A noun appears here and in code before it appears anywhere else: commands and events in `packages/domain/src/<context>/decider.ts`, views and ids in `packages/schema`. `just domain-vocabulary-check` fails a build that disagrees with this file. A context's `Not:` words are banned in the files under its `Paths:`; a context without `Paths:` bans them everywhere.
 
 ## Context: Planning
-Paths: packages/domain/src/thread, packages/domain/src/plan, packages/domain/src/upcast, packages/domain/src/index.ts, packages/schema
+Paths: packages/domain/src/thread, packages/domain/src/plan, packages/domain/src/upcast, packages/domain/src/index.ts, packages/schema/src/index.ts
 
 ### Artifact
 An interactive page the agent built, embedded in a Block. A decision report, a state explorer, a trace.
@@ -48,13 +48,19 @@ Carried by: `Thread` schema · Events: `ThreadOpened`, `ThreadResolved` · Comma
 Not: discussion, conversation, comment chain, issue, ticket
 
 ## Context: Agent work
-Paths: packages/domain/src/session, packages/schema
+Paths: packages/domain/src/session, packages/schema/src/session.ts
 
 ### Session
 Where Participants ask the agent, inside one Plan. Started by one Participant; others join; only the starter ends it. One stream per Session. Becomes the agent's Thread when the comment thread is renamed after the workshop.
 Example: "Pratos started a Session on plan gh-12, and Sam and Ana joined to ask about retries."
 Carried by: `SessionView` schema · Events: `SessionStarted`, `ParticipantJoined`, `SessionEnded` · Commands: `StartSession`, `JoinSession`, `EndSession`
 Not: chat, conversation, call, meeting, workspace
+
+### Message
+What a Participant says to the others in a Session. Mentioning @agent makes it an Ask instead, so the agent answers in a Run.
+Example: "Sam posted a Message asking Ana to look at the retries Block before the agent drafts it."
+Carried by: `Message` schema · Events: `MessagePosted` · Commands: `PostMessage`
+Not: comment, chat message, note
 
 ### Run
 One Ask, from queued to its result (pi-durable's word). One Run at a time per Session; others queue in order. Any Participant in the Session can steer a running Run; only whoever started it finishes it, or fails it with a reason.
@@ -96,4 +102,4 @@ One line per relationship: upstream → downstream, the pattern, what crosses, a
 
 ## Verbs
 
-Open, Reply, Resolve, Edit, Attach, Request, Fork, Start, Join, Ask, Steer, Finish, Fail, End, Sign up, Sign in, Sign out. Imperative in a command, past tense in an event. No other verbs name a command.
+Open, Reply, Resolve, Edit, Attach, Request, Fork, Start, Join, Ask, Steer, Finish, Fail, End, Post, Sign up, Sign in, Sign out. Imperative in a command, past tense in an event. No other verbs name a command.

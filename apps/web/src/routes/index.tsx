@@ -2,6 +2,7 @@ import { createFileRoute, Link, useRouter } from '@tanstack/react-router'
 // <cp-05>
 import { useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
+import { slugify } from '@greenhouse/schema/slug'
 import { PLAN_ID, recentPlans } from '#/lib/recent-plans'
 // </cp-05>
 import { currentAccount, signOut } from '#/lib/session'
@@ -38,24 +39,26 @@ function Home() {
 }
 // <cp-05>
 
-// Open a plan by id (a new id starts a new plan), or go back to one opened on this device. There is no plan index yet.
+// Open a plan by name (a new name starts a new plan), or go back to one opened on this device. You type freely; the id
+// is the name as a slug ("Retry policy, v2" opens retry-policy-v2), at most 40 characters like every plan id.
 function Plans() {
   const navigate = useNavigate()
   const [id, setId] = useState('')
   const [recent, setRecent] = useState<string[] | null>(null)
   useEffect(() => setRecent(recentPlans()), [])
-  const valid = PLAN_ID.test(id)
+  const slug = slugify(id, 40)
+  const valid = PLAN_ID.test(slug)
   const listed = recent && recent.length > 0 ? recent : null
   return (
     <section aria-labelledby="plans-heading" className="mt-10">
       <h2 id="plans-heading" className="text-lg font-semibold">Plans</h2>
-      <form className="mt-3 flex gap-2" onSubmit={(e) => { e.preventDefault(); if (valid) void navigate({ to: '/plans/$planId', params: { planId: id } }) }}>
-        <label htmlFor="plan-id" className="sr-only">Plan id</label>
-        <input id="plan-id" value={id} onChange={(e) => setId(e.target.value.trim().toLowerCase())} placeholder="Open or start a plan: gh-12, retry-policy…" aria-describedby="plan-id-help"
+      <form className="mt-3 flex gap-2" onSubmit={(e) => { e.preventDefault(); if (valid) void navigate({ to: '/plans/$planId', params: { planId: slug } }) }}>
+        <label htmlFor="plan-id" className="sr-only">Plan name</label>
+        <input id="plan-id" value={id} onChange={(e) => setId(e.target.value)} placeholder="Open or start a plan: Retry policy, gh-12…" aria-describedby="plan-id-help"
           className="h-9 min-w-0 flex-1 rounded-md border border-[var(--line)] bg-[var(--surface-strong)] px-3 text-sm text-[var(--sea-ink)] placeholder:text-[var(--sea-ink-soft)]" />
         <button type="submit" disabled={!valid} className="h-9 rounded-lg bg-[var(--lagoon)] px-4 text-sm font-medium text-white disabled:opacity-50">Open</button>
       </form>
-      <p id="plan-id-help" className={`mt-1.5 text-xs ${muted}`}>{id && !valid ? 'A plan id is 1 to 40 lowercase letters, digits or dashes.' : 'A new id starts a new plan. Anyone signed in opens it by the same id.'}</p>
+      <p id="plan-id-help" className={`mt-1.5 text-xs ${muted}`}>{!id.trim() ? 'A new name starts a new plan. Anyone signed in opens it by the same name.' : valid ? <>Opens as <code>{slug}</code>{slug === id ? '' : ', the id anyone can use'}</> : 'Use at least one letter or digit.'}</p>
       <ul className="mt-5 divide-y divide-[var(--line)] border-y border-[var(--line)]" aria-label={listed ? 'Plans opened on this device' : 'Example plan'}>
         {(listed ?? ['gh-12']).map((p) => (
           <li key={p}>

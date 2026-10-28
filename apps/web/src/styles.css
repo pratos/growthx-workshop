@@ -486,6 +486,23 @@ a {
   .gh-pill[data-tone="warn"] { background: var(--ch-warning-wash); color: var(--ch-warning-ink); border-color: color-mix(in oklch, var(--ch-warning-ink) 25%, transparent); }
   .gh-session-tab { height: 1.75rem; padding: 0 0.625rem; font-size: var(--ch-text-xs); }
   .gh-session-tab[aria-pressed="true"] { background: var(--ch-page); box-shadow: var(--ch-shadow-resting); }
+  .gh-face { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; flex: none; border-radius: 9999px; background: var(--ch-selected); color: var(--ch-ink-2); font-size: 10px; font-weight: 600; box-shadow: 0 0 0 2px var(--ch-ground); }
+  .gh-face[data-agent] { background: var(--ch-brand-wash); color: var(--ch-brand-ink); }
+  .gh-face-dot { position: absolute; right: -1px; bottom: -1px; width: 8px; height: 8px; border-radius: 9999px; background: var(--ch-success); box-shadow: 0 0 0 2px var(--ch-ground); }
+  .gh-thread { display: flex; flex-direction: column; gap: 0.875rem; }
+  .gh-members { display: flex; align-items: center; gap: 4px; }
+  .gh-members .gh-meta { margin-left: 6px; }
+  .gh-line { display: flex; gap: 0.5rem; align-items: flex-start; }
+  .gh-said { font-size: var(--ch-text-sm); line-height: 1.5; color: var(--ch-ink); white-space: pre-wrap; overflow-wrap: anywhere; }
+  .gh-line[data-mine] .gh-said { color: var(--ch-ink); }
+  .gh-mention { color: var(--ch-brand-ink); font-weight: 500; }
+  .gh-failed { color: var(--ch-warning-ink); }
+  .gh-streaming::after { content: ""; display: inline-block; width: 0.5ch; height: 1em; margin-left: 2px; vertical-align: text-bottom; background: var(--ch-brand); animation: gh-caret 1s steps(2, start) infinite; }
+  @keyframes gh-caret { to { visibility: hidden; } }
+  .gh-composer { position: relative; display: flex; flex-direction: column; gap: 0.5rem; padding: 0.5rem; border-radius: var(--ch-radius-lg); background: var(--ch-inset); border: 1px solid var(--ch-edge); }
+  .gh-composer-input { height: auto; min-height: 3.25rem; padding: 0.5rem 0.625rem; resize: vertical; line-height: 1.5; box-shadow: none; }
+  .gh-mentions { position: absolute; bottom: calc(100% + 6px); left: 0; }
+  @media (prefers-reduced-motion: reduce) { .gh-streaming::after { animation: none; } }
   .gh-dot { width: 7px; height: 7px; border-radius: 9999px; background: currentColor; }
   .gh-bubble { border-radius: var(--ch-radius-lg); padding: 0.5rem 0.75rem; font-size: var(--ch-text-sm); line-height: 1.5; max-width: 92%; }
   .gh-bubble-asked { align-self: flex-end; background: var(--ch-brand-wash); color: var(--ch-ink); }

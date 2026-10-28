@@ -56,6 +56,18 @@ const api: SessionsApi = {
     const body = (await r.json().catch(() => ({}))) as { rejected?: string };
     return { ok: r.ok, ...(body.rejected ? { rejected: body.rejected } : {}) };
   },
+  async post(planId, sessionId, body) {
+    const r = await call(`/plans/${encodeURIComponent(planId)}/sessions`, { method: "POST", body: JSON.stringify({ type: "PostMessage", data: { sessionId, body } }) });
+    const b = (await r.json().catch(() => ({}))) as { rejected?: string };
+    return { ok: r.ok, ...(b.rejected ? { rejected: b.rejected } : {}) };
+  },
+  async partial(planId, sessionId, runId, text) {
+    await call(`/plans/${encodeURIComponent(planId)}/sessions/${sessionId}/runs/${runId}/partial`, { method: "POST", body: JSON.stringify({ text }) }).catch(() => undefined);
+  },
+  async readPlan(planId) {
+    const r = await call(`/plans/${encodeURIComponent(planId)}`);
+    return r.ok ? (((await r.json()) as { body?: { content?: string } }).body?.content ?? "") : "";
+  },
   // Read the plan's text, put the answer in, save it as EditPlan based on what was read; if someone saved in between,
   // read again and redo it (three tries).
   async writeIntoPlan(planId, prompt, answer) {

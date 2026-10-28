@@ -17,6 +17,8 @@ export const FinishRun    = defineCommand('FinishRun',    { sessionId: Id, runId
 export const FailRun      = defineCommand('FailRun',      { sessionId: Id, runId: Id, by: ParticipantId, reason: Text });
 // </cp-08>
 export const EndSession   = defineCommand('EndSession',   { sessionId: Id, by: ParticipantId });
+// What a Participant says to the others in the Session. Mentioning @agent is an Ask instead (the page sends that).
+export const PostMessage  = defineCommand('PostMessage',  { sessionId: Id, by: ParticipantId, body: Text });
 
 export const SessionStarted    = defineEvent('SessionStarted',    { sessionId: Id, planId: Id, by: ParticipantId, title: Text });
 export const ParticipantJoined = defineEvent('ParticipantJoined', { sessionId: Id, by: ParticipantId });
@@ -28,15 +30,16 @@ export const RunFinished       = defineEvent('RunFinished',       { sessionId: I
 export const RunFailed         = defineEvent('RunFailed',         { sessionId: Id, runId: Id, by: ParticipantId, reason: Text });
 // </cp-08>
 export const SessionEnded      = defineEvent('SessionEnded',      { sessionId: Id, by: ParticipantId });
+export const MessagePosted     = defineEvent('MessagePosted',     { sessionId: Id, messageId: Id, by: ParticipantId, body: Text });
 
 export type SessionCommand = ReturnType<typeof StartSession> | ReturnType<typeof JoinSession> | ReturnType<typeof Ask> | ReturnType<typeof StartRun>
-  | ReturnType<typeof Steer> | ReturnType<typeof FinishRun> | ReturnType<typeof EndSession>
+  | ReturnType<typeof Steer> | ReturnType<typeof FinishRun> | ReturnType<typeof EndSession> | ReturnType<typeof PostMessage>
   // <cp-08>
   | ReturnType<typeof FailRun>
   // </cp-08>
   ;
 export type SessionEvent = ReturnType<typeof SessionStarted> | ReturnType<typeof ParticipantJoined> | ReturnType<typeof RunQueued> | ReturnType<typeof RunStarted>
-  | ReturnType<typeof RunSteered> | ReturnType<typeof RunFinished> | ReturnType<typeof SessionEnded>
+  | ReturnType<typeof RunSteered> | ReturnType<typeof RunFinished> | ReturnType<typeof SessionEnded> | ReturnType<typeof MessagePosted>
   // <cp-08>
   | ReturnType<typeof RunFailed>
   // </cp-08>
@@ -105,6 +108,9 @@ export const session: Decider<SessionState, SessionCommand, SessionEvent> = {
         if (running.startedBy !== by) return reject(`only ${running.startedBy}, who started ${running.runId}, can fail it`);
         return [RunFailed(command.data)];
       // </cp-08>
+      case 'PostMessage':
+        if (!member) return reject(`${by} has not joined this session`);
+        return [MessagePosted({ ...command.data, messageId: ctx.newId() })];
       case 'EndSession':
         if (by !== state.startedBy) return reject(`only ${state.startedBy}, who started the session, can end it`);
         if (running) return reject(`${running.runId} is still running`);

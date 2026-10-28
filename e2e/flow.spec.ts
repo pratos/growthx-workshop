@@ -62,13 +62,18 @@ test('two people in one room see each other, and the agent answers in their sess
   await expect(sam.locator('[data-thread]', { hasText: 'who owns the retry budget?' })).toBeVisible();
 
   // The admin starts a session; Sam joins it and asks; the agent answers, and both see the answer.
+  if (!(await admin.getByLabel('New session title').isVisible())) await admin.getByRole('button', { name: 'New', exact: true }).click();
   await admin.getByLabel('New session title').fill('Retry budget');
   await admin.getByRole('button', { name: 'Start', exact: true }).click();
   await expect(admin.locator('[data-session]')).toBeVisible();
+  await expect(admin.getByLabel(/Here now: .*sam/).first()).toBeVisible();
   await sam.getByRole('button', { name: 'Retry budget' }).click();
   await sam.getByRole('button', { name: 'Join this session' }).click();
-  await sam.getByLabel('Ask the agent').fill('Who should own the retry budget?');
-  await sam.getByRole('button', { name: 'Ask', exact: true }).click();
+  await sam.getByLabel('Message the session').fill('Ana, can you check the budget block?');
+  await sam.getByRole('button', { name: 'Send', exact: true }).click();
+  await expect(admin.locator('.gh-said', { hasText: 'Ana, can you check the budget block?' })).toBeVisible();
+  await sam.getByLabel('Message the session').fill('@agent Who should own the retry budget?');
+  await sam.getByRole('button', { name: 'Send', exact: true }).click();
   const answer = (p: Page) => p.locator('[data-run][data-status="finished"] [data-result]');
   await expect(answer(sam)).toContainText('Who should own the retry budget?', { timeout: 20_000 });
   await expect(answer(admin)).toContainText('Who should own the retry budget?', { timeout: 20_000 });

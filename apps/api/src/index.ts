@@ -102,6 +102,14 @@ app.get('/plans/:planId/sessions', requireSignIn, async (c) => {
   return c.json({ sessions: await c.env.PLAN_ROOM.getByName(planId(c.req.param('planId'))).sessionList() });
 });
 
+// The agent's answer as it is written: relayed to the room's sockets, not stored. Only the Run's runner may send it.
+app.post('/plans/:planId/sessions/:sessionId/runs/:runId/partial', async (c) => {
+  const body = (await c.req.json().catch(() => null)) as { text?: unknown } | null;
+  if (typeof body?.text !== 'string') return c.json({ rejected: 'text is required' }, 400);
+  const r = await c.env.PLAN_ROOM.getByName(planId(c.req.param('planId'))).runPartial(c.req.param('sessionId'), c.req.param('runId'), c.get('account').accountId, body.text);
+  return 'rejected' in r ? c.json(r, 409) : c.json(r);
+});
+
 app.get('/plans/:planId/sessions/:sessionId', requireSignIn, async (c) => {
   const view = await c.env.PLAN_ROOM.getByName(planId(c.req.param('planId'))).sessionView(c.req.param('sessionId'));
   return view ? c.json(view) : c.json({ error: 'no such session' }, 404);
@@ -120,7 +128,11 @@ app.get('/participants/:participant/flags', async (c) => {
 // </cp-10>
 // <cp-05>
 // Live stream of the plan: the Durable Object accepts the socket and fans out every append.
-app.get('/plans/:planId/ws', (c) => c.env.PLAN_ROOM.getByName(planId(c.req.param('planId'))).fetch(c.req.raw));
+app.get('/plans/:planId/ws', (c) => {
+  const upgrade = new Request(c.req.raw);
+  upgrade.headers.set('x-greenhouse-participant', c.get('account').accountId); // set here, after sign-in; never trusted from the client
+  return c.env.PLAN_ROOM.getByName(planId(c.req.param('planId'))).fetch(upgrade);
+});
 
 app.get('/plans/:planId/events', async (c) => {
   const id = planId(c.req.param('planId'));

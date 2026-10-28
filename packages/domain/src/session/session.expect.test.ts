@@ -4,7 +4,7 @@ import { Layer } from 'effect';
 import { EventStore, testCtx } from '@greenhouse/engine';
 import { bunSqlite } from '@greenhouse/engine/adapters/bun-sqlite';
 import { story } from '@greenhouse/engine/story';
-import { session, sessionStream, StartSession, JoinSession, Ask, StartRun, Steer, FinishRun, EndSession, AGENT, type SessionCommand } from './decider';
+import { session, sessionStream, StartSession, JoinSession, Ask, StartRun, Steer, FinishRun, EndSession, PostMessage, AGENT, type SessionCommand } from './decider';
 // <cp-08>
 import { FailRun } from './decider';
 // </cp-08>
@@ -81,3 +81,14 @@ test('the agent cannot finish, and says why', async () => {
   s.snapshot('agent-fails');
 });
 // </cp-08>
+
+test('people talk in the session; someone who has not joined cannot', async () => {
+  const { s, exec, setup } = world(); await setup();
+  await s.step('Pratos starts a session on plan gh-12', exec(StartSession({ ...S, planId: 'gh-12', by: 'pratos', title: 'rollout' })));
+  await s.step('Pratos posts a message to the session', exec(PostMessage({ ...S, by: 'pratos', body: 'Sam, can you look at the retries block first?' })));
+  await s.step('Sam posts before joining', exec(PostMessage({ ...S, by: 'sam', body: 'on it' })));
+  await s.step('Sam joins and replies', exec(JoinSession({ ...S, by: 'sam' })));
+  await s.step('Sam posts', exec(PostMessage({ ...S, by: 'sam', body: 'On it, then we ask the agent.' })));
+  await s.read('messages', 'SELECT message_id, posted_by, body FROM session_messages ORDER BY posted_at, message_id');
+  s.snapshot('people-talk');
+});

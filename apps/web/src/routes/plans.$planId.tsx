@@ -62,6 +62,9 @@ function PlanPage() {
   const { plan: loaded, account } = Route.useLoaderData();
   const plan = loaded!;
   const [sessionTick, setSessionTick] = useState(0);
+  // Who has this plan open now, and the agent's answers while it writes them (both from the room's socket).
+  const [here, setHere] = useState<string[]>([]);
+  const [partials, setPartials] = useState<Record<string, string>>({});
   const { planId } = Route.useParams();
   const router = useRouter();
   // Comments are written as the signed-in account; the API sets `by` from the sign-in.
@@ -92,9 +95,11 @@ function PlanPage() {
     ws.onerror = () => setLive('off');
     ws.onmessage = (m) => {
       try {
-        const type = (JSON.parse(String(m.data)) as { type?: string }).type;
-        if (type === 'events') void router.invalidate();
-        if (type === 'session') setSessionTick((n) => n + 1);
+        const frame = JSON.parse(String(m.data)) as { type?: string; here?: string[]; runId?: string; text?: string };
+        if (frame.type === 'events') void router.invalidate();
+        if (frame.type === 'session') { setSessionTick((n) => n + 1); setPartials({}); }
+        if (frame.here) setHere(frame.here);
+        if (frame.type === 'partial' && frame.runId) setPartials((p) => ({ ...p, [frame.runId!]: frame.text ?? '' }));
       } catch {}
     };
     return () => ws.close();
@@ -109,7 +114,7 @@ function PlanPage() {
 
   return (
     <main className="gh-workspace">
-      <SessionsPanel planId={planId} me={account?.accountId ?? null} tick={sessionTick} />
+      <SessionsPanel planId={planId} me={account?.accountId ?? null} tick={sessionTick} here={here} partials={partials} />
       <article className="gh-sheet" aria-label={`Plan ${planId}`}>
         <div className="gh-titlebar">
           <span className="gh-titlebar-title">{planId}</span>
@@ -119,6 +124,9 @@ function PlanPage() {
             <span className="gh-pill">version {plan.version}</span>
           </span>
           <span className="ml-auto flex items-center gap-3">
+            <span className="flex -space-x-1.5" aria-label={`Here now: ${here.join(', ') || 'nobody'}`}>
+              {here.map((who) => <span key={who} className="gh-face" data-agent={who === 'agent' || undefined} title={`${who}, here now`}>{who === 'agent' ? 'AI' : who.slice(0, 2).toUpperCase()}</span>)}
+            </span>
             <span className="gh-pill" data-live={live} data-tone={live === 'live' ? 'live' : undefined}><span className="gh-dot" aria-hidden="true" />{live === 'live' ? 'Live' : live === 'off' ? 'Offline' : 'Connecting'}</span>
             <span className="gh-muted">as {by}</span>
           </span>

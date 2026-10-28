@@ -5,7 +5,7 @@ import type { Env } from './services';
 import { Effect, Layer, ManagedRuntime } from 'effect';
 import { EventStore, type Recorded } from '@greenhouse/engine';
 import { durableObject } from '@greenhouse/engine/adapters/durable-object';
-import { session, sessionStream, sessionsView, readSession, listSessions, StartSession, JoinSession, Ask, StartRun, Steer, FinishRun, EndSession } from '@greenhouse/domain';
+import { session, sessionStream, sessionsView, readSession, listSessions, StartSession, JoinSession, Ask, StartRun, Steer, FinishRun, EndSession, PostMessage } from '@greenhouse/domain';
 // </cp-06>
 // <cp-08>
 import { FailRun } from '@greenhouse/domain';
@@ -13,7 +13,7 @@ import { FailRun } from '@greenhouse/domain';
 
 // <cp-06>
 const sessionCommands = {
-  StartSession, JoinSession, Ask, StartRun, Steer, FinishRun, EndSession,
+  StartSession, JoinSession, Ask, StartRun, Steer, FinishRun, EndSession, PostMessage,
   // <cp-08>
   FailRun,
   // </cp-08>
@@ -59,6 +59,15 @@ export class PlanRoom extends DurableObject<Env> {
     return { events: result };
   }
 
+  // A Run's answer while it is being written, shown to everyone in the room and never stored (RunFinished stores the
+  // result). Only whoever is running it can send it.
+  async runPartial(sessionId: string, runId: string, by: string, text: string): Promise<{ ok: true } | Rejection> {
+    const run = (await this.sessionView(sessionId))?.runs.find((r) => r.runId === runId);
+    if (!run || run.status !== 'running' || run.runBy !== by) return { rejected: `${runId} is not being run by ${by}` };
+    this.broadcastFrame({ type: 'partial', sessionId, runId, text: text.slice(0, 8000) });
+    return { ok: true };
+  }
+
   async sessionList() {
     return this.sessions.runPromise(listSessions().pipe(Effect.provide(durableObject(this.ctx.storage))));
   }
@@ -87,12 +96,20 @@ export class PlanRoom extends DurableObject<Env> {
     if (request.headers.get('Upgrade') !== 'websocket') return new Response('expected a websocket upgrade', { status: 426 });
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair) as [WebSocket, WebSocket];
-    this.ctx.acceptWebSocket(server);
-    server.send(JSON.stringify({ type: 'hello', version: this.version() }));
+    // The API stamps who is connecting (from the sign-in); the socket carries it as a tag, so presence survives hibernation.
+    const who = request.headers.get('x-greenhouse-participant') ?? 'someone';
+    this.ctx.acceptWebSocket(server, [who]);
+    server.send(JSON.stringify({ type: 'hello', version: this.version(), here: this.here() }));
+    this.broadcastFrame({ type: 'presence', here: this.here() });
     return new Response(null, { status: 101, webSocket: client });
   }
+  // Who has the plan open right now: one entry per Participant, however many tabs.
+  private here(leaving?: WebSocket): string[] {
+    const open = this.ctx.getWebSockets().filter((ws) => ws !== leaving && ws.readyState === WebSocket.OPEN);
+    return [...new Set(open.flatMap((ws) => this.ctx.getTags(ws)))].sort();
+  }
   webSocketMessage(ws: WebSocket, message: string | ArrayBuffer) { if (message === 'ping') ws.send('pong'); }
-  webSocketClose(ws: WebSocket) { try { ws.close(); } catch {} }
+  webSocketClose(ws: WebSocket) { try { ws.close(); } catch {} this.broadcastFrame({ type: 'presence', here: this.here(ws) }); }
   private broadcast(events: StoredEvent[]) { this.broadcastFrame({ type: 'events', events }); }
   private broadcastFrame(message: unknown) {
     const frame = JSON.stringify(message);

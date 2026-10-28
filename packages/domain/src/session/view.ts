@@ -8,6 +8,7 @@ export const sessionsView: Projection = {
   tables: [
     'CREATE TABLE IF NOT EXISTS sessions (session_id TEXT PRIMARY KEY, plan_id TEXT NOT NULL, title TEXT NOT NULL, started_by TEXT NOT NULL, status TEXT NOT NULL)',
     'CREATE TABLE IF NOT EXISTS session_participants (session_id TEXT NOT NULL, participant TEXT NOT NULL, joined_at TEXT NOT NULL, PRIMARY KEY (session_id, participant))',
+    'CREATE TABLE IF NOT EXISTS session_messages (message_id TEXT PRIMARY KEY, session_id TEXT NOT NULL, posted_by TEXT NOT NULL, body TEXT NOT NULL, posted_at TEXT NOT NULL)',
     'CREATE TABLE IF NOT EXISTS runs (run_id TEXT PRIMARY KEY, session_id TEXT NOT NULL, asked_by TEXT NOT NULL, asked TEXT NOT NULL, status TEXT NOT NULL, run_by TEXT, steers INTEGER NOT NULL DEFAULT 0, result TEXT, queued_at TEXT NOT NULL)',
   ],
   on(e) {
@@ -25,6 +26,7 @@ export const sessionsView: Projection = {
       // <cp-08>
       case 'RunFailed':   return [stmt("UPDATE runs SET status = 'failed', result = ? WHERE run_id = ?", d.reason, d.runId)];
       // </cp-08>
+      case 'MessagePosted': return [stmt('INSERT INTO session_messages (message_id, session_id, posted_by, body, posted_at) VALUES (?, ?, ?, ?, ?)', d.messageId, d.sessionId, d.by, d.body, e.at)];
       case 'SessionEnded': return [stmt("UPDATE sessions SET status = 'ended' WHERE session_id = ?", d.sessionId)];
       default: return [];
     }
@@ -39,11 +41,13 @@ export const readSession = (sessionId: string) => Effect.gen(function* () {
   const [s] = yield* sql.query<SessionRow>('SELECT session_id, plan_id, title, started_by, status FROM sessions WHERE session_id = ?', [sessionId]);
   if (!s) return undefined;
   const people = yield* sql.query<{ participant: string }>('SELECT participant FROM session_participants WHERE session_id = ? ORDER BY joined_at, participant', [sessionId]);
-  const runs = yield* sql.query<RunRow>('SELECT run_id, session_id, asked_by, asked, status, run_by, steers, result FROM runs WHERE session_id = ? ORDER BY queued_at, run_id', [sessionId]);
+  const runs = yield* sql.query<RunRow & { queued_at: string }>('SELECT run_id, session_id, asked_by, asked, status, run_by, steers, result, queued_at FROM runs WHERE session_id = ? ORDER BY queued_at, run_id', [sessionId]);
+  const messages = yield* sql.query<{ message_id: string; posted_by: string; body: string; posted_at: string }>('SELECT message_id, posted_by, body, posted_at FROM session_messages WHERE session_id = ? ORDER BY posted_at, message_id', [sessionId]);
   return {
     sessionId: s.session_id, planId: s.plan_id, title: s.title, startedBy: s.started_by, status: s.status,
     participants: people.map((p) => p.participant),
-    runs: runs.map((r) => ({ runId: r.run_id, sessionId: r.session_id, askedBy: r.asked_by, asked: r.asked, status: r.status, ...(r.run_by ? { runBy: r.run_by } : {}), steers: Number(r.steers), ...(r.result ? { result: r.result } : {}) })),
+    runs: runs.map((r) => ({ runId: r.run_id, sessionId: r.session_id, askedBy: r.asked_by, asked: r.asked, status: r.status, ...(r.run_by ? { runBy: r.run_by } : {}), steers: Number(r.steers), ...(r.result ? { result: r.result } : {}), at: r.queued_at })),
+    messages: messages.map((m) => ({ messageId: m.message_id, by: m.posted_by, body: m.body, at: m.posted_at })),
   } satisfies SessionView;
 });
 

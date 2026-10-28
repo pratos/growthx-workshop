@@ -1,9 +1,8 @@
 import { Schema } from 'effect';
+import { Id, ParticipantId, Text } from './ids';
+export { Id, ParticipantId, Text } from './ids';
 
 // The ubiquitous language, as schemas. Every word here is in docs/DOMAIN-VOCABULARY.md. Nothing in code gets a noun that is not here.
-export const Id = Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(64));
-export const ParticipantId = Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(64)); // a person or an agent; same commands, same rights
-export const Text = Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(4000));
 
 export const Decision = Schema.Struct({ threadId: Id, blockId: Id, by: ParticipantId, at: Schema.String, decision: Text });
 export type Decision = typeof Decision.Type;
@@ -38,11 +37,5 @@ export const Account = Schema.Struct({ accountId: ParticipantId, email: Email, n
 export type Account = typeof Account.Type;
 
 // ---- Agent work: a Session is where Participants ask the agent and its Runs happen. Becomes the agent's Thread at the rename.
-export const RunStatus = Schema.Literals(['queued', 'running', 'finished', 'failed']);
-export const Run = Schema.Struct({ runId: Id, sessionId: Id, askedBy: ParticipantId, asked: Text, status: RunStatus, runBy: Schema.optionalKey(ParticipantId), steers: Schema.Int, result: Schema.optionalKey(Text) });
-export type Run = typeof Run.Type;
-export const SessionView = Schema.Struct({
-  sessionId: Id, planId: Id, title: Text, startedBy: ParticipantId, status: Schema.Literals(['open', 'ended']),
-  participants: Schema.Array(ParticipantId), runs: Schema.Array(Run),
-});
-export type SessionView = typeof SessionView.Type;
+// Agent work's schemas live in their own file, so Planning's banned words (a Reply is never a "message") stay out of them.
+export * from './session';
