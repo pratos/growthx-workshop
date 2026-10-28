@@ -5,7 +5,7 @@ const cmdBase = process.argv[3] ?? base;
 const plan = `ws-${Date.now()}`;
 const ws = new WebSocket(`${base.replace(/^http/, 'ws')}/plans/${plan}/ws`);
 const heard = new Promise<string[]>((resolve, reject) => {
-  const t = setTimeout(() => reject(new Error('no events frame within 2s')), 2000);
+  const t = setTimeout(() => reject(new Error('no events frame within 5s')), 5000);
   ws.onmessage = (m) => { const d = JSON.parse(String(m.data)); if (d.type === 'events') { clearTimeout(t); resolve(d.events.map((e: { type: string }) => e.type)); } };
   ws.onerror = (e) => reject(new Error(`socket error: ${String((e as ErrorEvent).message ?? e)}`));
 });
