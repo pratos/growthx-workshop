@@ -13,6 +13,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const vizDir = [join(here, '..', '..', 'viz-explainer')].find((d) => existsSync(join(d, 'scripts', 'build.mjs')));
 const { load } = await import(join(vizDir ?? join(here, '..', '..', 'viz-explainer'), 'scripts', 'load.mjs'));
 const { marked } = await load('marked', '18.1.2', here);
+const history = await import(join(here, 'history.mjs'));
 
 const [planPath, second] = process.argv.slice(2);
 if (!planPath) { console.error('usage: build.mjs <plan.json> [out.html | --check]'); process.exit(2); }
@@ -100,9 +101,64 @@ if (errors.length) { for (const e of errors) console.error(`✗ ${e}`); process.
 for (const w of warnings) console.warn(`! ${w}`);
 if (checkOnly) { console.log(`✓ ${basename(planPath)}: ${plan.phases.length} phases, ${(plan.decisions ?? []).length} decisions, ${diagrams.size} diagrams`); process.exit(0); }
 
+// ---------- versions ----------
+// A build whose plan differs from the last recorded version appends one: who, through what, why, the prompt, the session.
+// PLAN_NO_RECORD=1 builds without recording (an old version rebuilt to look at, a preview).
+let recorded = null;
+if (!process.env.PLAN_NO_RECORD) {
+  const env = { ...process.env };
+  if (env.PLAN_TRANSCRIPT && !env.PLAN_PROMPT) env.PLAN_PROMPT = history.lastPrompt(env.PLAN_TRANSCRIPT);
+  recorded = history.record(planPath, plan, env);
+  if (recorded && recorded.via !== 'manual' && !recorded.intent) console.warn(`! v${recorded.v} has no intent: an agent edit sets "change": { "intent": "…" } in the plan, one sentence on why`);
+}
+const versions = history.load(planPath);
+
 // ---------- rendering ----------
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+// ---------- code ----------
+// Every code block on the page (a contract, or a fence inside any prose) is a figure with its language named and
+// colours from the page's own palette. A Markdown contract is rendered as Markdown, never shown as raw source.
+const LANGS = { ts: 'TypeScript', tsx: 'TypeScript', typescript: 'TypeScript', js: 'JavaScript', mjs: 'JavaScript', json: 'JSON', jsonc: 'JSON',
+  sql: 'SQL', sh: 'Shell', bash: 'Shell', zsh: 'Shell', css: 'CSS', html: 'HTML', yaml: 'YAML', yml: 'YAML', toml: 'TOML', md: 'Markdown', markdown: 'Markdown', text: 'Text', txt: 'Text', diff: 'Diff' };
+const KEYWORDS = {
+  code: 'abstract as async await break case catch class const continue declare default delete do else enum export extends false finally for from function get if implements import in infer instanceof interface keyof let new null of private protected public readonly return satisfies set static super switch this throw true try type typeof undefined unique var void while with yield',
+  sql: 'add all alter and as asc begin by cascade check commit constraint create default delete desc distinct drop else end exists foreign from group having if in index insert integer into is join key left limit not null on or order primary references replace returning rollback select set table text then transaction union unique update using values when where with',
+  sh: 'case do done elif else esac export fi for function if in local read return set then until while',
+};
+const tokenRules = (lang) => {
+  const l = (lang ?? '').toLowerCase();
+  const family = ['sql'].includes(l) ? 'sql' : ['sh', 'bash', 'zsh'].includes(l) ? 'sh' : 'code';
+  const comment = family === 'sql' ? '--[^\\n]*' : family === 'sh' || ['yaml', 'yml', 'toml'].includes(l) ? '#[^\\n]*' : '\\/\\/[^\\n]*|\\/\\*[\\s\\S]*?\\*\\/';
+  const kw = new Set(KEYWORDS[family].split(' '));
+  return { re: new RegExp(`(${comment})|("(?:\\\\.|[^"\\\\])*"|'(?:\\\\.|[^'\\\\])*'|\`(?:\\\\.|[^\`\\\\])*\`)|(\\b\\d[\\d_.]*\\b)|([A-Za-z_$][\\w$]*)(?=\\s*\\()|([A-Za-z_$][\\w$]*)`, 'g'), kw, family };
+};
+export function highlight(code, lang) {
+  const l = (lang ?? '').toLowerCase();
+  if (['text', 'txt', 'md', 'markdown', ''].includes(l)) return esc(code);
+  if (l === 'diff') return code.split('\n').map((line) => `<span class="${line.startsWith('+') ? 'tok-add' : line.startsWith('-') ? 'tok-del' : ''}">${esc(line)}</span>`).join('\n');
+  const { re, kw, family } = tokenRules(l);
+  let out = '', last = 0;
+  for (const m of code.matchAll(re)) {
+    out += esc(code.slice(last, m.index)); last = m.index + m[0].length;
+    const [all, com, str, num, fn, word] = m;
+    const k = com ? 'com' : str ? 'str' : num ? 'num'
+      : fn ? (kw.has(fn) ? 'kw' : 'fn')
+      : kw.has(family === 'sql' ? word.toLowerCase() : word) ? 'kw' : /^[A-Z]/.test(word) && family === 'code' ? 'type' : '';
+    out += k ? `<span class="tok-${k}">${esc(all)}</span>` : esc(all);
+  }
+  return out + esc(code.slice(last));
+}
+const codeBlock = (code, lang, file) => {
+  const l = (lang ?? '').toLowerCase();
+  return `<figure class="codeblock"><figcaption><span class="lang">${esc(LANGS[l] ?? (l || 'Text'))}</span>${file ? `<span class="where">${esc(file)}</span>` : ''}</figcaption><pre><code class="lang-${esc(l)}">${highlight(String(code).replace(/\n$/, ''), l)}</code></pre></figure>`;
+};
+marked.use({ renderer: { code({ text, lang }) { return codeBlock(text, (lang ?? '').split(/\s/)[0]); } } });
+
 const md = (s) => marked.parse(String(s ?? ''), { gfm: true });
+// A Markdown contract is shown as the Markdown it describes, one line per line as written; any other language is a code block.
+const contract = (k) => ['md', 'markdown'].includes((k.lang ?? '').toLowerCase())
+  ? `<figure class="codeblock contract is-md"><figcaption><span class="lang">Markdown</span><span class="where">rendered</span></figcaption><div class="md-body">${marked.parse(String(k.code ?? ''), { gfm: true, breaks: true })}</div></figure>`
+  : `<div class="contract">${codeBlock(k.code, k.lang)}</div>`;
 const mdi = (s) => marked.parseInline(String(s ?? ''), { gfm: true });
 const slug = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
@@ -160,7 +216,7 @@ const totals = plan.phases.reduce((a, ph) => { const [d, n] = count(ph); return 
 function phase(ph, i) {
   const [d, n] = count(ph);
   const state = n && d === n ? 'done' : d ? 'in progress' : 'not started';
-  const changes = ph.changes.map((c) => `<li class="change"><code class="file">${esc(c.file)}</code><div class="intent">${mdi(c.intent)}</div>${c.contract ? `<pre class="contract"><code class="lang-${esc(c.contract.lang ?? '')}">${esc(c.contract.code)}</code></pre>` : ''}</li>`).join('');
+  const changes = ph.changes.map((c) => `<li class="change"><code class="file">${esc(c.file)}</code><div class="intent">${mdi(c.intent)}</div>${c.contract ? contract(c.contract) : ''}</li>`).join('');
   const check = (v, kind) => `<li class="check ${v.done ? 'is-done' : ''}"><input type="checkbox" disabled ${v.done ? 'checked' : ''} aria-label="${v.done ? 'done' : 'not done'}"><span>${kind === 'auto' ? `<code>${esc(v.cmd)}</code>${v.text ? ` · ${mdi(v.text)}` : ''}` : mdi(v.text)}</span></li>`;
   return `<section class="phase" id="${esc(ph.id)}">
     <header class="phase-head"><h2><span class="phase-num">Phase ${i + 1}</span> ${esc(ph.name)}</h2><span class="pill pill-${slug(state)}">${state} · ${d}/${n}</span></header>
@@ -194,9 +250,22 @@ const nav = [
   ...(plan.design ? [['design', 'Design language']] : []),
   ...plan.phases.map((ph, i) => [ph.id, `${i + 1}. ${ph.name}`, count(ph)]),
   ...((plan.references ?? []).length ? [['references', 'References']] : []),
+  ...(versions.length ? [['versions', `Versions · v${versions.at(-1).v}`]] : []),
 ];
 
 const source = relative(process.cwd(), planPath);
+// Newest first. Each version says who changed the plan, through what, why, what changed, and the prompt and session behind it.
+const VIA = { manual: 'by hand', 'claude-code': 'Claude Code', pi: 'pi' };
+function versionsSection(vs) {
+  if (!vs.length) return '';
+  const item = (v) => `<li class="version" id="v${v.v}">
+    <div class="v-head"><span class="v-num">v${v.v}</span><time datetime="${esc(v.at)}">${esc(v.at.slice(0, 16).replace('T', ' '))} UTC</time><span class="v-who">${esc(v.by)} · ${esc(VIA[v.via] ?? v.via)}</span>${v.commit ? `<code class="v-commit">${esc(v.commit)}</code>` : ''}</div>
+    <p class="v-intent">${v.intent ? mdi(v.intent) : '<span class="none">no intent given</span>'}</p>
+    <ul class="v-changes">${v.changes.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>
+    ${v.prompt || v.session ? `<details class="v-origin"><summary>${v.prompt ? 'Prompt' : 'Session'}${v.session ? ` · session ${esc(v.session.id.slice(0, 8))}` : ''}</summary>${v.prompt ? `<blockquote>${esc(v.prompt)}</blockquote>` : ''}${v.session ? `<p class="v-session">session <code>${esc(v.session.id)}</code>${v.session.transcript ? ` · transcript <code>${esc(v.session.transcript)}</code>` : ''}</p>` : ''}</details>` : ''}
+  </li>`;
+  return `<section id="versions"><h2>Versions</h2><p class="v-how">Every change to this plan, newest first. <code>just plan-history FILE</code> lists them, <code>just plan-at FILE vN</code> rebuilds one, <code>just plan-diff FILE vA vB</code> says what changed.</p><ol class="versions" reversed>${[...vs].reverse().map(item).join('')}</ol></section>`;
+}
 const html = `<!doctype html>
 <html lang="en">
 <head>
@@ -234,7 +303,8 @@ const html = `<!doctype html>
   ${plan.design ? designBlock(plan.design) : ''}
   ${plan.phases.map(phase).join('')}
   ${(plan.references ?? []).length ? `<section id="references"><h2>References</h2><ul>${plan.references.map((r) => `<li>${mdi(r)}</li>`).join('')}</ul></section>` : ''}
-  <footer>Edit <code>${esc(source)}</code>, not this page. It is rebuilt from the JSON.</footer>
+  ${versionsSection(versions)}
+  <footer>Edit <code>${esc(source)}</code>, not this page. It is rebuilt from the JSON, and every change is a version in <code>${esc(relative(process.cwd(), history.versionsPath(planPath)))}</code>.</footer>
 </main>
 </div>
 <script type="application/json" id="plan">${JSON.stringify(plan).replace(/</g, '\\u003c')}</script>
@@ -267,4 +337,4 @@ const html = `<!doctype html>
 `;
 writeFileSync(outPath, html);
 rmSync(tmp, { recursive: true, force: true });
-console.log(`✓ ${basename(planPath)} → ${outPath} · ${visible} words, ${readMinutes} min read${warnings.length ? ` (${warnings.length} warning${warnings.length > 1 ? 's' : ''})` : ''}`);
+console.log(`✓ ${basename(planPath)} → ${outPath} · ${visible} words, ${readMinutes} min read${recorded ? ` · v${recorded.v} recorded` : versions.length ? ` · v${versions.at(-1).v}` : ''}${warnings.length ? ` (${warnings.length} warning${warnings.length > 1 ? 's' : ''})` : ''}`);

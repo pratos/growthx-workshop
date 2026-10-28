@@ -31,16 +31,20 @@ Source of truth: `docs/plans/YYYY-MM-DD-slug.plan.json` (or `thoughts/shared/pla
 - **Say what is not being done.** `notDoing` is required.
 - **Verification is runnable or observable.** Automated items are commands (prefer `just` recipes). Manual items are sentences a person can check by looking.
 - **Use the domain vocabulary's words.** Load `ddd-vocabulary` if the plan names anything new.
+- **Code and Markdown always render, never dump.** A contract with `"lang": "md"` renders as the Markdown it describes (headings, tables, fenced code, one line per line as written); any other `lang` is a code block with its language named and colours from the page. Fences inside prose fields render the same way. Give every contract its real `lang` (`ts`, `sql`, `sh`, `json`, `md`, `diff`), and leave a blank line after a Markdown table.
+- **Every change is a version.** Each build that changes the plan appends one line to `<slug>.plan.versions.jsonl` beside it: the whole plan, who, through what (by hand, Claude Code, pi), the intent, the prompt behind it, the session and transcript, and what changed in words. In the same edit as any change, set `"change": { "intent": "one sentence on why" }` in the plan; the Claude Code hook records the session and the prompt itself. From pi: `PLAN_VIA=pi PLAN_SESSION=<id> just plan FILE "intent"`. By hand: `just plan FILE "intent"`. Commit the versions file with the plan; the pre-commit hook stages it.
 
 ## After the plan
 
 - **Implementing** (`/implement_plan`): set `status` to `implementing`; work phase by phase; when a check passes, set its `"done": true` in the JSON and let the hook rebuild. Never tick a manual check until the person confirms it. If reality disagrees with the plan, stop and say so with the phase, what the plan says, and what you found.
-- **Iterating** (`/iterate_plan`): change the JSON surgically. A new choice gets a new decision report; a changed choice keeps the old one and records the new `chosen` with today's date.
+- **Iterating** (`/iterate_plan`): change the JSON surgically, with `change.intent` saying why. A new choice gets a new decision report; a changed choice keeps the old one and records the new `chosen` with today's date. `just plan-history FILE` shows every version; `just plan-diff FILE vA vB` says what changed; `just plan-at FILE vN` rebuilds an old one to look at.
+- **Starting a history** for a plan that predates versions: `bun skills/create-plan/scripts/history.mjs backfill FILE` reads git and the Claude Code transcripts, so each commit becomes a version with the session and prompt that produced it.
 - **Validating** (`/validate_plan`): read the JSON, run every automated command, compare `changes` with the diff, and report per phase. Mark the plan `done` only when every check is done.
 
 ## Reference
 
 - `references/plan-schema.md`: every field, with the GH-12 example.
 - `references/ui-blocks.md`: the design block and components.
-- `scripts/build.mjs`: JSON in, validated page out. Uses `../viz-explainer` for diagrams and decision reports.
+- `scripts/build.mjs`: JSON in, validated page out, and a version recorded when the plan changed. Uses `../viz-explainer` for diagrams and decision reports.
+- `scripts/history.mjs`: versions: record, list, at, diff, backfill from git and transcripts.
 - `assets/example.plan.json` and `assets/example.plan.html`: a real plan to copy.

@@ -79,9 +79,22 @@ arch-check:
     bun scripts/arch.ts --coverage
     bun scripts/arch.ts --check
 
-# Build a plan page from its JSON (a hook does this on every edit): just plan docs/plans/2026-10-28-resolve-thread.plan.json
-plan file:
-    bun skills/create-plan/scripts/build.mjs {{file}}
+# Build a plan page from its JSON and record the change as a version: just plan docs/plans/x.plan.json "why this change"
+# (a hook does this on every agent edit, with the session and prompt; from pi: PLAN_VIA=pi PLAN_SESSION=<id> just plan …)
+plan file intent="":
+    PLAN_INTENT="{{intent}}" bun skills/create-plan/scripts/build.mjs {{file}}
+
+# Every version of a plan: who, through what, why, what changed
+plan-history file:
+    @bun skills/create-plan/scripts/history.mjs list {{file}}
+
+# Rebuild one version of a plan to look at, without recording anything: just plan-at docs/plans/x.plan.json v3
+plan-at file v:
+    @out="$(mktemp -d)/$(basename {{file}} .plan.json)-{{v}}.plan.json"; bun skills/create-plan/scripts/history.mjs at {{file}} {{v}} > "$out" && PLAN_NO_RECORD=1 bun skills/create-plan/scripts/build.mjs "$out" "${out%.plan.json}.plan.html" >/dev/null 2>&1 && echo "${out%.plan.json}.plan.html"
+
+# What changed between two versions of a plan, in words: just plan-diff docs/plans/x.plan.json v2 v5
+plan-diff file a b:
+    @bun skills/create-plan/scripts/history.mjs diff {{file}} {{a}} {{b}}
 
 # List plans, newest first, with status and progress
 plans:

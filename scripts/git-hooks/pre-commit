@@ -12,5 +12,5 @@ if grep -qx 'docs/ARCHITECTURE.md' <<<"$staged"; then
 fi
 for f in $(grep -E '\.plan\.json$' <<<"$staged" || true); do
   bun skills/create-plan/scripts/build.mjs "$f" >/dev/null
-  git add "${f%.plan.json}.plan.html"
+  git add "${f%.plan.json}.plan.html" "${f%.plan.json}.plan.versions.jsonl"
 done
