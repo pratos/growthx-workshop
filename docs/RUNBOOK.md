@@ -1,48 +1,65 @@
 # Run of show · runbook
 
-Every live beat has a deterministic twin. If the agent misbehaves on stage, run the twin and keep going. Tags are the safety net: `git checkout cp-NN` puts the repo exactly where that beat expects it.
+Every live beat has a deterministic twin. If the agent misbehaves on stage, run the twin and keep going. Tags are the safety net: `git checkout cp-NN` puts the repo exactly where that beat expects it, and `scripts/demo.sh cp-NN` proves it.
 
-Before the show: `just install`, `just reset`, `just up` in one cmux pane, `git checkout main` in another. Keep `/tmp/gh-*.log` tails in a third.
+## Before the show
+
+```sh
+git status                 # clean, on main
+just install               # bun workspaces + vendored skills + the artifact builder
+just reset                 # fresh local D1 and Durable Object state, migrated and seeded
+just up                    # api + web in one process; http://localhost:3000
+for c in cp-00 cp-01 cp-02 cp-03 cp-04 cp-05 cp-06 cp-07; do scripts/demo.sh $c; done
+```
+
+cmux panes: `just up` · a shell on main · `tail -f /tmp/gh-*.log` · the browser on http://localhost:3000/plans/gh-12 with Agentation.
+
+## The beats
 
 | Beat | Live | Twin (always works) | Fallback |
 |---|---|---|---|
-| Fresh clone, nobody at the keyboard | `git clone … && just up`, open http://localhost:3000/login and /healthz | `just demo cp-00` | the two curls in `scripts/demo.sh` |
-| Agent names it ThreadClosed | ask pi: "add resolve thread"; watch the names | `git checkout wrong/cp-01 && just glossary-check` fails; `git checkout cp-01 && just glossary-check` passes | `just demo cp-01` |
+| Fresh clone, nobody at the keyboard | `git clone … && just up`, open `/login` and `/healthz` | `just demo cp-00` | the two curls in `scripts/demo.sh` |
+| Agent names it ThreadClosed | ask pi: "add resolve thread"; watch the names | `git checkout wrong/cp-01 && just glossary-check` fails; on `cp-01` it passes | `just demo cp-01` |
 | Tests the agent learns from | ask pi for a test; it writes a mock | `just test`, then `cat packages/domain/src/thread/__expect__/resolve.snap.txt` | `just demo cp-02` |
 | Changing a recorded event | ask Claude Code to "add rationale to decisions"; it edits the schema | `cat packages/domain/src/upcast/__expect__/*.snap.txt` | `just demo cp-03` |
 | Plan as a wall of Markdown | `/create_plan GH-12` in Claude Code | open `docs/decisions/gh-12.html`, click an option | `just demo cp-04` |
-| UI half | Claude Code with impeccable + animate on `/plans/gh-12`; Agentation note | http://localhost:3000/plans/gh-12 resolve a thread | `just demo cp-05` |
-| Correct code that is wrong | `HEAD_REF=wrong/cp-01 just review cp-02` live (90 s) | `cat demo/cp-06-review.md` | `just demo cp-06` |
-| Released, then changed | `just deploy`, flag on for you, `wrangler rollback` | `GH_REMOTE=1 just flag list`, `docs/RELEASE.md` | the check-in Worker, same commands |
+| UI half | Claude Code with impeccable + animate on `/plans/gh-12`; one Agentation note | open a thread, resolve it, see the decision | `just demo cp-05` |
+| Correct code that is wrong | `HEAD_REF=wrong/cp-01 just review cp-02` live, about ninety seconds | `cat demo/cp-06-review.md` | `just demo cp-06` |
+| Released, then changed | `just deploy`, `GH_REMOTE=1 just flag user resolve-thread <you>`, use it live, `just rollback api <id>` | `curl …/healthz` shows label and id; `GH_REMOTE=1 just flag list` | `just demo cp-07` |
 
-## Live URLs
+## Live
 
-- api: https://greenhouse-api.prthamesh-sarang.workers.dev (`/healthz` carries the version id)
-- web: https://greenhouse-web.prthamesh-sarang.workers.dev
-- rollback: `just rollback api <previous version id>` (ids from `cd apps/api && bunx wrangler deployments list`)
-
-## Timings that matter
-
-- `just up` from a fresh clone: measure the morning of. Over three minutes means attendees watch Run 1 and follow in Run 2.
-- The live review takes about ninety seconds. Start it, take a question, come back.
-- `just deploy` for both Workers takes about a minute. Run it before the break if the network is slow.
+- api: https://greenhouse-api.prthamesh-sarang.workers.dev · `/healthz` returns `version.label` (git describe, for people) and `version.id` (for rollback)
+- web: https://greenhouse-web.prthamesh-sarang.workers.dev · `/healthz` shows its own version and the api's, through the service binding
+- check-in: https://growthx-eng.tarp.sh · `just checkin deploy`
+- previous version ids: `cd apps/api && bunx wrangler deployments list`
 
 ## Commands you will type
 
 ```sh
-just up                                  # api + web, D1 and DO in miniflare
+just up                                  # api + web locally, D1 and DO in miniflare
 just test                                # expect tests then api tests
-just glossary-check                      # the cp-01 beat
-just replay gh-12                        # the stream as a story
+just glossary-check                      # cp-01
+just replay gh-12                        # the stream as a story (api must be up on :8787, or GH_API=<url>)
 just artifact docs/decisions/gh-12.spec.json docs/decisions/gh-12.html
 HEAD_REF=wrong/cp-01 just review cp-02   # model inversion, live
-just flag user resolve-thread <id>       # rollout, you first
-just deploy                              # wrangler: api then web; stops on pending migrations
+just deploy                              # wrangler: api then web; refuses if a D1 migration is pending
+GH_REMOTE=1 just flag user resolve-thread pratos
+GH_REMOTE=1 just flag off resolve-thread
+just rollback api <version-id>
 ```
+
+## Timings
+
+- `just up` from a fresh clone: measure the morning of. Over three minutes means attendees watch Run 1 and follow in Run 2.
+- The live review takes about ninety seconds. Start it, take a question, come back.
+- `just deploy` for both Workers takes about a minute including the smoke.
 
 ## If something is on fire
 
 - Web dev server stuck: `pkill -f "vite dev"` then `just up`.
 - D1 or DO state weird: `just reset`.
-- Compatibility date error from workerd: the bundled runtime is older than the date; lower `compatibility_date` in both `wrangler.jsonc` files.
-- Wrangler not logged in: `bunx wrangler login`, then `just deploy`.
+- workerd refuses the compatibility date: the bundled runtime is older than the date; lower `compatibility_date` in both `wrangler.jsonc` files.
+- `wrangler` not logged in: `bunx wrangler login`.
+- Flag gate passes for everyone: the flags must reach the Durable Object as a list of names, never as a function (RPC turns functions into async stubs).
+- Hydration error on the plan page: a timestamp was formatted in a locale; render the ISO string.

@@ -20,6 +20,7 @@ apps/web (TanStack Start · Worker)  ──service binding──▶  apps/api (H
 |---|---|---|
 | apps/web | packages/schema, the API over `env.API` | packages/domain, packages/db, any database client |
 | apps/api | packages/domain, packages/schema | apps/web |
+| apps/checkin | nothing; a standalone Worker that shares the toolchain | packages/* |
 | packages/domain | packages/schema, zod | anything with I/O |
 | packages/schema | zod | everything else |
 | .github/workflows | runs the same `just` recipes | |
@@ -28,7 +29,8 @@ apps/web (TanStack Start · Worker)  ──service binding──▶  apps/api (H
 
 - **D1 everywhere.** Local D1 through wrangler, prod D1. Postgres through Hyperdrive is an option (a `hyperdrive` binding in `apps/api/wrangler.jsonc`), not a default.
 - **The event log lives in the PlanRoom DO**, one per Plan. Single writer, strong order, append in one synchronous block. D1 holds auth, flags and cross-plan projections rebuilt by `just replay`.
-- **Flags are evaluated in `decide()`**, from a D1 table read once per request and passed to the DO as a list of names. Never in the web Worker. Default off.
+- **Flags are evaluated in `decide()`**, from a D1 table read once per request and passed to the Durable Object as a list of names. A function would cross the RPC boundary as an async stub and its promise would read as true; that bug was caught by the first smoke test. Never in the web Worker. Default off.
 - **Migrations never run on deploy.** `just deploy` stops if any are pending; they are applied by hand and are additive.
 - **The web Worker has no data access.** It reads through the API binding. A database import under `apps/web` is a lint error.
+- **`/healthz` carries two versions**: a `label` from `git describe` for people, an `id` from the version metadata binding for `wrangler rollback`. The deploy passes the label in as a var.
 - **Everything that runs is a `just` recipe**, so the agent and the sandbox use the same commands a person does.
