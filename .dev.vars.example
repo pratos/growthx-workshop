@@ -9,3 +9,4 @@ GIT_DESCRIBE=dev
 # The agent signs in like any Participant (same commands, same rights), with its own local account.
 AGENT_EMAIL=agent@greenhouse.test
 AGENT_PASSWORD=greenhouse-agent-local
+ANTHROPIC_API_KEY=
