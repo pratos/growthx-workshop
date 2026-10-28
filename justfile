@@ -78,9 +78,9 @@ secret action name:
     @read -rs -p "{{name}}: " v; echo; [ -n "$v" ] || { echo "empty, nothing written"; exit 1; }; \
     touch .dev.vars; grep -v "^{{name}}=" .dev.vars > .dev.vars.tmp || true; printf '%s=%s\n' "{{name}}" "$v" >> .dev.vars.tmp; mv .dev.vars.tmp .dev.vars; chmod 600 .dev.vars; echo "{{name}} stored in .dev.vars"
 
-# Deploy api then web through Alchemy. Stops if a D1 migration is pending.
-deploy stage="prod":
-    @scripts/deploy.sh {{stage}}
+# Deploy api then web with wrangler. Stops if a D1 migration is pending. `just deploy staging` uses the wrangler env of that name.
+deploy env="prod":
+    @scripts/deploy.sh {{env}}
 
 # Run one checkpoint's deterministic beat: just demo cp-02
 demo cp:

@@ -11,6 +11,6 @@ Each checkpoint is a git tag. Each has one deterministic beat (`just demo cp-NN`
 | cp-04 | `/create_plan GH-12` returns a wall of Markdown. | viz-explainer decision report | `just artifact` builds `docs/decisions/gh-12.html` and validates every step |
 | cp-05 | The resolve action looks generic. | impeccable + animate + Agentation | web `/plans/:id` resolves a thread through the API; Agentation toolbar present in dev |
 | cp-06 | Correct code that is wrong. | `just review` with the other model | review on `wrong/cp-01` names ThreadClosed against the glossary |
-| cp-07 | Released, then changed under real users. | flag + Workers version rollback | runs on the check-in Worker: `just flag`, `wrangler versions` |
+| cp-07 | Released, then changed under real users. | flag + `wrangler rollback` | `/healthz` on the deployed api carries the version id; `GH_REMOTE=1 just flag list` |
 
 Order of building: 00, 02, 01, 03, 04, 06, 05, 07. The domain comes before the glossary beat because the glossary check needs declared commands to check.

@@ -13,13 +13,13 @@ Before the show: `just install`, `just reset`, `just up` in one cmux pane, `git 
 | Plan as a wall of Markdown | `/create_plan GH-12` in Claude Code | open `docs/decisions/gh-12.html`, click an option | `just demo cp-04` |
 | UI half | Claude Code with impeccable + animate on `/plans/gh-12`; Agentation note | http://localhost:3000/plans/gh-12 resolve a thread | `just demo cp-05` |
 | Correct code that is wrong | `HEAD_REF=wrong/cp-01 just review cp-02` live (90 s) | `cat demo/cp-06-review.md` | `just demo cp-06` |
-| Released, then changed | `just deploy dev`, flag on for you, `wrangler versions` rollback | `just flag list`, `docs/RELEASE.md` | the check-in Worker, same commands |
+| Released, then changed | `just deploy`, flag on for you, `wrangler rollback` | `GH_REMOTE=1 just flag list`, `docs/RELEASE.md` | the check-in Worker, same commands |
 
 ## Timings that matter
 
 - `just up` from a fresh clone: measure the morning of. Over three minutes means attendees watch Run 1 and follow in Run 2.
 - The live review takes about ninety seconds. Start it, take a question, come back.
-- Alchemy deploy of both Workers: measure once logged in. If over two minutes, run it before the break and show the output.
+- `just deploy` for both Workers takes about a minute. Run it before the break if the network is slow.
 
 ## Commands you will type
 
@@ -31,7 +31,7 @@ just replay gh-12                        # the stream as a story
 just artifact docs/decisions/gh-12.spec.json docs/decisions/gh-12.html
 HEAD_REF=wrong/cp-01 just review cp-02   # model inversion, live
 just flag user resolve-thread <id>       # rollout, you first
-just deploy dev                          # alchemy: api then web; stops on pending migrations
+just deploy                              # wrangler: api then web; stops on pending migrations
 ```
 
 ## If something is on fire
@@ -39,4 +39,4 @@ just deploy dev                          # alchemy: api then web; stops on pendi
 - Web dev server stuck: `pkill -f "vite dev"` then `just up`.
 - D1 or DO state weird: `just reset`.
 - Compatibility date error from workerd: the bundled runtime is older than the date; lower `compatibility_date` in both `wrangler.jsonc` files.
-- Alchemy says no provider: `bunx alchemy login` (interactive, your browser), then `just deploy dev`.
+- Wrangler not logged in: `bunx wrangler login`, then `just deploy`.

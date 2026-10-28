@@ -22,11 +22,11 @@ apps/web (TanStack Start · Worker)  ──service binding──▶  apps/api (H
 | apps/api | packages/domain, packages/schema | apps/web |
 | packages/domain | packages/schema, zod | anything with I/O |
 | packages/schema | zod | everything else |
-| infra | nothing from apps or packages | |
+| .github/workflows | runs the same `just` recipes | |
 
 ## Decisions already made
 
-- **D1 everywhere.** Local D1 through wrangler, prod D1. Postgres through Hyperdrive is an option the deploy file documents, not a default.
+- **D1 everywhere.** Local D1 through wrangler, prod D1. Postgres through Hyperdrive is an option (a `hyperdrive` binding in `apps/api/wrangler.jsonc`), not a default.
 - **The event log lives in the PlanRoom DO**, one per Plan. Single writer, strong order, append in one synchronous block. D1 holds auth, flags and cross-plan projections rebuilt by `just replay`.
 - **Flags are evaluated in `decide()`**, from a D1 table read once per request and passed to the DO as a list of names. Never in the web Worker. Default off.
 - **Migrations never run on deploy.** `just deploy` stops if any are pending; they are applied by hand and are additive.

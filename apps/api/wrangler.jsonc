@@ -6,7 +6,7 @@
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true, "logs": { "enabled": true, "head_sampling_rate": 1 }, "traces": { "enabled": true, "head_sampling_rate": 0.1 } },
   "version_metadata": { "binding": "VERSION" },
-  "d1_databases": [{ "binding": "DB", "database_name": "greenhouse", "database_id": "local", "migrations_dir": "migrations" }],
+  "d1_databases": [{ "binding": "DB", "database_name": "greenhouse", "database_id": "90289f2e-a6d5-4512-8c55-3b248c65f747", "migrations_dir": "migrations" }],
   "durable_objects": { "bindings": [{ "name": "PLAN_ROOM", "class_name": "PlanRoom" }] },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["PlanRoom"] }]
 }

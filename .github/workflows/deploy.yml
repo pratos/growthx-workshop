@@ -3,8 +3,6 @@ on:
   push: { branches: [main] }
   pull_request:
   workflow_dispatch:
-    inputs:
-      stage: { description: "alchemy stage", default: "prod" }
 concurrency: { group: deploy-${{ github.ref }}, cancel-in-progress: false }
 jobs:
   check:
@@ -26,26 +24,29 @@ jobs:
     if: github.event_name == 'pull_request'
     needs: check
     runs-on: ubuntu-latest
-    env: { CLOUDFLARE_API_TOKEN: "${{ secrets.CLOUDFLARE_API_TOKEN }}", CLOUDFLARE_ACCOUNT_ID: "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}", ALCHEMY_PASSWORD: "${{ secrets.ALCHEMY_PASSWORD }}" }
+    env: { CLOUDFLARE_API_TOKEN: "${{ secrets.CLOUDFLARE_API_TOKEN }}", CLOUDFLARE_ACCOUNT_ID: "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" }
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
-      - run: bun infra/alchemy.run.ts --stage pr-${{ github.event.number }}
+      - name: preview as a versioned upload (no traffic)
+        run: |
+          cd apps/api && bunx wrangler versions upload --tag pr-${{ github.event.number }}
+          cd ../web && bun run build && bunx wrangler versions upload --tag pr-${{ github.event.number }}
   deploy:
     if: github.event_name != 'pull_request'
     needs: check
     runs-on: ubuntu-latest
     environment: production
-    env: { CLOUDFLARE_API_TOKEN: "${{ secrets.CLOUDFLARE_API_TOKEN }}", CLOUDFLARE_ACCOUNT_ID: "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}", ALCHEMY_PASSWORD: "${{ secrets.ALCHEMY_PASSWORD }}" }
+    env: { CLOUDFLARE_API_TOKEN: "${{ secrets.CLOUDFLARE_API_TOKEN }}", CLOUDFLARE_ACCOUNT_ID: "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" }
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - name: stop if a D1 migration is pending (migrations are applied by hand, never here)
-        run: scripts/deploy.sh ${{ inputs.stage || 'prod' }}
+        run: scripts/deploy.sh
       - name: smoke
-        run: curl -sf "$(cat .alchemy/last-api-url)/healthz" | jq -e '.ok == true'
+        run: curl -sf "https://greenhouse-api.${{ vars.WORKERS_SUBDOMAIN }}.workers.dev/healthz" | jq -e '.ok == true'
   migrate:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
