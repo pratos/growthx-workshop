@@ -100,7 +100,7 @@ export class PlanRoom extends DurableObject<Env> {
     const who = request.headers.get('x-greenhouse-participant') ?? 'someone';
     this.ctx.acceptWebSocket(server, [who]);
     server.send(JSON.stringify({ type: 'hello', version: this.version(), here: this.here() }));
-    this.broadcastFrame({ type: 'presence', here: this.here() });
+    this.presenceChanged(this.here());
     return new Response(null, { status: 101, webSocket: client });
   }
   // Who has the plan open right now: one entry per Participant, however many tabs.
@@ -109,7 +109,15 @@ export class PlanRoom extends DurableObject<Env> {
     return [...new Set(open.flatMap((ws) => this.ctx.getTags(ws)))].sort();
   }
   webSocketMessage(ws: WebSocket, message: string | ArrayBuffer) { if (message === 'ping') ws.send('pong'); }
-  webSocketClose(ws: WebSocket) { try { ws.close(); } catch {} this.broadcastFrame({ type: 'presence', here: this.here(ws) }); }
+  webSocketClose(ws: WebSocket) { try { ws.close(); } catch {} this.presenceChanged(this.here(ws)); }
+  // Who is here changed: tell the sockets, and tell the orchestrator (the plans table in D1) so home can show it.
+  private presenceChanged(here: string[]) {
+    this.broadcastFrame({ type: 'presence', here });
+    const planId = this.ctx.id.name;
+    if (!planId) return;
+    this.ctx.waitUntil(this.env.DB.prepare('UPDATE plans SET here = ?1, last_active_at = ?2 WHERE plan_id = ?3')
+      .bind(JSON.stringify(here), new Date().toISOString(), planId).run().then(() => undefined, () => undefined));
+  }
   private broadcast(events: StoredEvent[]) { this.broadcastFrame({ type: 'events', events }); }
   private broadcastFrame(message: unknown) {
     const frame = JSON.stringify(message);

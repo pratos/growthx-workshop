@@ -503,6 +503,22 @@ a {
   .gh-composer-input { height: auto; min-height: 3.25rem; padding: 0.5rem 0.625rem; resize: vertical; line-height: 1.5; box-shadow: none; }
   .gh-mentions { position: absolute; bottom: calc(100% + 6px); left: 0; }
   @media (prefers-reduced-motion: reduce) { .gh-streaming::after { animation: none; } }
+  .gh-link-btn { font-size: var(--ch-text-2xs); color: var(--ch-ink-3); text-decoration: underline; text-underline-offset: 2px; }
+  @media (hover: hover) and (pointer: fine) { .gh-link-btn:hover { color: var(--ch-brand-ink); } }
+  .gh-card:target { box-shadow: 0 0 0 2px var(--ch-brand), var(--ch-shadow-resting); scroll-margin-top: 4rem; }
+  .gh-share { position: absolute; right: 0; top: calc(100% + 6px); }
+  .gh-share-note { padding: 4px 6px 2px; font-size: var(--ch-text-2xs); color: var(--ch-ink-3); border-top: 1px solid var(--ch-edge); margin-top: 4px; }
+  .gh-chat-switch { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; margin-top: 2px; font-size: var(--ch-text-sm); color: var(--ch-ink-2); }
+  .gh-chat-switch kbd { font: inherit; font-size: var(--ch-text-2xs); color: var(--ch-ink-3); border: 1px solid var(--ch-edge); border-radius: var(--ch-radius-sm); padding: 0 4px; background: var(--ch-page); }
+  @media (hover: hover) and (pointer: fine) { .gh-chat-switch:hover { color: var(--ch-ink); } }
+  .gh-palette-backdrop { position: fixed; inset: 0; z-index: 60; background: oklch(0.15908 0.00637 95 / 12%); display: flex; justify-content: center; align-items: flex-start; padding-top: 14vh; }
+  .gh-palette { width: min(32rem, calc(100vw - 2rem)); padding: 4px; background: var(--ch-page); border-radius: var(--ch-radius-lg); box-shadow: 0 0 0 1px var(--ch-edge), var(--ch-shadow-overlay); }
+  .gh-palette-input { width: 100%; height: 2.5rem; padding: 0 0.625rem; border: 0; border-bottom: 1px solid var(--ch-divider); outline: none; font-size: var(--ch-text-base); color: var(--ch-ink); background: transparent; margin-bottom: 4px; }
+  .gh-events { display: flex; flex-direction: column; border-top: 1px solid var(--ch-divider); font-size: var(--ch-text-xs); }
+  .gh-events li { display: grid; grid-template-columns: 2.5rem 9rem 5rem 9.5rem minmax(0, 1fr); gap: 0.5rem; padding: 6px 0; border-bottom: 1px solid var(--ch-edge); color: var(--ch-ink-2); align-items: baseline; }
+  .gh-events code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; color: var(--ch-ink-3); overflow-wrap: anywhere; }
+  .gh-event-type { color: var(--ch-ink); font-weight: 500; }
+  @media (max-width: 700px) { .gh-events li { grid-template-columns: 2rem 1fr; } .gh-events li > :nth-child(n+3) { grid-column: 2; } }
   .gh-dot { width: 7px; height: 7px; border-radius: 9999px; background: currentColor; }
   .gh-bubble { border-radius: var(--ch-radius-lg); padding: 0.5rem 0.75rem; font-size: var(--ch-text-sm); line-height: 1.5; max-width: 92%; }
   .gh-bubble-asked { align-self: flex-end; background: var(--ch-brand-wash); color: var(--ch-ink); }

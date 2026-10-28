@@ -139,8 +139,19 @@ app.get('/plans/:planId/events', async (c) => {
   return c.json(await runtimeFor(c.env).runPromise(PlanRooms.use((r) => r.events(id))));
 });
 
+// The orchestrator: every plan room anyone has opened, newest activity first, with who is in each now.
+app.get('/plans', requireSignIn, async (c) => {
+  const { results } = await c.env.DB.prepare('SELECT plan_id, opened_by, opened_at, last_active_at, here FROM plans ORDER BY last_active_at DESC LIMIT 100')
+    .all<{ plan_id: string; opened_by: string; opened_at: string; last_active_at: string; here: string }>();
+  return c.json({ plans: results.map((p) => ({ planId: p.plan_id, openedBy: p.opened_by, openedAt: p.opened_at, lastActiveAt: p.last_active_at, here: JSON.parse(p.here) as string[] })) });
+});
+
 app.get('/plans/:planId', async (c) => {
   const id = planId(c.req.param('planId'));
+  // Opening a plan registers its room with the orchestrator (first opener and time), then marks it active.
+  const now = new Date().toISOString();
+  c.executionCtx.waitUntil(c.env.DB.prepare('INSERT INTO plans (plan_id, opened_by, opened_at, last_active_at) VALUES (?1, ?2, ?3, ?3) ON CONFLICT(plan_id) DO UPDATE SET last_active_at = ?3')
+    .bind(id, c.get('account').accountId, now).run().then(() => undefined, () => undefined));
   return c.json(await runtimeFor(c.env).runPromise(PlanRooms.use((r) => r.read(id))));
 });
 

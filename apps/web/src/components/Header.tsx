@@ -1,4 +1,5 @@
 import { Link, useRouter, useRouterState } from '@tanstack/react-router'
+import { signInHref } from '#/lib/next'
 import { useEffect, useState } from 'react'
 import { currentAccount, signOut, type Account } from '#/lib/session'
 
@@ -27,8 +28,8 @@ export default function Header() {
             </>
           ) : (
             <>
-              <Link to="/login" className="opacity-80 hover:opacity-100">Sign in</Link>
-              <Link to="/signup" className="gh-btn gh-btn-primary !py-1">Sign up</Link>
+              <Link to="/login" className="opacity-80 hover:opacity-100" onClick={(e) => { if (location.pathname !== '/') { e.preventDefault(); location.assign(signInHref('login')); } }}>Sign in</Link>
+              <Link to="/signup" className="gh-btn gh-btn-primary !py-1" onClick={(e) => { if (location.pathname !== '/') { e.preventDefault(); location.assign(signInHref('signup')); } }}>Sign up</Link>
             </>
           )}
         </span>

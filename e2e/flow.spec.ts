@@ -62,17 +62,20 @@ test('two people in one room see each other, and the agent answers in their sess
   await expect(sam.locator('[data-thread]', { hasText: 'who owns the retry budget?' })).toBeVisible();
 
   // The admin starts a session; Sam joins it and asks; the agent answers, and both see the answer.
-  if (!(await admin.getByLabel('New session title').isVisible())) await admin.getByRole('button', { name: 'New', exact: true }).click();
-  await admin.getByLabel('New session title').fill('Retry budget');
-  await admin.getByRole('button', { name: 'Start', exact: true }).click();
+  const chat = `Retry budget ${Date.now().toString(36)}`;
+  await admin.getByRole('button', { name: 'Switch chat' }).click();
+  await admin.getByLabel('Find or start a chat').fill(chat);
+  await admin.keyboard.press('Enter');
   await expect(admin.locator('[data-session]')).toBeVisible();
   await expect(admin.getByLabel(/Here now: .*sam/).first()).toBeVisible();
-  await sam.getByRole('button', { name: 'Retry budget' }).click();
-  await sam.getByRole('button', { name: 'Join this session' }).click();
-  await sam.getByLabel('Message the session').fill('Ana, can you check the budget block?');
+  await sam.getByRole('button', { name: 'Switch chat' }).click();
+  await sam.getByLabel('Find or start a chat').fill(chat);
+  await sam.keyboard.press('Enter');
+  await sam.getByRole('button', { name: 'Join this chat' }).click();
+  await sam.getByLabel('Message the chat').fill('Ana, can you check the budget block?');
   await sam.getByRole('button', { name: 'Send', exact: true }).click();
   await expect(admin.locator('.gh-said', { hasText: 'Ana, can you check the budget block?' })).toBeVisible();
-  await sam.getByLabel('Message the session').fill('@agent Who should own the retry budget?');
+  await sam.getByLabel('Message the chat').fill('@agent Who should own the retry budget?');
   await sam.getByRole('button', { name: 'Send', exact: true }).click();
   const answer = (p: Page) => p.locator('[data-run][data-status="finished"] [data-result]');
   await expect(answer(sam)).toContainText('Who should own the retry budget?', { timeout: 20_000 });
@@ -111,3 +114,22 @@ test('the plan is written in the editor: "/" makes a heading, and the text is sa
   await signOut(page);
 });
 // </cp-05>
+
+test('a shared link to a thread brings someone signed out back to that thread after signing in', async ({ page }) => {
+  const plan = `share-${Date.now().toString(36)}`;
+  await signIn(page, logins.admin);
+  await ready(page, `/plans/${plan}`);
+  await page.getByLabel('Block id').fill('b1');
+  await page.getByLabel('What should we decide').fill('who signs off the rollout?');
+  await page.getByRole('button', { name: 'Open', exact: true }).click();
+  const id = await page.locator('[data-thread]').first().getAttribute('data-thread');
+  await signOut(page);
+  await ready(page, `/plans/${plan}#thread-${id}`);
+  await page.getByRole('alert').getByRole('link', { name: 'Sign in' }).click();
+  await page.getByLabel('Email').fill(logins.sam.email);
+  await page.getByLabel('Password').fill(logins.sam.password);
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  await expect(page).toHaveURL(new RegExp(`/plans/${plan}#thread-${id}$`));
+  await expect(page.locator(`#thread-${id}`)).toContainText('who signs off the rollout?');
+  await signOut(page);
+});

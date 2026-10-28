@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { SessionView } from '@greenhouse/schema';
 import { listSessions, sessionCommand } from '#/lib/sessions';
+import { CopyLink } from '#/components/Share';
 
 // The chat beside the plan. A Session is a conversation of Messages between people; mentioning @agent turns a message
 // into an Ask, which the agent answers in a Run, streamed as it writes. Every step is an event in the plan room, so
@@ -29,13 +30,15 @@ export function SessionsPanel({ planId, me, tick, here = [], partials = {} }: Pr
   const [error, setError] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
   const [mention, setMention] = useState<{ query: string; index: number } | null>(null);
-  const [starting, setStarting] = useState(false);
+  const [palette, setPalette] = useState(false);
   const bottom = useRef<HTMLDivElement>(null);
 
   const refresh = useCallback(async () => {
     const r = await listSessions({ data: planId });
     setStatus(r.status);
-    if (r.data) { setSessions(r.data.sessions); setSelected((s) => s ?? r.data!.sessions.at(-1)?.sessionId ?? null); }
+    // A shared link can name the session (?session=…); otherwise the newest.
+    const linked = typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('session');
+    if (r.data) { setSessions(r.data.sessions); setSelected((s) => s ?? (r.data!.sessions.some((x) => x.sessionId === linked) ? linked : r.data!.sessions.at(-1)?.sessionId ?? null)); }
   }, [planId]);
   useEffect(() => { void refresh(); }, [refresh, tick, me]);
 
@@ -45,22 +48,39 @@ export function SessionsPanel({ planId, me, tick, here = [], partials = {} }: Pr
     ...current.runs.map((run) => ({ kind: 'run' as const, at: run.at ?? '', run })),
   ].sort((a, b) => a.at.localeCompare(b.at)), [current]);
   const streaming = Object.keys(partials).length;
+  // ⌘K (Ctrl+K) switches chats, or starts one.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setPalette((v) => !v); } };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
   useEffect(() => { bottom.current?.scrollIntoView({ block: 'nearest' }); }, [lines.length, streaming]);
 
-  async function send(type: string, data: Record<string, unknown>) {
+  async function command(type: string, data: Record<string, unknown>) {
     setError(null);
     const r = await sessionCommand({ data: { planId, type, data } }) as { status: number; events?: unknown[]; rejected?: string };
     if (r.status >= 400) setError(r.rejected ?? `failed (${r.status})`);
-    if (type === 'StartSession' && r.events?.[0]) setSelected((r.events[0] as { data: { sessionId: string } }).data.sessionId);
+    const started = type === 'StartSession' ? (r.events?.[0] as { data?: { sessionId?: string } } | undefined)?.data?.sessionId : undefined;
+    if (started) setSelected(started);
+    return { ok: r.status < 400, started };
+  }
+  async function send(type: string, data: Record<string, unknown>) {
+    const r = await command(type, data);
     await refresh();
-    return r.status < 400;
+    return r.ok;
+  }
+  async function startChat(title: string) {
+    const r = await command('StartSession', { title: title.slice(0, 80) });
+    await refresh();
+    setPalette(false);
+    return r.started;
   }
 
   if (!me || status === 401) {
     return (
       <aside className="gh-chat" aria-label="Sessions">
         <h2 className="text-lg font-semibold">Chat</h2>
-        <p className="gh-muted mt-2 text-sm"><Link to="/login" className="underline">Sign in</Link> to start a session or join one. Sessions are where you talk with the others here and ask the agent.</p>
+        <p className="gh-muted mt-2 text-sm"><Link to="/login" className="underline">Sign in</Link> to talk with the others here and ask the agent.</p>
       </aside>
     );
   }
@@ -81,44 +101,74 @@ export function SessionsPanel({ planId, me, tick, here = [], partials = {} }: Pr
   }
   async function submit() {
     const text = draft.trim();
-    if (!text || !current) return;
+    if (!text) return;
+    // No chat yet: the first message starts one, named from its first words.
+    const sessionId = current?.sessionId ?? await startChat(text.replace(/@\S+\s*/g, '').split(/\s+/).slice(0, 6).join(' ') || 'Chat');
+    if (!sessionId) return;
     // Mentioning @agent asks the agent (a Run); anything else is a Message to the people in the session.
     const ok = /(^|\s)@agent\b/.test(text)
-      ? await send('Ask', { sessionId: current.sessionId, asked: text.replace(/(^|\s)@agent\b\s*/, '$1').trim() || text })
-      : await send('PostMessage', { sessionId: current.sessionId, body: text });
+      ? await send('Ask', { sessionId, asked: text.replace(/(^|\s)@agent\b\s*/, '$1').trim() || text })
+      : await send('PostMessage', { sessionId, body: text });
     if (ok) setDraft('');
   }
+
+  const composerForm = (
+  <form className="gh-composer" onSubmit={(e) => { e.preventDefault(); void submit(); }}>
+    {mention && candidates.length > 0 && (
+      <div className="gh-slash gh-mentions" role="listbox" aria-label="Mention">
+        {candidates.map((p, i) => (
+          <button key={p} type="button" role="option" aria-selected={i === mention.index} className="gh-slash-item" onMouseDown={(ev) => { ev.preventDefault(); pick(p); }}>
+            <span className="flex items-center gap-2"><Face who={p} />{p === AGENT ? 'agent' : p}</span>
+            <span className="gh-slash-hint">{p === AGENT ? 'asks the agent' : here.includes(p) ? 'here now' : 'in this session'}</span>
+          </button>
+        ))}
+      </div>
+    )}
+    <textarea value={draft} rows={2} aria-label="Message the chat" placeholder="Message the chat. Mention @agent to ask the agent."
+      className="gh-input gh-composer-input"
+      onChange={(e) => onDraft(e.target.value, e.target.selectionStart)}
+      onKeyDown={(e) => {
+        if (mention && candidates.length > 0) {
+          if (e.key === 'ArrowDown') { e.preventDefault(); setMention({ ...mention, index: (mention.index + 1) % candidates.length }); return; }
+          if (e.key === 'ArrowUp') { e.preventDefault(); setMention({ ...mention, index: (mention.index + candidates.length - 1) % candidates.length }); return; }
+          if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); pick(candidates[mention.index]!); return; }
+          if (e.key === 'Escape') { setMention(null); return; }
+        }
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void submit(); }
+      }} />
+    <div className="flex items-center justify-between gap-2">
+      <span className="gh-meta">Enter sends. Shift+Enter for a new line.</span>
+      <button type="submit" className="gh-btn gh-btn-primary" disabled={!draft.trim()}>Send</button>
+    </div>
+  </form>
+  );
 
   return (
     <aside className="gh-chat" aria-label="Sessions">
       <header className="flex items-center justify-between gap-2">
-        <h2 className="text-lg font-semibold">Chat</h2>
+        <div className="min-w-0">
+          <h2 className="text-lg font-semibold">Chat</h2>
+          <button type="button" className="gh-chat-switch" onClick={() => setPalette(true)} aria-label="Switch chat">
+            <span className="truncate">{current ? current.title : sessions?.length ? 'Pick a chat' : 'No chat yet'}</span><kbd>⌘K</kbd>
+          </button>
+        </div>
         <span className="flex -space-x-1.5" aria-label={`Here now: ${here.join(', ') || 'nobody'}`}>
           {here.map((who) => <Face key={who} who={who} online />)}
         </span>
       </header>
       {error && <p role="alert" className="gh-pill" data-tone="warn">{error}</p>}
-
-      <nav className="flex flex-wrap items-center gap-1.5" aria-label="Sessions on this plan">
-        {sessions === null ? <span className="gh-meta">Loading sessions…</span> : sessions.map((s) => (
-          <button key={s.sessionId} type="button" onClick={() => setSelected(s.sessionId)} aria-pressed={s.sessionId === selected} className="gh-btn gh-session-tab">
-            {s.title}{s.status === 'ended' && <span className="gh-muted">ended</span>}
-          </button>
-        ))}
-        <button type="button" className="gh-btn gh-btn-ghost gh-session-tab" aria-expanded={starting} onClick={() => setStarting((v) => !v)}>New</button>
-      </nav>
-      {(starting || sessions?.length === 0) && (
-        <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); const t = new FormData(e.currentTarget).get('title'); if (typeof t === 'string' && t.trim()) void send('StartSession', { title: t.trim() }).then((ok) => ok && setStarting(false)); e.currentTarget.reset(); }}>
-          <input name="title" required aria-label="New session title" placeholder="What is this session about?" className="gh-input" />
-          <button type="submit" className="gh-btn">Start</button>
-        </form>
-      )}
+      {palette && <ChatSwitcher sessions={sessions ?? []} selected={selected} onPick={(id) => { setSelected(id); setPalette(false); }} onStart={(t) => void startChat(t)} onClose={() => setPalette(false)} />}
+      {!current && sessions !== null && (<>
+        <p className="gh-muted text-sm">Say something to start a chat. Mention @agent to ask the agent.</p>
+        {composerForm}
+      </>)}
 
       {current && (
         <section data-session={current.sessionId} className="gh-thread">
           <div className="gh-members" aria-label="In this session">
             {people.map((p) => <Face key={p} who={p} online={here.includes(p)} />)}
-            <span className="gh-meta">{people.length} in this session</span>
+            <span className="gh-meta">{people.length} in this chat</span>
+            <span className="ml-auto"><CopyLink path={`/plans/${planId}?session=${current.sessionId}`} label="Copy link to this chat" /></span>
           </div>
           {lines.length === 0 && <p className="gh-muted text-sm">Nothing said yet. Say hello, or mention @agent to ask the agent.</p>}
           <ol className="flex flex-col gap-3">
@@ -149,8 +199,8 @@ export function SessionsPanel({ planId, me, tick, here = [], partials = {} }: Pr
           </ol>
           <div ref={bottom} />
 
-          {current.status === 'ended' ? <p className="gh-muted text-sm">This session has ended.</p> : !member ? (
-            <button type="button" onClick={() => void send('JoinSession', { sessionId: current.sessionId })} className="gh-btn self-start">Join this session</button>
+          {current.status === 'ended' ? <p className="gh-muted text-sm">This chat has ended.</p> : !member ? (
+            <button type="button" onClick={() => void send('JoinSession', { sessionId: current.sessionId })} className="gh-btn self-start">Join this chat</button>
           ) : (
             <>
               {running && (
@@ -159,41 +209,46 @@ export function SessionsPanel({ planId, me, tick, here = [], partials = {} }: Pr
                   <button type="submit" className="gh-btn">Steer</button>
                 </form>
               )}
-              <form className="gh-composer" onSubmit={(e) => { e.preventDefault(); void submit(); }}>
-                {mention && candidates.length > 0 && (
-                  <div className="gh-slash gh-mentions" role="listbox" aria-label="Mention">
-                    {candidates.map((p, i) => (
-                      <button key={p} type="button" role="option" aria-selected={i === mention.index} className="gh-slash-item" onMouseDown={(ev) => { ev.preventDefault(); pick(p); }}>
-                        <span className="flex items-center gap-2"><Face who={p} />{p === AGENT ? 'agent' : p}</span>
-                        <span className="gh-slash-hint">{p === AGENT ? 'asks the agent' : here.includes(p) ? 'here now' : 'in this session'}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-                <textarea value={draft} rows={2} aria-label="Message the session" placeholder="Message the session. Mention @agent to ask the agent."
-                  className="gh-input gh-composer-input"
-                  onChange={(e) => onDraft(e.target.value, e.target.selectionStart)}
-                  onKeyDown={(e) => {
-                    if (mention && candidates.length > 0) {
-                      if (e.key === 'ArrowDown') { e.preventDefault(); setMention({ ...mention, index: (mention.index + 1) % candidates.length }); return; }
-                      if (e.key === 'ArrowUp') { e.preventDefault(); setMention({ ...mention, index: (mention.index + candidates.length - 1) % candidates.length }); return; }
-                      if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); pick(candidates[mention.index]!); return; }
-                      if (e.key === 'Escape') { setMention(null); return; }
-                    }
-                    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void submit(); }
-                  }} />
-                <div className="flex items-center justify-between gap-2">
-                  <span className="gh-meta">Enter sends. Shift+Enter for a new line.</span>
-                  <button type="submit" className="gh-btn gh-btn-primary" disabled={!draft.trim()}>Send</button>
-                </div>
-              </form>
+              {composerForm}
               {current.startedBy === me && !running && (
-                <button type="button" onClick={() => void send('EndSession', { sessionId: current.sessionId })} className="gh-muted self-start text-xs underline">End this session</button>
+                <button type="button" onClick={() => void send('EndSession', { sessionId: current.sessionId })} className="gh-muted self-start text-xs underline">End this chat</button>
               )}
             </>
           )}
         </section>
       )}
     </aside>
+  );
+}
+
+// ⌘K: switch to another chat on this plan, or start one named by what you typed.
+function ChatSwitcher({ sessions, selected, onPick, onStart, onClose }: { sessions: SessionView[]; selected: string | null; onPick: (id: string) => void; onStart: (title: string) => void; onClose: () => void }) {
+  const [query, setQuery] = useState('');
+  const [index, setIndex] = useState(0);
+  const found = sessions.filter((s) => s.title.toLowerCase().includes(query.trim().toLowerCase()));
+  const items = [...found.map((s) => ({ kind: 'chat' as const, s })), ...(query.trim() ? [{ kind: 'new' as const }] : [])];
+  const choose = (i: number) => { const it = items[i]; if (!it) return; if (it.kind === 'chat') onPick(it.s.sessionId); else onStart(query.trim()); };
+  return (
+    <div className="gh-palette-backdrop" onMouseDown={onClose}>
+      <div className="gh-palette" role="dialog" aria-label="Switch chat" onMouseDown={(e) => e.stopPropagation()}>
+        <input autoFocus value={query} onChange={(e) => { setQuery(e.target.value); setIndex(0); }} aria-label="Find or start a chat" placeholder="Find a chat, or name a new one…" className="gh-palette-input"
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') onClose();
+            if (e.key === 'ArrowDown') { e.preventDefault(); setIndex((i) => (i + 1) % Math.max(items.length, 1)); }
+            if (e.key === 'ArrowUp') { e.preventDefault(); setIndex((i) => (i + items.length - 1) % Math.max(items.length, 1)); }
+            if (e.key === 'Enter') { e.preventDefault(); choose(index); }
+          }} />
+        <div role="listbox" aria-label="Chats">
+          {items.length === 0 && <p className="gh-slash-empty">No chats yet. Type a name to start one.</p>}
+          {items.map((it, i) => (
+            <button key={it.kind === 'chat' ? it.s.sessionId : 'new'} type="button" role="option" aria-selected={i === index} className="gh-slash-item" onMouseEnter={() => setIndex(i)} onClick={() => choose(i)}>
+              {it.kind === 'chat'
+                ? <><span>{it.s.title}</span><span className="gh-slash-hint">{it.s.sessionId === selected ? 'open now' : `${it.s.participants.length} in it${it.s.status === 'ended' ? ', ended' : ''}`}</span></>
+                : <><span>Start “{query.trim()}”</span><span className="gh-slash-hint">a new chat</span></>}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }

@@ -1,4 +1,5 @@
-import { createFileRoute, Link, useRouter } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
+import { nextPath } from '#/lib/next';
 import { useState } from 'react';
 import { signIn } from '#/lib/session';
 
@@ -8,7 +9,6 @@ export const Route = createFileRoute('/login')({ component: Login });
 const field = (f: FormData, name: string): string => { const v = f.get(name); return typeof v === 'string' ? v : ''; };
 
 function Login() {
-  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   return (
@@ -25,7 +25,7 @@ function Login() {
           const r = await signIn({ data: { email: field(d, 'email'), password: field(d, 'password') } });
           setBusy(false);
           if ('error' in r && r.error) return setError(r.error);
-          await router.navigate({ to: '/' });
+          window.location.assign(nextPath()); // back to the shared link, if one brought you here
         }}
       >
         <label className="text-sm">Email<input name="email" type="email" autoComplete="username" required className="mt-1 w-full rounded border border-gray-300 px-3 py-2" /></label>
@@ -33,7 +33,7 @@ function Login() {
         {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
         <button type="submit" disabled={busy} className="mt-2 rounded bg-black px-3 py-2 text-white disabled:opacity-60">{busy ? 'Signing in…' : 'Sign in'}</button>
       </form>
-      <p className="mt-6 text-sm text-gray-500">No account yet? <Link to="/signup" className="underline">Sign up</Link></p>
+      <p className="mt-6 text-sm text-gray-500">No account yet? <Link to="/signup" className="underline" onClick={(e) => { if (window.location.search) { e.preventDefault(); window.location.assign(`/signup${window.location.search}`); } }}>Sign up</Link></p>
     </main>
   );
 }

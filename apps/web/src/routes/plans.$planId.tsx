@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useRouter } from '@tanstack/react-router';
+import { createFileRoute, useRouter } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
 import { useEffect, useState } from 'react';
 import type { PlanView } from '@greenhouse/schema';
@@ -7,6 +7,8 @@ import { apiGetOrStatus, apiCommand } from '#/lib/api';
 import { apiGet } from '#/lib/api';
 // </cp-10>
 import { rememberPlan } from '#/lib/recent-plans';
+import { signInHref } from '#/lib/next';
+import { ShareMenu, CopyLink } from '#/components/Share';
 import { PlanEditor, WRITE_PREFIX } from '#/components/PlanEditor';
 import { savePlanText } from '#/lib/plan-text';
 import { askToWrite } from '#/lib/sessions';
@@ -27,6 +29,12 @@ const resolveThread = createServerFn({ method: 'POST' })
   .handler(({ data }) => apiCommand(data.planId, 'ResolveThread', data.by, { threadId: data.threadId, decision: data.decision }));
 
 type Open = { planId: string; blockId: string; body: string; by: string };
+// The plan room's own event log, for the Events view: what was recorded, by whom, in order.
+type LoggedEvent = { version: number; type: string; at: string; by: string; data: Record<string, unknown> };
+const loadEvents = createServerFn({ method: 'GET' })
+  .validator((id: string) => id)
+  .handler(({ data: id }) => apiGetOrStatus<LoggedEvent[]>(`/plans/${id}/events`));
+
 const openThread = createServerFn({ method: 'POST' })
   .validator((d: Open) => d)
   .handler(({ data }) => apiCommand(data.planId, 'OpenThread', data.by, { blockId: data.blockId, body: data.body }));
@@ -50,7 +58,7 @@ export const Route = createFileRoute('/plans/$planId')({
 function PlanGate() {
   const { plan, status } = Route.useLoaderData();
   const { planId } = Route.useParams();
-  if (!plan) return <main className="mx-auto max-w-3xl px-4 py-16"><h1 className="text-3xl font-semibold tracking-tight">{planId}</h1><p role="alert" className="gh-muted mt-4 text-sm">{status === 401 ? <><Link to="/login" className="underline">Sign in</Link> to open this plan. Plans are for the people working on them.</> : status === 400 ? 'A plan id is 1 to 40 lowercase letters, digits or dashes.' : `This plan could not be opened (${status}).`}</p></main>;
+  if (!plan) return <main className="mx-auto max-w-3xl px-4 py-16"><h1 className="text-3xl font-semibold tracking-tight">{planId}</h1><p role="alert" className="gh-muted mt-4 text-sm">{status === 401 ? <><a href="/login" className="underline" onClick={(e) => { e.preventDefault(); window.location.assign(signInHref()); }}>Sign in</a> to open this plan. Plans are for the people working on them.</> : status === 400 ? 'A plan id is 1 to 40 lowercase letters, digits or dashes.' : `This plan could not be opened (${status}).`}</p></main>;
   return <PlanPage />;
 }
 
@@ -58,7 +66,7 @@ function PlanPage() {
   // Home lists the plans opened on this device; there is no plan index yet.
   const { planId: opened } = Route.useParams();
   useEffect(() => rememberPlan(opened), [opened]);
-  const [view, setView] = useState<'document' | 'decisions'>('document');
+  const [view, setView] = useState<'document' | 'decisions' | 'events'>('document');
   const { plan: loaded, account } = Route.useLoaderData();
   const plan = loaded!;
   const [sessionTick, setSessionTick] = useState(0);
@@ -128,17 +136,19 @@ function PlanPage() {
               {here.map((who) => <span key={who} className="gh-face" data-agent={who === 'agent' || undefined} title={`${who}, here now`}>{who === 'agent' ? 'AI' : who.slice(0, 2).toUpperCase()}</span>)}
             </span>
             <span className="gh-pill" data-live={live} data-tone={live === 'live' ? 'live' : undefined}><span className="gh-dot" aria-hidden="true" />{live === 'live' ? 'Live' : live === 'off' ? 'Offline' : 'Connecting'}</span>
+            <ShareMenu planId={planId} />
             <span className="gh-muted">as {by}</span>
           </span>
         </div>
         <div className="gh-views" role="tablist" aria-label="Plan views">
           <button type="button" role="tab" aria-selected={view === 'document'} className="gh-view" onClick={() => setView('document')}>Plan</button>
           <button type="button" role="tab" aria-selected={view === 'decisions'} className="gh-view" onClick={() => setView('decisions')}>Decisions <span className="tabular-nums">{plan.decisions.length}</span></button>
+          <button type="button" role="tab" aria-selected={view === 'events'} className="gh-view" onClick={() => setView('events')}>Events <span className="tabular-nums">{plan.version}</span></button>
         </div>
         <div className="gh-doc">
           <h1>{planId}</h1>
           {error && <p role="alert" className="gh-pill mt-4" data-tone="warn">{error}</p>}
-          {view === 'decisions' ? (
+          {view === 'events' ? <EventLog planId={planId} version={plan.version} /> : view === 'decisions' ? (
             <section className="mt-8" aria-label="Decisions">
               {plan.decisions.length === 0 ? <p className="gh-muted text-sm">No decisions yet. A thread ends in one when someone resolves it.</p> : (
                 <ol className="flex flex-col divide-y divide-[var(--ch-divider)]">
@@ -163,8 +173,8 @@ function PlanPage() {
                 {plan.threads.map((t) => {
                   const decision = plan.decisions.find((d) => d.threadId === t.threadId);
                   return (
-                    <article key={t.threadId} data-thread={t.threadId} className="gh-card gh-arrive p-4">
-                      <p className="gh-meta"><span>Block {t.blockId}</span><span>{t.replies} {t.replies === 1 ? 'reply' : 'replies'}</span></p>
+                    <article key={t.threadId} id={`thread-${t.threadId}`} data-thread={t.threadId} className="gh-card gh-arrive p-4">
+                      <p className="gh-meta"><span>Block {t.blockId}</span><span>{t.replies} {t.replies === 1 ? 'reply' : 'replies'}</span><CopyLink path={`/plans/${planId}#thread-${t.threadId}`} label="Copy link to this thread" /></p>
                       <p className="mt-1.5 text-base font-medium">{t.body}</p>
                       {decision ? (
                         <div className="mt-3 text-sm" data-decision>
@@ -202,5 +212,32 @@ function PlanPage() {
         </div>
       </article>
     </main>
+  );
+}
+
+// Events: the plan room's log as recorded, newest first, for debugging what happened and in what order.
+function EventLog({ planId, version }: { planId: string; version: number }) {
+  const [events, setEvents] = useState<LoggedEvent[] | null>(null);
+  const [status, setStatus] = useState(200);
+  useEffect(() => { void loadEvents({ data: planId }).then((r) => { setStatus(r.status); setEvents(r.data ?? []); }); }, [planId, version]);
+  if (events === null) return <p className="gh-muted mt-8 text-sm">Loading the event log…</p>;
+  if (status >= 400) return <p role="alert" className="gh-muted mt-8 text-sm">The event log could not be read ({status}).</p>;
+  if (events.length === 0) return <p className="gh-muted mt-8 text-sm">Nothing recorded on this plan yet.</p>;
+  const brief = (d: Record<string, unknown>) => Object.entries(d).map(([k, v]) => `${k}=${typeof v === 'string' ? (v.length > 80 ? `${v.slice(0, 80)}…` : v) : JSON.stringify(v)}`).join('  ');
+  return (
+    <section className="mt-8" aria-label="Events">
+      <p className="gh-muted text-sm">{events.length} events on this plan, newest first. Sessions keep their own streams in the same room.</p>
+      <ol className="gh-events mt-4">
+        {[...events].reverse().map((e) => (
+          <li key={e.version}>
+            <span className="tabular-nums">{e.version}</span>
+            <span className="gh-event-type">{e.type}</span>
+            <span>{e.by}</span>
+            <span className="tabular-nums">{e.at.slice(0, 19).replace('T', ' ')}</span>
+            <code>{brief(e.data)}</code>
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 }
