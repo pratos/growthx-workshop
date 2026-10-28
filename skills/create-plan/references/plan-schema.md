@@ -17,6 +17,9 @@ One JSON object. Prose fields are Markdown and are rendered; keep them to short 
   "approach": "Why the phases are in this order.",
   "approachDiagram": "lifecycle",                        // optional: id from diagrams
 
+  "contexts": [                                          // one line per vocabulary context: what it covers (20 words)
+    { "name": "Planning", "about": "The words people write and decide with." }
+  ],
   "vocabulary": [                                        // required when the plan adds, renames or redefines a word
     { "term": "Comment", "context": "Planning", "status": "renamed", "from": "the comment Thread",
       "meaning": "A comment on one Block. Collects Replies, ends in a Decision.", "not": ["discussion", "issue"] },

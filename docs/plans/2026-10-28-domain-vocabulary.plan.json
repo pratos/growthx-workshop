@@ -1320,7 +1320,15 @@
     { "term": "Container", "context": "Cloudflare: translated at the edge", "status": "translated", "meaning": "Becomes Workspace in the domain: where code runs." },
     { "term": "Sandbox", "context": "Cloudflare: translated at the edge", "status": "translated", "meaning": "Becomes Workspace in the domain, like a Container." }
   ],
-  "change": { "intent": "List every word in one Vocabulary table, by context, with status, meaning and banned synonyms." },
+  "contexts": [
+    { "name": "Planning", "about": "The words people write and decide with. The comment thread becomes a Comment." },
+    { "name": "Working together", "about": "Who is here, live. A person and the Agent act alike." },
+    { "name": "Agent work", "about": "pi-durable 1.4.0's own words, pinned. A Thread is where a Run happens." },
+    { "name": "Workspace", "about": "Where the agent changes code: a repo, a branch, a preview people can open." },
+    { "name": "Internal: only in packages/agent", "about": "Library words that never reach the domain, the screens or the API." },
+    { "name": "Cloudflare: translated at the edge", "about": "Platform words, renamed to domain words where the code meets Cloudflare." }
+  ],
+  "change": { "intent": "Say what each vocabulary context covers, so the list reads without the diagram." },
   "references": [
     "`docs/DOMAIN-VOCABULARY.md`, `packages/schema/src/index.ts`, `skills/ddd-vocabulary/SKILL.md`",
     "githubnext/chopin: `docs/architecture.md`, `docs/decisions.md`",

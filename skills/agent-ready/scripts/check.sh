@@ -51,7 +51,8 @@ fi
 # 4 · local data comes back with one command
 recipes="$(just --summary 2>/dev/null || true)"
 for r in up test seed reset; do
-  grep -qw "$r" <<<"$recipes" && ok "just: '$r' recipe" || bad "just: no '$r' recipe" "add 'just $r' (reset = wipe local state, migrate, seed)"
+  hint="add 'just $r'"; [ "$r" = reset ] && hint="add 'just reset': wipe local state, migrate, seed"
+  grep -qw "$r" <<<"$recipes" && ok "just: '$r' recipe" || bad "just: no '$r' recipe" "$hint"
 done
 
 # 5 · two seeded accounts the agent can log in as

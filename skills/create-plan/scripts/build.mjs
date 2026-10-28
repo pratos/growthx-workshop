@@ -88,6 +88,10 @@ if (plan.vocabulary) {
     if (t?.status === 'renamed') need(t.from, `${where}: a renamed word says what it was (from)`);
     over(`${where}: meaning`, t?.meaning, BUDGET.term);
   }
+  // Each context gets a line saying what it covers; a context without one is listed bare.
+  const named = new Set((plan.contexts ?? []).map((c) => c.name));
+  for (const c of new Set((plan.vocabulary ?? []).map((t) => t.context))) if (!named.has(c)) warnings.push(`vocabulary context "${c}" has no line in contexts saying what it covers`);
+  for (const c of plan.contexts ?? []) over(`context ${c.name}: about`, c.about, BUDGET.term);
 }
 if ((plan.discoveries ?? []).length > BUDGET.discoveries) warnings.push(`${plan.discoveries.length} discoveries; keep the ${BUDGET.discoveries} that change a decision`);
 (plan.discoveries ?? []).forEach((x, i) => over(`discovery ${i + 1}`, x, BUDGET.discovery));
@@ -170,6 +174,16 @@ const codeBlock = (code, lang, file) => {
 marked.use({ renderer: { code({ text, lang }) { return codeBlock(text, (lang ?? '').split(/\s/)[0]); } } });
 
 const md = (s) => marked.parse(String(s ?? ''), { gfm: true });
+// Every section says what it is and how to read it, so a reader landing on it cold is not left guessing.
+const LEDE = {
+  decisions: 'Each real choice in this plan, with the options compared side by side. A decided one is locked on its choice; open “Compare the options” to see why.',
+  not: 'Out of scope for this plan, each with the reason in the same line.',
+  design: 'The look this plan’s screens use: tokens first, then each component rendered live in every state it can be in.',
+  changes: 'Each file this phase touches and what must be true of it afterwards. Code appears only as a contract other code depends on.',
+  done: 'The phase is done when every box is ticked. Automated checks are commands; by-hand checks are things a person confirms by looking.',
+  references: 'Where the facts in this plan come from.',
+};
+const lede = (k) => `<p class="lede-line">${esc(LEDE[k])}</p>`;
 // A Markdown contract is shown as the Markdown it describes, one line per line as written; any other language is a code block.
 const contract = (k) => ['md', 'markdown'].includes((k.lang ?? '').toLowerCase())
   ? `<figure class="codeblock contract is-md"><figcaption><span class="lang">Markdown</span><span class="where">rendered</span></figcaption><div class="md-body">${marked.parse(String(k.code ?? ''), { gfm: true, breaks: true })}</div></figure>`
@@ -216,7 +230,7 @@ function designBlock(d) {
   const type = (t.type ?? []).map((x) => `<div class="type-row"><span class="type-meta">${esc(x.name)} · ${x.size}/${x.lineHeight ?? 1.4} · ${x.weight ?? 400}</span><span style="font-family:${esc(t.font?.sans ?? 'inherit')};font-size:${x.size}px;font-weight:${x.weight ?? 400};line-height:${x.lineHeight ?? 1.4}">${esc(x.sample ?? 'The plan room records what happened.')}</span></div>`).join('');
   const space = (t.space ?? []).map((v) => `<div class="space-row"><span class="bar" style="width:${v * 2}px"></span><code>${v}px</code></div>`).join('');
   const radius = Object.entries(t.radius ?? {}).map(([k, v]) => `<div class="radius"><span style="border-radius:${typeof v === 'number' ? v + 'px' : esc(v)}"></span><code>${esc(k)} ${esc(v)}</code></div>`).join('');
-  return `<section id="design"><h2>Design language</h2>${d.notes ? md(d.notes) : ''}
+  return `<section id="design"><h2>Design language</h2>${lede('design')}${d.notes ? md(d.notes) : ''}
     ${swatches ? `<h3>Colour</h3><div class="swatches">${swatches}</div>` : ''}
     ${type ? `<h3>Type</h3><div class="type">${type}</div>` : ''}
     ${space ? `<h3>Space</h3><div class="space">${space}</div>` : ''}
@@ -237,9 +251,9 @@ function phase(ph, i) {
     <header class="phase-head"><h2><span class="phase-num">Phase ${i + 1}</span> ${esc(ph.name)}</h2><span class="pill pill-${slug(state)}">${state} · ${d}/${n}</span></header>
     ${md(ph.goal)}
     ${ph.diagram ? vizFrame(diagrams.get(ph.diagram).spec, ph.diagram) : ''}
-    <h3>Changes</h3><ul class="changes">${changes}</ul>
+    <h3>Changes</h3>${lede('changes')}<ul class="changes">${changes}</ul>
     ${(ph.components ?? []).length ? `<h3>Components</h3>${ph.components.map(component).join('')}` : ''}
-    <h3>Done when</h3>
+    <h3>Done when</h3>${lede('done')}
     <div class="verify"><div><h4>Automated</h4><ul class="checks">${ph.verify.automated.map((v) => check(v, 'auto')).join('') || '<li class="none">none</li>'}</ul></div>
     <div><h4>By hand</h4><ul class="checks">${ph.verify.manual.map((v) => check(v, 'manual')).join('') || '<li class="none">none</li>'}</ul></div></div>
     ${ph.notes ? `<div class="phase-notes">${md(ph.notes)}</div>` : ''}
@@ -271,15 +285,29 @@ const nav = [
 ];
 
 const source = relative(process.cwd(), planPath);
+// What each status means, shown under the counts for the statuses this plan uses.
+const STATUS_MEANS = {
+  new: 'not in the vocabulary before this plan',
+  adopted: 'a library’s own word, used as is',
+  renamed: 'the same idea under a new word; the old word is shown',
+  changed: 'the same word with a new or sharper meaning',
+  kept: 'unchanged, listed so the whole vocabulary is in one place',
+  internal: 'allowed only inside the package named in its context',
+  translated: 'a platform’s word, mapped to a domain word where code meets the platform',
+};
 // One table per context, in the order the plan lists them, with a count per status on top.
 function vocabularySection(terms) {
   if (!terms?.length) return '';
   const contexts = [...new Set(terms.map((t) => t.context))];
   const counts = STATUS.map((st) => [st, terms.filter((t) => t.status === st).length]).filter(([, n]) => n);
   const row = (t) => `<tr><th scope="row">${esc(t.term)}</th><td><span class="term-status is-${esc(t.status)}">${esc(t.status)}</span></td><td>${mdi(t.meaning)}${t.from ? `<span class="term-from"> · ${t.status === 'renamed' ? 'was' : 'from'} ${mdi(t.from)}</span>` : ''}</td><td class="term-not">${(t.not ?? []).map(esc).join(', ')}</td></tr>`;
+  const about = new Map((plan.contexts ?? []).map((c) => [c.name, c.about]));
+  const used = STATUS.filter((st) => terms.some((t) => t.status === st));
   return `<section id="vocabulary"><h2>Vocabulary</h2>
+    <p class="lede-line">Every word this plan adds, renames or redefines, and the words around them, in one place. People, code and the agent use these words and no others; the last column lists words that must not be used for the same thing, and <code>just domain-vocabulary-check</code> fails code that does.</p>
     <p class="term-counts">${terms.length} words · ${counts.map(([st, n]) => `<span class="term-status is-${st}">${n} ${st}</span>`).join(' ')}</p>
-    ${contexts.map((c) => `<h3 class="term-context">${esc(c)}</h3><div class="table-wrap"><table class="terms"><thead><tr><th>Word</th><th>Status</th><th>Meaning</th><th>Not</th></tr></thead><tbody>${terms.filter((t) => t.context === c).map(row).join('')}</tbody></table></div>`).join('')}
+    <dl class="term-legend">${used.map((st) => `<div><dt><span class="term-status is-${st}">${st}</span></dt><dd>${esc(STATUS_MEANS[st])}</dd></div>`).join('')}</dl>
+    ${contexts.map((c) => `<h3 class="term-context">${esc(c)}</h3>${about.get(c) ? `<p class="term-about">${mdi(about.get(c))}</p>` : ''}<div class="table-wrap"><table class="terms"><thead><tr><th>Word</th><th>Status</th><th>What it means</th><th>Never call it</th></tr></thead><tbody>${terms.filter((t) => t.context === c).map(row).join('')}</tbody></table></div>`).join('')}
   </section>`;
 }
 
@@ -327,12 +355,12 @@ const html = `<!doctype html>
   <section id="current"><h2>Where we are</h2>${md(plan.current ?? '')}${(plan.discoveries ?? []).length ? `<ul class="discoveries">${plan.discoveries.map((x) => `<li>${mdi(x)}</li>`).join('')}</ul>` : ''}</section>
   <section id="end"><h2>Where we end up</h2>${md(plan.endState ?? '')}</section>
   ${vocabularySection(plan.vocabulary)}
-  <section id="not"><h2>Not doing</h2><ul>${plan.notDoing.map((x) => `<li>${mdi(x)}</li>`).join('')}</ul></section>
+  <section id="not"><h2>Not doing</h2>${lede('not')}<ul>${plan.notDoing.map((x) => `<li>${mdi(x)}</li>`).join('')}</ul></section>
   ${plan.approach ? `<section id="approach"><h2>Approach</h2>${md(plan.approach)}${plan.approachDiagram && diagrams.has(plan.approachDiagram) ? vizFrame(diagrams.get(plan.approachDiagram).spec, plan.approachDiagram) : ''}</section>` : ''}
-  ${(plan.decisions ?? []).length ? `<section id="decisions"><h2>Decisions</h2>${plan.decisions.map(decision).join('')}</section>` : ''}
+  ${(plan.decisions ?? []).length ? `<section id="decisions"><h2>Decisions</h2>${lede('decisions')}${plan.decisions.map(decision).join('')}</section>` : ''}
   ${plan.design ? designBlock(plan.design) : ''}
   ${plan.phases.map(phase).join('')}
-  ${(plan.references ?? []).length ? `<section id="references"><h2>References</h2><ul>${plan.references.map((r) => `<li>${mdi(r)}</li>`).join('')}</ul></section>` : ''}
+  ${(plan.references ?? []).length ? `<section id="references"><h2>References</h2>${lede('references')}<ul>${plan.references.map((r) => `<li>${mdi(r)}</li>`).join('')}</ul></section>` : ''}
   ${versionsSection(versions)}
   <footer>Edit <code>${esc(source)}</code>, not this page. It is rebuilt from the JSON, and every change is a version in <code>${esc(relative(process.cwd(), history.versionsPath(planPath)))}</code>.</footer>
 </main>

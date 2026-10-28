@@ -187,6 +187,14 @@ body.has-expanded { overflow: hidden; }
 .term-status.is-new { color: var(--ok); border-color: color-mix(in oklab, var(--ok) 45%, transparent); }
 .term-status.is-adopted { color: var(--accent); border-color: color-mix(in oklab, var(--accent) 45%, transparent); }
 .term-status.is-renamed, .term-status.is-changed { color: var(--warn); border-color: color-mix(in oklab, var(--warn) 45%, transparent); }
+
+/* A section's lead line: what it is and how to read it. */
+.lede-line { color: var(--muted); font-size: 14.5px; margin: -2px 0 14px; max-width: var(--measure); }
+h3 + .lede-line { margin-top: -4px; }
+.term-legend { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 4px 24px; margin: 6px 0 4px; font-size: 13.5px; color: var(--muted); }
+.term-legend div { display: grid; grid-template-columns: 6.5em 1fr; gap: 8px; align-items: baseline; }
+.term-legend dd { margin: 0; }
+.term-about { color: var(--muted); font-size: 14px; margin: -2px 0 8px; max-width: var(--measure); }
 </style>
 </head>
 <body>
@@ -209,7 +217,7 @@ body.has-expanded { overflow: hidden; }
   <section id="end"><h2>Where we end up</h2><p>Resolving a thread records two facts, <code>ThreadResolved</code> and <code>DecisionRecorded</code>. A second resolve is refused. The plan page shows the decision on the thread, and every open tab sees it at once. People without the flag see the thread as before.</p>
 </section>
   
-  <section id="not"><h2>Not doing</h2><ul><li>Reopening a resolved thread; nobody has asked for it yet.</li><li>Editing a recorded decision; a change of mind is a new thread.</li><li>Notifications outside the plan page.</li></ul></section>
+  <section id="not"><h2>Not doing</h2><p class="lede-line">Out of scope for this plan, each with the reason in the same line.</p><ul><li>Reopening a resolved thread; nobody has asked for it yet.</li><li>Editing a recorded decision; a change of mind is a new thread.</li><li>Notifications outside the plan page.</li></ul></section>
   <section id="approach"><h2>Approach</h2><p>Domain first, because event shapes are the contract everything else reads. Then the flag and API, so the behaviour exists and is off. Then the page, with every state shown first.</p>
 <iframe class="viz" title="How does a thread move from open to decided?" allow="fullscreen" allowfullscreen srcdoc="&lt;!doctype html&gt;
 &lt;html lang=&quot;en&quot;&gt;
@@ -620,7 +628,7 @@ body.has-expanded { overflow: hidden; }
 &lt;/body&gt;
 &lt;/html&gt;
 "></iframe></section>
-  <section id="decisions"><h2>Decisions</h2><article class="decision" id="decision-events">
+  <section id="decisions"><h2>Decisions</h2><p class="lede-line">Each real choice in this plan, with the options compared side by side. A decided one is locked on its choice; open “Compare the options” to see why.</p><article class="decision" id="decision-events">
     <h3>When someone resolves a comment, do we save one record or two?</h3>
     <p class="chosen">Chosen: <b>Two records</b> · pratos · 2026-10-27</p>
     <p>Two records keep &quot;the comment is closed&quot; and &quot;this was decided&quot; apart, so the decision log can count decisions on its own. Both were built and their tests passed.</p>
@@ -1035,7 +1043,7 @@ body.has-expanded { overflow: hidden; }
 &lt;/html&gt;
 "></iframe></details>
   </article></section>
-  <section id="design"><h2>Design language</h2><p>The plan page is a working surface, read often and quickly. Quiet surfaces, one accent for the action, green only for something decided.</p>
+  <section id="design"><h2>Design language</h2><p class="lede-line">The look this plan’s screens use: tokens first, then each component rendered live in every state it can be in.</p><p>The plan page is a working surface, read often and quickly. Quiet surfaces, one accent for the action, green only for something decided.</p>
 
     <h3>Colour</h3><div class="swatches"><div class="swatch"><span style="background:#fffcf0"></span><b>bg</b><code>#fffcf0</code></div><div class="swatch"><span style="background:#100f0f"></span><b>fg</b><code>#100f0f</code></div><div class="swatch"><span style="background:#6f6e69"></span><b>muted</b><code>#6f6e69</code></div><div class="swatch"><span style="background:#dad8ce"></span><b>line</b><code>#dad8ce</code></div><div class="swatch"><span style="background:#f2f0e5"></span><b>surface</b><code>#f2f0e5</code></div><div class="swatch"><span style="background:#205ea6"></span><b>accent</b><code>#205ea6</code></div><div class="swatch"><span style="background:#66800b"></span><b>ok</b><code>#66800b</code></div><div class="swatch"><span style="background:#ad8301"></span><b>warn</b><code>#ad8301</code></div></div>
     <h3>Type</h3><div class="type"><div class="type-row"><span class="type-meta">title · 28/1.15 · 650</span><span style="font-family:ui-sans-serif, system-ui, -apple-system, Inter, sans-serif;font-size:28px;font-weight:650;line-height:1.15">Plan GH-12</span></div><div class="type-row"><span class="type-meta">body · 16/1.5 · 400</span><span style="font-family:ui-sans-serif, system-ui, -apple-system, Inter, sans-serif;font-size:16px;font-weight:400;line-height:1.5">Should retries live in the client or the wrapper?</span></div><div class="type-row"><span class="type-meta">meta · 12/1.4 · 500</span><span style="font-family:ui-sans-serif, system-ui, -apple-system, Inter, sans-serif;font-size:12px;font-weight:500;line-height:1.4">block b3 · 2 replies</span></div></div>
@@ -1456,13 +1464,13 @@ body.has-expanded { overflow: hidden; }
 &lt;/body&gt;
 &lt;/html&gt;
 "></iframe>
-    <h3>Changes</h3><ul class="changes"><li class="change"><code class="file">docs/DOMAIN-VOCABULARY.md</code><div class="intent">Add <code>ResolveThread</code> and <code>DecisionRecorded</code> under Thread and Decision, before any code names them.</div></li><li class="change"><code class="file">packages/domain/src/thread/decider.ts</code><div class="intent">Add the command, the two events, and the resolve case in <code>decide</code>.</div><div class="contract"><figure class="codeblock"><figcaption><span class="lang">TypeScript</span></figcaption><pre><code class="lang-ts"><span class="tok-type">ResolveThread</span>    = <span class="tok-fn">defineCommand</span>(<span class="tok-str">&#39;ResolveThread&#39;</span>, { threadId, by, decision })
+    <h3>Changes</h3><p class="lede-line">Each file this phase touches and what must be true of it afterwards. Code appears only as a contract other code depends on.</p><ul class="changes"><li class="change"><code class="file">docs/DOMAIN-VOCABULARY.md</code><div class="intent">Add <code>ResolveThread</code> and <code>DecisionRecorded</code> under Thread and Decision, before any code names them.</div></li><li class="change"><code class="file">packages/domain/src/thread/decider.ts</code><div class="intent">Add the command, the two events, and the resolve case in <code>decide</code>.</div><div class="contract"><figure class="codeblock"><figcaption><span class="lang">TypeScript</span></figcaption><pre><code class="lang-ts"><span class="tok-type">ResolveThread</span>    = <span class="tok-fn">defineCommand</span>(<span class="tok-str">&#39;ResolveThread&#39;</span>, { threadId, by, decision })
 <span class="tok-type">ThreadResolved</span>   = <span class="tok-fn">defineEvent</span>(<span class="tok-str">&#39;ThreadResolved&#39;</span>,  { threadId, by })
 <span class="tok-type">DecisionRecorded</span> = <span class="tok-fn">defineEvent</span>(<span class="tok-str">&#39;DecisionRecorded&#39;</span>, { threadId, blockId, by, decision })
 
 <span class="tok-kw">type</span> <span class="tok-type">ThreadState</span> = { kind: <span class="tok-str">&#39;none&#39;</span> } | { kind: <span class="tok-str">&#39;open&#39;</span>; blockId: string } | { kind: <span class="tok-str">&#39;resolved&#39;</span> }</code></pre></figure></div></li><li class="change"><code class="file">packages/domain/src/thread/thread.expect.test.ts</code><div class="intent">One expect test for resolve, one for resolving twice, one for the flag being off.</div></li></ul>
     
-    <h3>Done when</h3>
+    <h3>Done when</h3><p class="lede-line">The phase is done when every box is ticked. Automated checks are commands; by-hand checks are things a person confirms by looking.</p>
     <div class="verify"><div><h4>Automated</h4><ul class="checks"><li class="check is-done"><input type="checkbox" disabled checked aria-label="done"><span><code>just test</code></span></li><li class="check is-done"><input type="checkbox" disabled checked aria-label="done"><span><code>just domain-vocabulary-check</code></span></li></ul></div>
     <div><h4>By hand</h4><ul class="checks"><li class="check is-done"><input type="checkbox" disabled checked aria-label="done"><span>Read <code>resolve.snap.txt</code> aloud; it should sound like something that happened.</span></li></ul></div></div>
     
@@ -1471,10 +1479,10 @@ body.has-expanded { overflow: hidden; }
     <p>The API runs the command through Effect services. <code>resolve-thread</code> is checked in <code>decide</code>, off by default, on for the two seeded people.</p>
 
     
-    <h3>Changes</h3><ul class="changes"><li class="change"><code class="file">apps/api/src/services.ts</code><div class="intent">Decode, read flags, dispatch, and turn a rejection into a typed error.</div><div class="contract"><figure class="codeblock"><figcaption><span class="lang">TypeScript</span></figcaption><pre><code class="lang-ts"><span class="tok-fn">dispatch</span>(planId: string, body: unknown):
+    <h3>Changes</h3><p class="lede-line">Each file this phase touches and what must be true of it afterwards. Code appears only as a contract other code depends on.</p><ul class="changes"><li class="change"><code class="file">apps/api/src/services.ts</code><div class="intent">Decode, read flags, dispatch, and turn a rejection into a typed error.</div><div class="contract"><figure class="codeblock"><figcaption><span class="lang">TypeScript</span></figcaption><pre><code class="lang-ts"><span class="tok-fn">dispatch</span>(planId: string, body: unknown):
   <span class="tok-type">Effect</span>&lt;<span class="tok-type">StoredEvent</span>[], <span class="tok-type">InvalidCommand</span> | <span class="tok-type">CommandRejected</span>&gt;</code></pre></figure></div></li><li class="change"><code class="file">apps/api/migrations/0001_flags_and_projections.sql</code><div class="intent">The flags table and the decisions projection; additive only.</div></li><li class="change"><code class="file">packages/db/seed.sql</code><div class="intent">Seed <code>resolve-thread</code> off, allowlisted for admin and pratos.</div></li></ul>
     
-    <h3>Done when</h3>
+    <h3>Done when</h3><p class="lede-line">The phase is done when every box is ticked. Automated checks are commands; by-hand checks are things a person confirms by looking.</p>
     <div class="verify"><div><h4>Automated</h4><ul class="checks"><li class="check is-done"><input type="checkbox" disabled checked aria-label="done"><span><code>bun test apps/api/test</code></span></li><li class="check is-done"><input type="checkbox" disabled checked aria-label="done"><span><code>GH_REMOTE=1 just flag list</code> · shows resolve-thread off with an allowlist</span></li></ul></div>
     <div><h4>By hand</h4><ul class="checks"><li class="check "><input type="checkbox" disabled  aria-label="not done"><span>A guest gets 409 with a sentence that names the flag; pratos gets both events.</span></li></ul></div></div>
     
@@ -1483,7 +1491,7 @@ body.has-expanded { overflow: hidden; }
     <p>Open threads get a field and a Resolve button; resolved ones show who decided what and when. Other tabs update without a refresh.</p>
 
     
-    <h3>Changes</h3><ul class="changes"><li class="change"><code class="file">apps/web/src/routes/plans.$planId.tsx</code><div class="intent">Resolve form on open threads, decision line on resolved ones, live socket.</div></li><li class="change"><code class="file">apps/web/src/routes/plans.$planId.ws.ts</code><div class="intent">Proxy the socket to the API over the service binding.</div></li></ul>
+    <h3>Changes</h3><p class="lede-line">Each file this phase touches and what must be true of it afterwards. Code appears only as a contract other code depends on.</p><ul class="changes"><li class="change"><code class="file">apps/web/src/routes/plans.$planId.tsx</code><div class="intent">Resolve form on open threads, decision line on resolved ones, live socket.</div></li><li class="change"><code class="file">apps/web/src/routes/plans.$planId.ws.ts</code><div class="intent">Proxy the socket to the API over the service binding.</div></li></ul>
     <h3>Components</h3><figure class="component-block">
     <figcaption><b>Thread, resolving</b> · One field, one action. The refusal names the flag in a sentence, never a status code.</figcaption>
     <div class="states"><div class="state"><div class="state-label"><span>open</span><button type="button" class="full" aria-label="Show open full screen">full screen</button></div><iframe class="component" data-frame="c1" sandbox="allow-scripts" style="height:190px" srcdoc="&lt;!doctype html&gt;&lt;html&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;&lt;style&gt;:root{--bg: #fffcf0; --fg: #100f0f; --muted: #6f6e69; --line: #dad8ce; --surface: #f2f0e5; --accent: #205ea6; --ok: #66800b; --warn: #ad8301; --radius-md: 8px; --radius-lg: 12px; --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px; --font: ui-sans-serif, system-ui, -apple-system, Inter, sans-serif; --mono: ui-monospace, SF Mono, Menlo, monospace;} *{box-sizing:border-box} html,body{overflow:hidden} body{margin:0;padding:20px;font:15px/1.5 var(--font, ui-sans-serif, system-ui, sans-serif);background:var(--bg, #fffcf0);color:var(--fg, #100f0f)} .thread { border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 16px; max-width: 560px; }
@@ -1527,12 +1535,12 @@ button { font: inherit; font-size: 14px; padding: 8px 14px; border: 0; border-ra
 .alert { margin: 10px 0 0; font-size: 13.5px; color: var(--warn); }
 .decided { margin: 0; font-size: 14px; color: var(--ok); }</code></pre></details>
   </figure>
-    <h3>Done when</h3>
+    <h3>Done when</h3><p class="lede-line">The phase is done when every box is ticked. Automated checks are commands; by-hand checks are things a person confirms by looking.</p>
     <div class="verify"><div><h4>Automated</h4><ul class="checks"><li class="check is-done"><input type="checkbox" disabled checked aria-label="done"><span><code>just lint</code></span></li><li class="check is-done"><input type="checkbox" disabled checked aria-label="done"><span><code>just demo cp-08</code> · a second socket hears the append</span></li></ul></div>
     <div><h4>By hand</h4><ul class="checks"><li class="check is-done"><input type="checkbox" disabled checked aria-label="done"><span>Two tabs on /plans/gh-12: resolve in one, the other shows the decision without a refresh.</span></li><li class="check "><input type="checkbox" disabled  aria-label="not done"><span>As a guest, the refusal is a sentence and the field keeps its text.</span></li></ul></div></div>
     
   </section>
-  <section id="references"><h2>References</h2><ul><li><code>docs/ARCHITECTURE.md</code> and the map at <code>docs/architecture/index.html#record</code></li><li><code>docs/RELEASE.md</code>, for the rollout once the page is done</li></ul></section>
+  <section id="references"><h2>References</h2><p class="lede-line">Where the facts in this plan come from.</p><ul><li><code>docs/ARCHITECTURE.md</code> and the map at <code>docs/architecture/index.html#record</code></li><li><code>docs/RELEASE.md</code>, for the rollout once the page is done</li></ul></section>
   <section id="versions"><h2>Versions</h2><p class="v-how">Every change to this plan, newest first. <code>just plan-history FILE</code> lists them, <code>just plan-at FILE vN</code> rebuilds one, <code>just plan-diff FILE vA vB</code> says what changed.</p><ol class="versions" reversed><li class="version" id="v4">
     <div class="v-head"><span class="v-num">v4</span><time datetime="2026-10-28T06:50:24.000Z">2026-10-28 06:50 UTC</time><span class="v-who">pratos · Claude Code</span><code class="v-commit">e8c54fbbb</code></div>
     <p class="v-intent">planning beat: replace the GH-12 event-modelling report with &#39;Where should the agent&#39;s work run?&#39; (browser tab, plan room, container; plain comparison rows); viz template takes per-decision axes; resolve-thread plan&#39;s decision in plain words; old report and example removed</p>
