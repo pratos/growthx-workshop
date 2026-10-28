@@ -60,7 +60,7 @@ seeds="$(cfg '.seed // [] | .[]')"
 if [ -z "$seeds" ]; then bad "seed: no seed file" "add one (or list it under seed in agent-ready.json)"
 else
   # shellcheck disable=SC2086
-  if grep -qiE "insert (or (replace|ignore) )?into [\"'\`]?(users?|accounts?|members?|participants?)[\"'\` (]|create(Many)?User|signUp|users?\.(create|insert)" $seeds 2>/dev/null \
+  if grep -qiE "insert (or (replace|ignore) )?into [\"'\`]?(users?|accounts?|members?|participants?)[\"'\` (]|create(Many)?User|signUp|users?\.(create|insert)|(open|create|add)Accounts?\(|accounts?Sql\(" $seeds 2>/dev/null \
      && grep -qi 'admin' $seeds 2>/dev/null; then ok "seed: creates user accounts, including an admin"
   else bad "seed: no user accounts in $(echo $seeds | tr '\n' ' ')" "seed one admin and one regular user with known local-only passwords"; fi
 fi

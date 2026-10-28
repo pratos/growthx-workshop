@@ -1,15 +1,45 @@
 import { DurableObject } from 'cloudflare:workers';
+import { Effect, Layer, ManagedRuntime } from 'effect';
+import { EventStore, type Recorded } from '@greenhouse/engine';
+import { durableObject } from '@greenhouse/engine/adapters/durable-object';
 import { route, type Command, type DomainEvent, type Rejection, type StoredEvent, project } from '@greenhouse/domain';
+import { session, sessionStream, sessionsView, readSession, StartSession, JoinSession, Ask, StartRun, Steer, FinishRun, EndSession } from '@greenhouse/domain';
 import type { Env } from './services';
+
+const sessionCommands = { StartSession, JoinSession, Ask, StartRun, Steer, FinishRun, EndSession } as const;
+export type SessionResult = { events: Recorded[] } | Rejection;
 
 // One Durable Object per Plan. Its SQLite is the plan's event log: the system of record.
 export class PlanRoom extends DurableObject<Env> {
+  // Sessions run on the engine over this object's own SQLite: synchronous, single writer, projections in the same transaction.
+  private readonly sessions: ManagedRuntime.ManagedRuntime<EventStore, never>;
+
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
+    this.sessions = ManagedRuntime.make(EventStore.layer([sessionsView]).pipe(Layer.provide(durableObject(ctx.storage))));
     void ctx.blockConcurrencyWhile(async () => {
       this.ctx.storage.sql.exec(`CREATE TABLE IF NOT EXISTS events (
         version INTEGER PRIMARY KEY, type TEXT NOT NULL, at TEXT NOT NULL, by TEXT NOT NULL, data TEXT NOT NULL)`);
+      await this.sessions.runPromise(EventStore.use((s) => s.setup()));
     });
+  }
+
+  // A Session command from a signed-in Participant. `by` comes from the sign-in, never from the body.
+  async sessionCommand(planId: string, type: string, data: unknown, by: string): Promise<SessionResult> {
+    const make = sessionCommands[type as keyof typeof sessionCommands];
+    if (!make) return { rejected: `unknown command ${type}` };
+    const fields = { ...(data as object), by, ...(type === 'StartSession' ? { planId, sessionId: crypto.randomUUID().slice(0, 8) } : {}) };
+    let command;
+    try { command = make(fields as never); } catch (e) { return { rejected: `invalid ${type}: ${e instanceof Error ? e.message : String(e)}` }; }
+    const ctx = { newId: () => crypto.randomUUID().slice(0, 8), now: () => new Date(), flag: () => false };
+    const result = await this.sessions.runPromise(EventStore.use((s) => s.execute(session, sessionStream(command.data.sessionId), command as never, ctx, by)));
+    if ('rejected' in result) return result;
+    this.broadcastFrame({ type: 'session', events: result });
+    return { events: result };
+  }
+
+  async sessionView(sessionId: string) {
+    return this.sessions.runPromise(readSession(sessionId).pipe(Effect.provide(durableObject(this.ctx.storage))));
   }
 
   version(): number {
@@ -37,8 +67,9 @@ export class PlanRoom extends DurableObject<Env> {
   }
   webSocketMessage(ws: WebSocket, message: string | ArrayBuffer) { if (message === 'ping') ws.send('pong'); }
   webSocketClose(ws: WebSocket) { try { ws.close(); } catch {} }
-  private broadcast(events: StoredEvent[]) {
-    const frame = JSON.stringify({ type: 'events', events });
+  private broadcast(events: StoredEvent[]) { this.broadcastFrame({ type: 'events', events }); }
+  private broadcastFrame(message: unknown) {
+    const frame = JSON.stringify(message);
     for (const ws of this.ctx.getWebSockets()) { try { ws.send(frame); } catch {} }
   }
 

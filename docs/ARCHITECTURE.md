@@ -14,7 +14,7 @@ flowchart LR
     A["API"]
     RW["Rules and shared words"]
     R[("Plan room · one per plan · what happened, in order")]
-    D[("Settings and summaries · feature switches")]
+    D[("Settings, accounts and summaries · feature switches, who can sign in")]
   end
   subgraph ag["Agent"]
     AG["Agent · a participant like you"]
@@ -57,9 +57,9 @@ The map's parts, and the folders that hold them. `just arch` refuses a folder un
 |---|---|
 | Web app | `apps/web` |
 | API | `apps/api` |
-| Plan room | `apps/api` (the PlanRoom Durable Object), `packages/domain` |
+| Plan room | `apps/api` (the PlanRoom Durable Object), `packages/domain`, `packages/engine` (the event log every stream is written through) |
 | Rules and shared words | `packages/domain`, `packages/schema`, `docs/DOMAIN-VOCABULARY.md` |
-| Settings and summaries | `apps/api/migrations`, `packages/db` |
+| Settings, accounts and summaries | `apps/api/migrations`, `packages/db`, `packages/engine` (accounts are a stream in D1) |
 | Agent | `packages/agent` |
 | Agent memory | `packages/agent` (SQLite checkpoints) |
 | Workshop check-in | `apps/checkin` |
@@ -69,12 +69,13 @@ The map's parts, and the folders that hold them. `just arch` refuses a folder un
 | From | May import | Must not import |
 |---|---|---|
 | apps/web | packages/schema, the API over `env.API` | packages/domain, packages/db, any database client |
-| apps/api | packages/domain, packages/schema | apps/web |
+| apps/api | packages/domain, packages/engine, packages/schema | apps/web |
 | packages/agent | @earendil-works/pi-durable, pi-ai, chord; bun:sqlite | apps/*, packages/domain (for now: a standalone harness demo) |
 | apps/checkin | nothing; a standalone Worker that shares the toolchain | packages/* |
-| packages/domain | packages/schema, effect | anything with I/O |
+| packages/domain | packages/schema, packages/engine, effect | anything with I/O outside the engine's Sql port |
+| packages/engine | effect; bun:sqlite and PGlite in its adapters and tests | packages/domain, packages/schema, apps/* |
 | packages/schema | effect | everything else |
-| packages/db | nothing; SQL seeds run by `just seed` | everything |
+| packages/db | packages/domain, packages/engine: prints seeds and new accounts as SQL, produced by the engine | apps/* |
 | .github/workflows | runs the same `just` recipes | |
 
 ## Decisions already made

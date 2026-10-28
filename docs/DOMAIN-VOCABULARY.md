@@ -39,13 +39,35 @@ A comment thread anchored to exactly one Block. Opens, collects Replies, ends in
 Carried by: `Thread` schema · Events: `ThreadOpened`, `ThreadResolved` · Commands: `OpenThread`, `ResolveThread`
 Not: discussion, conversation, comment chain, issue, ticket
 
+## Context: Agent work
+
+### Session
+Where Participants ask the agent, inside one Plan. Started by one Participant; others join; only the starter ends it. One stream per Session. Becomes the agent's Thread when the comment thread is renamed after the workshop.
+Carried by: `SessionView` schema · Events: `SessionStarted`, `ParticipantJoined`, `SessionEnded` · Commands: `StartSession`, `JoinSession`, `EndSession`
+Not: chat, conversation, call, meeting, workspace
+
+### Run
+One Ask, from queued to its result (pi-durable's word). One Run at a time per Session; others queue in order. Any Participant in the Session can steer a running Run; only whoever started it finishes it.
+Carried by: `Run` schema · Events: `RunQueued`, `RunStarted`, `RunSteered`, `RunFinished` · Commands: `Ask`, `StartRun`, `Steer`, `FinishRun`
+Not: job, task, prompt
+
 ## Context: Identity
 
 ### Participant
-A person or an agent in a plan room. Same commands, same rights. The agent holds no command a person cannot issue.
-Carried by: `ParticipantId` schema · Events: none yet · Commands: none; every command carries `by`
+A person or an agent in a plan room. Same commands, same rights. The agent holds no command a person cannot issue, and signs in with its own Account.
+Carried by: `ParticipantId` schema · Events: `ParticipantJoined` · Commands: none of its own; every command carries `by`, set from the sign-in
 Not: user, member, bot, assistant, actor, author
+
+### Account
+How a Participant signs in: an email, a name, a password hash, and whether they are an admin. One stream per email, so two sign-ups for one email cannot both win.
+Carried by: `Account` schema · Events: `AccountOpened` · Commands: `SignUp`, `OpenAccount` (seeds and `just user-add`)
+Not: profile, login, identity, credentials
+
+### Sign-in
+One live sign-in on one device: the hash of a token, and when it expires. Signing out ends that one only. Never called a session: that word is agent work.
+Carried by: the `sign_ins` table · Events: `SignedIn`, `SignedOut` · Commands: `SignIn`, `SignOut`
+Not: cookie, login
 
 ## Verbs
 
-Open, Reply, Resolve, Edit, Attach, Request, Fork. Imperative in a command, past tense in an event. No other verbs name a command.
+Open, Reply, Resolve, Edit, Attach, Request, Fork, Start, Join, Ask, Steer, Finish, End, Sign up, Sign in, Sign out. Imperative in a command, past tense in an event. No other verbs name a command.

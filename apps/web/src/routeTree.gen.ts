@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as HealthzRouteImport } from './routes/healthz'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ReadyzRouteImport } from './routes/readyz'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as AdminFlagsRouteImport } from './routes/admin.flags'
 import { Route as PlansPlanIdRouteImport } from './routes/plans.$planId'
 import { Route as PlansPlanIdWsRouteImport } from './routes/plans.$planId.ws'
@@ -37,6 +38,11 @@ const ReadyzRoute = ReadyzRouteImport.update({
   path: '/readyz',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminFlagsRoute = AdminFlagsRouteImport.update({
   id: '/admin/flags',
   path: '/admin/flags',
@@ -58,6 +64,7 @@ export interface FileRoutesByFullPath {
   '/healthz': typeof HealthzRoute
   '/login': typeof LoginRoute
   '/readyz': typeof ReadyzRoute
+  '/signup': typeof SignupRoute
   '/admin/flags': typeof AdminFlagsRoute
   '/plans/$planId': typeof PlansPlanIdRouteWithChildren
   '/plans/$planId/ws': typeof PlansPlanIdWsRoute
@@ -67,6 +74,7 @@ export interface FileRoutesByTo {
   '/healthz': typeof HealthzRoute
   '/login': typeof LoginRoute
   '/readyz': typeof ReadyzRoute
+  '/signup': typeof SignupRoute
   '/admin/flags': typeof AdminFlagsRoute
   '/plans/$planId': typeof PlansPlanIdRouteWithChildren
   '/plans/$planId/ws': typeof PlansPlanIdWsRoute
@@ -77,6 +85,7 @@ export interface FileRoutesById {
   '/healthz': typeof HealthzRoute
   '/login': typeof LoginRoute
   '/readyz': typeof ReadyzRoute
+  '/signup': typeof SignupRoute
   '/admin/flags': typeof AdminFlagsRoute
   '/plans/$planId': typeof PlansPlanIdRouteWithChildren
   '/plans/$planId/ws': typeof PlansPlanIdWsRoute
@@ -88,6 +97,7 @@ export interface FileRouteTypes {
     | '/healthz'
     | '/login'
     | '/readyz'
+    | '/signup'
     | '/admin/flags'
     | '/plans/$planId'
     | '/plans/$planId/ws'
@@ -97,6 +107,7 @@ export interface FileRouteTypes {
     | '/healthz'
     | '/login'
     | '/readyz'
+    | '/signup'
     | '/admin/flags'
     | '/plans/$planId'
     | '/plans/$planId/ws'
@@ -106,6 +117,7 @@ export interface FileRouteTypes {
     | '/healthz'
     | '/login'
     | '/readyz'
+    | '/signup'
     | '/admin/flags'
     | '/plans/$planId'
     | '/plans/$planId/ws'
@@ -116,6 +128,7 @@ export interface RootRouteChildren {
   HealthzRoute: typeof HealthzRoute
   LoginRoute: typeof LoginRoute
   ReadyzRoute: typeof ReadyzRoute
+  SignupRoute: typeof SignupRoute
   AdminFlagsRoute: typeof AdminFlagsRoute
   PlansPlanIdRoute: typeof PlansPlanIdRouteWithChildren
 }
@@ -148,6 +161,13 @@ declare module '@tanstack/react-router' {
       path: '/readyz'
       fullPath: '/readyz'
       preLoaderRoute: typeof ReadyzRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/flags': {
@@ -191,6 +211,7 @@ const rootRouteChildren: RootRouteChildren = {
   HealthzRoute: HealthzRoute,
   LoginRoute: LoginRoute,
   ReadyzRoute: ReadyzRoute,
+  SignupRoute: SignupRoute,
   AdminFlagsRoute: AdminFlagsRoute,
   PlansPlanIdRoute: PlansPlanIdRouteWithChildren,
 }

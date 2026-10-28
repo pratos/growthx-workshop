@@ -5,6 +5,11 @@ import { thread, threadKey, OpenThread, Reply, ResolveThread, type ThreadEvent }
 
 export * from './kernel';
 export * from './thread/decider';
+export * from './account/decider';
+export * from './account/view';
+export * from './account/accounts';
+export * from './session/decider';
+export * from './session/view';
 
 export type Command = Message & { by: string };
 export type DomainEvent = ThreadEvent;

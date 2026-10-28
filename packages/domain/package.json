@@ -7,6 +7,7 @@
   },
   "dependencies": {
     "@greenhouse/schema": "workspace:*",
-    "effect": "4.0.7"
+    "effect": "4.0.7",
+    "@greenhouse/engine": "workspace:*"
   }
 }

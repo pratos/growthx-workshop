@@ -1,1 +1,11 @@
-{ "name": "@greenhouse/db", "private": true, "type": "module", "description": "D1 migrations live in apps/api/migrations (wrangler convention); this package holds seeds and the replay job." }
+{
+  "name": "@greenhouse/db",
+  "private": true,
+  "type": "module",
+  "description": "D1 migrations live in apps/api/migrations (wrangler convention); this package prints seeds and new accounts as SQL, produced by the engine.",
+  "dependencies": {
+    "@greenhouse/domain": "workspace:*",
+    "@greenhouse/engine": "workspace:*",
+    "effect": "4.0.7"
+  }
+}

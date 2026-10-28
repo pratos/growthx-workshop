@@ -24,3 +24,20 @@ export const CommandEnvelope = Schema.Struct({
   by: ParticipantId,
 });
 export type CommandEnvelope = typeof CommandEnvelope.Type;
+
+// ---- Identity: who can sign in. An Account's id is the ParticipantId its commands carry.
+export const Email = Schema.String.check(Schema.isMinLength(3), Schema.isMaxLength(254), Schema.isPattern(/^[^@\s]+@[^@\s]+$/));
+export const Name = Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(80));
+export const Secret = Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(512)); // a hash, never a password
+export const Account = Schema.Struct({ accountId: ParticipantId, email: Email, name: Name, admin: Schema.Boolean });
+export type Account = typeof Account.Type;
+
+// ---- Agent work: a Session is where Participants ask the agent and its Runs happen. Becomes the agent's Thread at the rename.
+export const RunStatus = Schema.Literals(['queued', 'running', 'finished']);
+export const Run = Schema.Struct({ runId: Id, sessionId: Id, askedBy: ParticipantId, asked: Text, status: RunStatus, steers: Schema.Int, result: Schema.optionalKey(Text) });
+export type Run = typeof Run.Type;
+export const SessionView = Schema.Struct({
+  sessionId: Id, planId: Id, title: Text, startedBy: ParticipantId, status: Schema.Literals(['open', 'ended']),
+  participants: Schema.Array(ParticipantId), runs: Schema.Array(Run),
+});
+export type SessionView = typeof SessionView.Type;

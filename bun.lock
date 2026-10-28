@@ -18,6 +18,7 @@
       "name": "@greenhouse/api",
       "dependencies": {
         "@greenhouse/domain": "workspace:*",
+        "@greenhouse/engine": "workspace:*",
         "@greenhouse/schema": "workspace:*",
         "effect": "4.0.7",
         "hono": "^4.10.0",
@@ -67,12 +68,27 @@
     },
     "packages/db": {
       "name": "@greenhouse/db",
+      "dependencies": {
+        "@greenhouse/domain": "workspace:*",
+        "@greenhouse/engine": "workspace:*",
+        "effect": "4.0.7",
+      },
     },
     "packages/domain": {
       "name": "@greenhouse/domain",
       "dependencies": {
+        "@greenhouse/engine": "workspace:*",
         "@greenhouse/schema": "workspace:*",
         "effect": "4.0.7",
+      },
+    },
+    "packages/engine": {
+      "name": "@greenhouse/engine",
+      "dependencies": {
+        "effect": "4.0.7",
+      },
+      "devDependencies": {
+        "@electric-sql/pglite": "0.3.14",
       },
     },
     "packages/schema": {
@@ -187,6 +203,8 @@
 
     "@earendil-works/pi-telemetry": ["@earendil-works/pi-telemetry@1.4.0", "", {}, "sha512-MLIfowwUYIY65jSjMX82paZOrX/NTvLk6D08h+3Jq42a99RzUOewzuCR0zOlPul3D6UBfddat76VT6LvsHEs1w=="],
 
+    "@electric-sql/pglite": ["@electric-sql/pglite@0.3.14", "", {}, "sha512-3DB258dhqdsArOI1fIt7cb9RpUOgcDg5hXWVgVHAeqVQ/qxtFy605QKs4gx6mFq3jWsSPqDN8TgSEsqC3OfV9Q=="],
+
     "@emnapi/core": ["@emnapi/core@1.11.3", "", { "dependencies": { "@emnapi/wasi-threads": "1.2.3", "tslib": "^2.4.0" } }, "sha512-zLpS5asjEb7lq8jYLq37N6XKaE41DIexlY1rF/z4/tIl3wo13Sqm28fRyfIsKZD+NZ8mM5RoKkpW/rBcuoSZSg=="],
 
     "@emnapi/runtime": ["@emnapi/runtime@1.11.3", "", { "dependencies": { "tslib": "^2.4.0" } }, "sha512-Xz4Tpyki7XyrpbUK1jR1AhdAdaXyhhY4lZ3neLodmhpuWfy2PAQN5B46sAiU4liOXGLkHypn/qU+jvfWSCYYLA=="],
@@ -256,6 +274,8 @@
     "@greenhouse/db": ["@greenhouse/db@workspace:packages/db"],
 
     "@greenhouse/domain": ["@greenhouse/domain@workspace:packages/domain"],
+
+    "@greenhouse/engine": ["@greenhouse/engine@workspace:packages/engine"],
 
     "@greenhouse/schema": ["@greenhouse/schema@workspace:packages/schema"],
 

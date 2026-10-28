@@ -1,16 +1,18 @@
 #!/usr/bin/env bash
 # just user-add EMAIL NAME [admin|member]   (local D1 unless GH_REMOTE=1)
+# Opens the account through the engine (AccountOpened plus the accounts row), so it is recorded exactly like a sign-up.
 # Asks for the password without echoing it; only its hash reaches D1. The participant id is the part of the email before @.
 set -euo pipefail
+root="$(cd "$(dirname "$0")/.." && pwd)"
 email="${1:?usage: just user-add EMAIL NAME [admin|member]}"; name="${2:?usage: just user-add EMAIL NAME [admin|member]}"; role="${3:-member}"
 case "$role" in admin|member) ;; *) echo "role must be admin or member"; exit 2 ;; esac
-[[ "$email" =~ ^[^@\ \']+@[^@\ \']+$ ]] || { echo "not an email: $email"; exit 2; }
-[[ "$name" != *"'"* ]] || { echo "name cannot contain a quote"; exit 2; }
-id="${email%@*}"; email="$(tr '[:upper:]' '[:lower:]' <<<"$email")"
 read -rsp "password for $email: " pw; echo
 [ ${#pw} -ge 12 ] || { echo "use at least 12 characters"; exit 2; }
-hash="$(printf '%s' "$pw" | bun "$(dirname "$0")/../packages/db/hash-password.ts")"; unset pw
+tmp="$(mktemp -t gh-account.XXXXXX).sql"; trap 'rm -f "$tmp"' EXIT
+printf '%s' "$pw" | bun "$root/packages/db/add-account.ts" "$email" "$name" "$role" > "$tmp"; unset pw
 remote="--local"; [ "${GH_REMOTE:-}" = "1" ] && remote="--remote"
-cd "$(dirname "$0")/../apps/api"
-bunx wrangler d1 execute greenhouse $remote --command "INSERT INTO users (id, email, name, role, password_hash) VALUES ('$id', '$email', '$name', '$role', '$hash') ON CONFLICT(email) DO UPDATE SET name=excluded.name, role=excluded.role, password_hash=excluded.password_hash" >/dev/null
-echo "✓ $email is a $role ($remote, participant id $id)"
+cd "$root/apps/api"
+if bunx wrangler d1 execute greenhouse $remote --file "$tmp" >/dev/null 2>"$tmp.err"; then echo "✓ $email opened as $role ($remote)"
+elif grep -q UNIQUE "$tmp.err"; then echo "✗ $email already has an account ($remote)"; rm -f "$tmp.err"; exit 1
+else cat "$tmp.err"; rm -f "$tmp.err"; exit 1; fi
+rm -f "$tmp.err"

@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { Context, Effect, Layer, Schema } from 'effect';
-import { ParticipantId } from '@greenhouse/schema';
+import { ParticipantId, type Account } from '@greenhouse/schema';
 import { runtimeFor, type Env } from './services';
 import { requireAdmin } from './auth';
 
@@ -81,7 +81,7 @@ export class FlagsAdmin extends Context.Service<FlagsAdmin, {
 
 // ---- The edge: a Hono sub-app mounted at /flags. Programs run through the shared runtime; the FlagsAdmin layer is provided per request from the env's D1.
 
-export const flagsAdmin = new Hono<{ Bindings: Env }>();
+export const flagsAdmin = new Hono<{ Bindings: Env; Variables: { account: Account } }>();
 
 // Every flag route needs a signed-in admin: reading who is on an allowlist is admin data too.
 flagsAdmin.use('*', requireAdmin);

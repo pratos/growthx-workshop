@@ -1,4 +1,4 @@
-import { createFileRoute, useRouter } from '@tanstack/react-router';
+import { createFileRoute, Link, useRouter } from '@tanstack/react-router';
 import { useState } from 'react';
 import { signIn } from '#/lib/session';
 
@@ -33,6 +33,7 @@ function Login() {
         {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
         <button type="submit" disabled={busy} className="mt-2 rounded bg-black px-3 py-2 text-white disabled:opacity-60">{busy ? 'Signing in…' : 'Sign in'}</button>
       </form>
+      <p className="mt-6 text-sm text-gray-500">No account yet? <Link to="/signup" className="underline">Sign up</Link></p>
     </main>
   );
 }
