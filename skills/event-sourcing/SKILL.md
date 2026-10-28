@@ -36,7 +36,7 @@ Spreadsheets won because the data and its flow are visible. An event log gives a
 4. **Fill `decide`**, then `evolve` if state changed, then any projection.
 5. **Run `just test`.** Expect tests in milliseconds, then the event-replay e2e through the API.
 6. **If the change touches a recorded event**, stop and pick a rung on the ladder. Write the upcaster's expect test with a real old event from prod as input.
-7. **If the change is a modelling choice** (one event or two, where a field lives), do not decide in prose. `just explore` both, and build a decision report. The GH-12 example in viz-explainer is this exact case.
+7. **If the change is a modelling choice** (one event or two, where a field lives), do not decide in prose. `just explore` both, and build a decision report. The resolve-thread plan in `docs/plans` shows this case: one record or two when a comment is resolved.
 8. **Hand over** the snapshot and, if asked why, the artifact.
 
 ## Explain mode

@@ -72,7 +72,7 @@ sequenceDiagram
 
 Two or more options, each with its own diagram, compared on the same axes. The template renders one option's diagram at a time with tabs, and a comparison strip underneath.
 
-Axes, always the same four so reports are comparable across decisions:
+Axes are the questions that matter for this decision, written as plain row labels in `spec.axes` (`[{ key, label }]`) with a short answer per option in `option.axes[key]`. For an architecture choice that is things like "close the laptop", "the process crashes", "cost while idle". Without `spec.axes`, the template falls back to four code-change rows:
 
 1. Call sites touched (count and list).
 2. Mechanical changes vs judgement calls.

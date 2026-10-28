@@ -7,7 +7,7 @@ Each checkpoint is a git tag. Each has one deterministic beat (`scripts/demo.sh 
 | Tag | Beat shown live | File that fixes it | `demo.sh` checks |
 |---|---|---|---|
 | cp-00 | Fresh clone, nobody at the keyboard. `just up`, `/healthz`, `/login`. | justfile, flake.nix, both `wrangler.jsonc` | api answers `/healthz` and `/readyz` |
-| cp-01 | `/create_plan GH-12` returns a wall of Markdown. | `docs/decisions/gh-12.spec.json` + viz-explainer | the decision report builds with every step validated |
+| cp-01 | `/create_plan` for the coding agent returns a wall of Markdown. | `docs/decisions/agent-loop.spec.json` + viz-explainer: where should the agent's work run? | the decision report builds with every step validated |
 | cp-02 | "Add resolve thread." Agent names it ThreadClosed with a verdict. | `docs/DOMAIN-VOCABULARY.md` + `check-domain-vocabulary.sh` + the web import boundary in `.oxlintrc.json` | check passes on the tag, fails on branch `wrong/cp-02` |
 | cp-03 | Agent writes a unit test with a mock. | the expect harness in `packages/domain/src/kernel.ts` | `bun test` runs the Thread decider snapshots, read as prose |
 | cp-04 | Agent edits a recorded event's shape in place. | `packages/domain/src/upcast` | a verbatim v1 stream reads as v2 |

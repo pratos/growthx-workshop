@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Is a decision its own fact, or part of ThreadResolved?</title>
+<title>Where should the agent's work run?</title>
 <script src="https://cdn.jsdelivr.net/npm/pele@1.12.0/dist/pele.global.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/4.5.0/anime.umd.min.js"></script>
 <style>
@@ -139,171 +139,177 @@
 <script type="application/json" id="spec">
 {
   "kind": "decision-report",
-  "question": "Is a decision its own fact, or part of ThreadResolved?",
+  "question": "Where should the agent's work run?",
   "meta": {
-    "builtBy": "agent · just explore GH-12",
-    "builtAt": "2026-10-27",
-    "source": "GH-12 · two explorations"
+    "builtBy": "create-plan",
+    "builtAt": "2026-10-28"
   },
+  "axes": [
+    {
+      "key": "tab",
+      "label": "Close the laptop"
+    },
+    {
+      "key": "crash",
+      "label": "The process crashes"
+    },
+    {
+      "key": "together",
+      "label": "Two people at once"
+    },
+    {
+      "key": "code",
+      "label": "Run code and tests"
+    },
+    {
+      "key": "idle",
+      "label": "Cost while nobody is using it"
+    }
+  ],
   "options": [
     {
-      "id": "two-events",
-      "label": "Two events",
-      "summary": "The thread is resolved in one event and the decision is recorded in a second. A thread can close without a decision.",
-      "diagram": "sequenceDiagram\n  participant P as Person\n  participant A as API\n  participant L as Event log\n  participant D as Decision log\n  P->>A: ResolveThread(thread-7, \"wrapper\")\n  A->>L: ThreadResolved\n  A->>L: DecisionRecorded\n  L->>D: project decision",
-      "tried": {
-        "kind": "exploration",
-        "ref": "exp_two_events",
-        "summary": "expect green, 2 projections touched"
-      },
-      "axes": {
-        "callSites": {
-          "count": 4,
-          "list": [
-            "resolve.ts",
-            "decision-log.ts",
-            "thread-view.ts",
-            "mcp/list-decisions.ts"
-          ]
-        },
-        "mechanical": "2 mechanical, 2 judgement (what a decision-less close means in the UI)",
-        "silent": "Decision log can lag the thread by one event",
-        "invariant": "\"A decision references exactly one thread\" stays a type; \"every resolved thread has a decision\" becomes a check"
-      }
-    },
-    {
-      "id": "one-event",
-      "label": "One event",
-      "summary": "The resolve event carries the decision. A thread cannot close without one.",
-      "diagram": "sequenceDiagram\n  participant P as Person\n  participant A as API\n  participant L as Event log\n  participant D as Decision log\n  P->>A: ResolveThread(thread-7, \"wrapper\")\n  A->>L: ThreadResolved{decision}\n  L->>D: project decision",
-      "tried": {
-        "kind": "exploration",
-        "ref": "exp_one_event",
-        "summary": "expect green, 1 projection touched"
-      },
-      "axes": {
-        "callSites": {
-          "count": 3,
-          "list": [
-            "resolve.ts",
-            "decision-log.ts",
-            "mcp/list-decisions.ts"
-          ]
-        },
-        "mechanical": "3 mechanical, 0 judgement",
-        "silent": "None found",
-        "invariant": "Both invariants are types. Loses \"close without deciding\", which the domain vocabulary does not have"
-      }
-    },
-    {
-      "id": "close-only",
-      "label": "ThreadClosed, no decision",
-      "summary": "The thread closes and nothing is recorded. This is what the first pass wrote.",
-      "diagram": "sequenceDiagram\n  participant P as Person\n  participant A as API\n  participant L as Event log\n  P->>A: ResolveThread(thread-7)\n  A->>L: ThreadClosed",
+      "id": "browser",
+      "label": "In the browser tab",
+      "summary": "The tab runs the agent beside you; nothing else to deploy.",
+      "diagram": "flowchart LR\n  Y[\"You\"]\n  B[\"Browser tab · the agent runs here\"]\n  M[\"Model\"]\n  L[\"Work stops, nothing saved\"]\n  Y -- \"ask\" --> B\n  B -- \"think\" --> M\n  B -. \"close the tab\" .-> L",
       "tried": null,
       "axes": {
-        "callSites": {
-          "count": 1,
-          "list": [
-            "resolve.ts"
-          ]
-        },
-        "mechanical": "1 mechanical",
-        "silent": "Decision ownership disappears",
-        "invariant": "Breaks the domain vocabulary: there is no ThreadClosed"
+        "tab": "The work stops",
+        "crash": "Lost",
+        "together": "No, one tab each",
+        "code": "No shell, no git",
+        "idle": "Free"
+      }
+    },
+    {
+      "id": "room",
+      "label": "In the plan room, on Cloudflare",
+      "summary": "A Durable Object per plan runs the agent and saves every step.",
+      "diagram": "flowchart LR\n  Y[\"You and teammates\"]\n  R[\"Plan room · the agent runs here\"]\n  M[\"Model\"]\n  S[(\"Room storage · every step\")]\n  C[\"Container · only to run code\"]\n  Y -- \"ask\" --> R\n  R -- \"think\" --> M\n  R -- \"saves\" --> S\n  R -- \"run tests\" --> C\n  R -. \"shows each step\" .-> Y",
+      "tried": {
+        "kind": "spike",
+        "ref": "cp-08 and packages/agent",
+        "summary": "rooms showed every step live; the agent resumed after kill -9"
+      },
+      "axes": {
+        "tab": "Keeps working",
+        "crash": "Resumes from the last step",
+        "together": "Yes, one room",
+        "code": "Yes, through a container",
+        "idle": "Almost nothing while asleep"
+      }
+    },
+    {
+      "id": "container",
+      "label": "In a container",
+      "summary": "One machine runs the agent and the code together.",
+      "diagram": "flowchart LR\n  Y[\"You\"]\n  C[\"Container · the agent and the code\"]\n  M[\"Model\"]\n  D[(\"Its own disk\")]\n  G[\"Disk wiped when it stops\"]\n  Y -- \"ask\" --> C\n  C -- \"think\" --> M\n  C -- \"saves\" --> D\n  C -. \"stopped when idle\" .-> G",
+      "tried": {
+        "kind": "spike",
+        "ref": "packages/agent",
+        "summary": "a local process resumed from its own SQLite file"
+      },
+      "axes": {
+        "tab": "Keeps working",
+        "crash": "Only if its disk survives",
+        "together": "Hard, one machine each",
+        "code": "Yes, directly",
+        "idle": "Pays while it runs"
       }
     }
   ],
   "steps": [
     {
-      "id": "cmd",
-      "option": "two-events",
-      "caption": "Pratos resolves thread 7 with one command and gives the decision in their own words.",
+      "id": "ask",
+      "option": "browser",
+      "caption": "You ask, and the tab runs the agent right next to you.",
       "edges": [
-        "i0"
+        "L_Y_B_0",
+        "L_B_M_0"
       ],
       "focus": [
-        "P",
-        "A"
+        "Y",
+        "B"
       ]
     },
     {
-      "id": "resolved",
-      "option": "two-events",
-      "caption": "The log records that the thread is resolved.",
+      "id": "close",
+      "option": "browser",
+      "caption": "Close the laptop and the work stops; nothing was saved.",
       "edges": [
-        "i1"
+        "L_B_L_0"
       ],
       "focus": [
         "L"
       ]
     },
     {
-      "id": "decided",
-      "option": "two-events",
-      "caption": "The log records who decided and what they chose. This second event can be left out.",
+      "id": "ask",
+      "option": "room",
+      "caption": "You and teammates ask in the same plan room.",
       "edges": [
-        "i2"
+        "L_Y_R_0"
       ],
       "focus": [
-        "L"
+        "Y",
+        "R"
       ]
     },
     {
-      "id": "proj",
-      "option": "two-events",
-      "caption": "The decision log is built from both events.",
+      "id": "save",
+      "option": "room",
+      "caption": "The room saves every step, so a crash resumes where it stopped.",
       "edges": [
-        "i3"
+        "L_R_S_0"
       ],
       "focus": [
-        "D"
+        "S"
       ]
     },
     {
-      "id": "cmd",
-      "option": "one-event",
-      "caption": "Pratos sends the same command.",
+      "id": "code",
+      "option": "room",
+      "caption": "It wakes a container only to run code, then lets it sleep.",
       "edges": [
-        "i0"
+        "L_R_C_0"
       ],
       "focus": [
-        "P",
-        "A"
+        "C"
       ]
     },
     {
-      "id": "resolved",
-      "option": "one-event",
-      "caption": "One event records that the thread is resolved and what was decided. Without a decision there is no resolve.",
+      "id": "see",
+      "option": "room",
+      "caption": "Everyone in the room sees each step as it happens.",
       "edges": [
-        "i1"
+        "L_R_Y_0"
       ],
       "focus": [
-        "L"
+        "Y"
       ]
     },
     {
-      "id": "proj",
-      "option": "one-event",
-      "caption": "The decision log is built from that one event.",
+      "id": "ask",
+      "option": "container",
+      "caption": "The agent and the code share one machine, which is simple.",
       "edges": [
-        "i2"
+        "L_Y_C_0",
+        "L_C_M_0"
       ],
       "focus": [
-        "D"
+        "Y",
+        "C"
       ]
     },
     {
-      "id": "cmd",
-      "option": "close-only",
-      "caption": "Every test passes, and the word ThreadClosed is not in the domain vocabulary.",
+      "id": "stop",
+      "option": "container",
+      "caption": "To save money it stops when idle, and its disk goes with it.",
       "edges": [
-        "i0",
-        "i1"
+        "L_C_G_0"
       ],
       "focus": [
-        "L"
+        "G"
       ]
     }
   ]
@@ -510,7 +516,11 @@
     tabs.innerHTML = spec.options.map(o => `<button role="tab" data-id="${esc(o.id)}" aria-selected="${o.id === optionId}">${esc(o.label)}</button>`).join('');
     tabs.onclick = e => { const b = e.target.closest('button'); if (!b) return; optionId = b.dataset.id; stepIndex = 0; [...tabs.children].forEach(t => t.setAttribute('aria-selected', t === b)); mount(); updateReset(); };
 
-    const axes = [['Call sites touched', o => o.axes?.callSites ? `${o.axes.callSites.count}${o.axes.callSites.list?.length ? ' · ' + o.axes.callSites.list.map(esc).join(', ') : ''}` : ''], ['Mechanical vs judgement', o => esc(o.axes?.mechanical || '')], ['Silent behaviour changes', o => esc(o.axes?.silent || '')], ['Invariant at risk', o => esc(o.axes?.invariant || '')]];
+    // The comparison rows are the questions that matter for this decision: `spec.axes` = [{ key, label }], `option.axes[key]` = a short answer.
+    // Without `spec.axes`, the code-change defaults apply.
+    const axes = spec.axes
+      ? spec.axes.map(a => [esc(a.label), o => esc(o.axes?.[a.key] ?? '')])
+      : [['Call sites touched', o => o.axes?.callSites ? `${o.axes.callSites.count}${o.axes.callSites.list?.length ? ' · ' + o.axes.callSites.list.map(esc).join(', ') : ''}` : ''], ['Mechanical vs judgement', o => esc(o.axes?.mechanical || '')], ['Silent behaviour changes', o => esc(o.axes?.silent || '')], ['Invariant at risk', o => esc(o.axes?.invariant || '')]];
     if (spec.options.some(o => o.axes)) {
       $('compare').hidden = false;
       $('compare').innerHTML = `<table><thead><tr><th></th>${spec.options.map(o => `<th>${esc(o.label)}</th>`).join('')}</tr></thead><tbody>${axes.map(([name, f]) => `<tr><td>${name}</td>${spec.options.map(o => `<td>${f(o)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;

@@ -24,7 +24,7 @@ reveal.js 5.1 from CDN, markdown source of truth in `deck/slides.md`, theme in `
 - Human vs agent must stay visually distinct (previously oxblood vs teal); the device and colours are open.
 
 ## Brand Commitments
-- Presenter voice: dry, lower-case, self-deprecating ("Fin.", "/btw", "AI Fiend").
+- Presenter voice: dry, lower-case, self-deprecating ("Fin.", "/btw").
 - Six memes are part of the talk's humour; they stay recognisable but are restyled into one consistent style with Codex image generation.
 
 ## Evidence on Hand

@@ -502,7 +502,11 @@ body.has-expanded { overflow: hidden; }
     tabs.innerHTML = spec.options.map(o =&gt; `&lt;button role=&quot;tab&quot; data-id=&quot;${esc(o.id)}&quot; aria-selected=&quot;${o.id === optionId}&quot;&gt;${esc(o.label)}&lt;/button&gt;`).join(&#39;&#39;);
     tabs.onclick = e =&gt; { const b = e.target.closest(&#39;button&#39;); if (!b) return; optionId = b.dataset.id; stepIndex = 0; [...tabs.children].forEach(t =&gt; t.setAttribute(&#39;aria-selected&#39;, t === b)); mount(); updateReset(); };
 
-    const axes = [[&#39;Call sites touched&#39;, o =&gt; o.axes?.callSites ? `${o.axes.callSites.count}${o.axes.callSites.list?.length ? &#39; · &#39; + o.axes.callSites.list.map(esc).join(&#39;, &#39;) : &#39;&#39;}` : &#39;&#39;], [&#39;Mechanical vs judgement&#39;, o =&gt; esc(o.axes?.mechanical || &#39;&#39;)], [&#39;Silent behaviour changes&#39;, o =&gt; esc(o.axes?.silent || &#39;&#39;)], [&#39;Invariant at risk&#39;, o =&gt; esc(o.axes?.invariant || &#39;&#39;)]];
+    // The comparison rows are the questions that matter for this decision: `spec.axes` = [{ key, label }], `option.axes[key]` = a short answer.
+    // Without `spec.axes`, the code-change defaults apply.
+    const axes = spec.axes
+      ? spec.axes.map(a =&gt; [esc(a.label), o =&gt; esc(o.axes?.[a.key] ?? &#39;&#39;)])
+      : [[&#39;Call sites touched&#39;, o =&gt; o.axes?.callSites ? `${o.axes.callSites.count}${o.axes.callSites.list?.length ? &#39; · &#39; + o.axes.callSites.list.map(esc).join(&#39;, &#39;) : &#39;&#39;}` : &#39;&#39;], [&#39;Mechanical vs judgement&#39;, o =&gt; esc(o.axes?.mechanical || &#39;&#39;)], [&#39;Silent behaviour changes&#39;, o =&gt; esc(o.axes?.silent || &#39;&#39;)], [&#39;Invariant at risk&#39;, o =&gt; esc(o.axes?.invariant || &#39;&#39;)]];
     if (spec.options.some(o =&gt; o.axes)) {
       $(&#39;compare&#39;).hidden = false;
       $(&#39;compare&#39;).innerHTML = `&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;&lt;/th&gt;${spec.options.map(o =&gt; `&lt;th&gt;${esc(o.label)}&lt;/th&gt;`).join(&#39;&#39;)}&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;${axes.map(([name, f]) =&gt; `&lt;tr&gt;&lt;td&gt;${name}&lt;/td&gt;${spec.options.map(o =&gt; `&lt;td&gt;${f(o)}&lt;/td&gt;`).join(&#39;&#39;)}&lt;/tr&gt;`).join(&#39;&#39;)}&lt;/tbody&gt;&lt;/table&gt;`;
@@ -912,7 +916,11 @@ body.has-expanded { overflow: hidden; }
     tabs.innerHTML = spec.options.map(o =&gt; `&lt;button role=&quot;tab&quot; data-id=&quot;${esc(o.id)}&quot; aria-selected=&quot;${o.id === optionId}&quot;&gt;${esc(o.label)}&lt;/button&gt;`).join(&#39;&#39;);
     tabs.onclick = e =&gt; { const b = e.target.closest(&#39;button&#39;); if (!b) return; optionId = b.dataset.id; stepIndex = 0; [...tabs.children].forEach(t =&gt; t.setAttribute(&#39;aria-selected&#39;, t === b)); mount(); updateReset(); };
 
-    const axes = [[&#39;Call sites touched&#39;, o =&gt; o.axes?.callSites ? `${o.axes.callSites.count}${o.axes.callSites.list?.length ? &#39; · &#39; + o.axes.callSites.list.map(esc).join(&#39;, &#39;) : &#39;&#39;}` : &#39;&#39;], [&#39;Mechanical vs judgement&#39;, o =&gt; esc(o.axes?.mechanical || &#39;&#39;)], [&#39;Silent behaviour changes&#39;, o =&gt; esc(o.axes?.silent || &#39;&#39;)], [&#39;Invariant at risk&#39;, o =&gt; esc(o.axes?.invariant || &#39;&#39;)]];
+    // The comparison rows are the questions that matter for this decision: `spec.axes` = [{ key, label }], `option.axes[key]` = a short answer.
+    // Without `spec.axes`, the code-change defaults apply.
+    const axes = spec.axes
+      ? spec.axes.map(a =&gt; [esc(a.label), o =&gt; esc(o.axes?.[a.key] ?? &#39;&#39;)])
+      : [[&#39;Call sites touched&#39;, o =&gt; o.axes?.callSites ? `${o.axes.callSites.count}${o.axes.callSites.list?.length ? &#39; · &#39; + o.axes.callSites.list.map(esc).join(&#39;, &#39;) : &#39;&#39;}` : &#39;&#39;], [&#39;Mechanical vs judgement&#39;, o =&gt; esc(o.axes?.mechanical || &#39;&#39;)], [&#39;Silent behaviour changes&#39;, o =&gt; esc(o.axes?.silent || &#39;&#39;)], [&#39;Invariant at risk&#39;, o =&gt; esc(o.axes?.invariant || &#39;&#39;)]];
     if (spec.options.some(o =&gt; o.axes)) {
       $(&#39;compare&#39;).hidden = false;
       $(&#39;compare&#39;).innerHTML = `&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;&lt;/th&gt;${spec.options.map(o =&gt; `&lt;th&gt;${esc(o.label)}&lt;/th&gt;`).join(&#39;&#39;)}&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;${axes.map(([name, f]) =&gt; `&lt;tr&gt;&lt;td&gt;${name}&lt;/td&gt;${spec.options.map(o =&gt; `&lt;td&gt;${f(o)}&lt;/td&gt;`).join(&#39;&#39;)}&lt;/tr&gt;`).join(&#39;&#39;)}&lt;/tbody&gt;&lt;/table&gt;`;
@@ -1322,7 +1330,11 @@ body.has-expanded { overflow: hidden; }
     tabs.innerHTML = spec.options.map(o =&gt; `&lt;button role=&quot;tab&quot; data-id=&quot;${esc(o.id)}&quot; aria-selected=&quot;${o.id === optionId}&quot;&gt;${esc(o.label)}&lt;/button&gt;`).join(&#39;&#39;);
     tabs.onclick = e =&gt; { const b = e.target.closest(&#39;button&#39;); if (!b) return; optionId = b.dataset.id; stepIndex = 0; [...tabs.children].forEach(t =&gt; t.setAttribute(&#39;aria-selected&#39;, t === b)); mount(); updateReset(); };
 
-    const axes = [[&#39;Call sites touched&#39;, o =&gt; o.axes?.callSites ? `${o.axes.callSites.count}${o.axes.callSites.list?.length ? &#39; · &#39; + o.axes.callSites.list.map(esc).join(&#39;, &#39;) : &#39;&#39;}` : &#39;&#39;], [&#39;Mechanical vs judgement&#39;, o =&gt; esc(o.axes?.mechanical || &#39;&#39;)], [&#39;Silent behaviour changes&#39;, o =&gt; esc(o.axes?.silent || &#39;&#39;)], [&#39;Invariant at risk&#39;, o =&gt; esc(o.axes?.invariant || &#39;&#39;)]];
+    // The comparison rows are the questions that matter for this decision: `spec.axes` = [{ key, label }], `option.axes[key]` = a short answer.
+    // Without `spec.axes`, the code-change defaults apply.
+    const axes = spec.axes
+      ? spec.axes.map(a =&gt; [esc(a.label), o =&gt; esc(o.axes?.[a.key] ?? &#39;&#39;)])
+      : [[&#39;Call sites touched&#39;, o =&gt; o.axes?.callSites ? `${o.axes.callSites.count}${o.axes.callSites.list?.length ? &#39; · &#39; + o.axes.callSites.list.map(esc).join(&#39;, &#39;) : &#39;&#39;}` : &#39;&#39;], [&#39;Mechanical vs judgement&#39;, o =&gt; esc(o.axes?.mechanical || &#39;&#39;)], [&#39;Silent behaviour changes&#39;, o =&gt; esc(o.axes?.silent || &#39;&#39;)], [&#39;Invariant at risk&#39;, o =&gt; esc(o.axes?.invariant || &#39;&#39;)]];
     if (spec.options.some(o =&gt; o.axes)) {
       $(&#39;compare&#39;).hidden = false;
       $(&#39;compare&#39;).innerHTML = `&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;&lt;/th&gt;${spec.options.map(o =&gt; `&lt;th&gt;${esc(o.label)}&lt;/th&gt;`).join(&#39;&#39;)}&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;${axes.map(([name, f]) =&gt; `&lt;tr&gt;&lt;td&gt;${name}&lt;/td&gt;${spec.options.map(o =&gt; `&lt;td&gt;${f(o)}&lt;/td&gt;`).join(&#39;&#39;)}&lt;/tr&gt;`).join(&#39;&#39;)}&lt;/tbody&gt;&lt;/table&gt;`;
@@ -1732,7 +1744,11 @@ body.has-expanded { overflow: hidden; }
     tabs.innerHTML = spec.options.map(o =&gt; `&lt;button role=&quot;tab&quot; data-id=&quot;${esc(o.id)}&quot; aria-selected=&quot;${o.id === optionId}&quot;&gt;${esc(o.label)}&lt;/button&gt;`).join(&#39;&#39;);
     tabs.onclick = e =&gt; { const b = e.target.closest(&#39;button&#39;); if (!b) return; optionId = b.dataset.id; stepIndex = 0; [...tabs.children].forEach(t =&gt; t.setAttribute(&#39;aria-selected&#39;, t === b)); mount(); updateReset(); };
 
-    const axes = [[&#39;Call sites touched&#39;, o =&gt; o.axes?.callSites ? `${o.axes.callSites.count}${o.axes.callSites.list?.length ? &#39; · &#39; + o.axes.callSites.list.map(esc).join(&#39;, &#39;) : &#39;&#39;}` : &#39;&#39;], [&#39;Mechanical vs judgement&#39;, o =&gt; esc(o.axes?.mechanical || &#39;&#39;)], [&#39;Silent behaviour changes&#39;, o =&gt; esc(o.axes?.silent || &#39;&#39;)], [&#39;Invariant at risk&#39;, o =&gt; esc(o.axes?.invariant || &#39;&#39;)]];
+    // The comparison rows are the questions that matter for this decision: `spec.axes` = [{ key, label }], `option.axes[key]` = a short answer.
+    // Without `spec.axes`, the code-change defaults apply.
+    const axes = spec.axes
+      ? spec.axes.map(a =&gt; [esc(a.label), o =&gt; esc(o.axes?.[a.key] ?? &#39;&#39;)])
+      : [[&#39;Call sites touched&#39;, o =&gt; o.axes?.callSites ? `${o.axes.callSites.count}${o.axes.callSites.list?.length ? &#39; · &#39; + o.axes.callSites.list.map(esc).join(&#39;, &#39;) : &#39;&#39;}` : &#39;&#39;], [&#39;Mechanical vs judgement&#39;, o =&gt; esc(o.axes?.mechanical || &#39;&#39;)], [&#39;Silent behaviour changes&#39;, o =&gt; esc(o.axes?.silent || &#39;&#39;)], [&#39;Invariant at risk&#39;, o =&gt; esc(o.axes?.invariant || &#39;&#39;)]];
     if (spec.options.some(o =&gt; o.axes)) {
       $(&#39;compare&#39;).hidden = false;
       $(&#39;compare&#39;).innerHTML = `&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;&lt;/th&gt;${spec.options.map(o =&gt; `&lt;th&gt;${esc(o.label)}&lt;/th&gt;`).join(&#39;&#39;)}&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;${axes.map(([name, f]) =&gt; `&lt;tr&gt;&lt;td&gt;${name}&lt;/td&gt;${spec.options.map(o =&gt; `&lt;td&gt;${f(o)}&lt;/td&gt;`).join(&#39;&#39;)}&lt;/tr&gt;`).join(&#39;&#39;)}&lt;/tbody&gt;&lt;/table&gt;`;
@@ -2142,7 +2158,11 @@ body.has-expanded { overflow: hidden; }
     tabs.innerHTML = spec.options.map(o =&gt; `&lt;button role=&quot;tab&quot; data-id=&quot;${esc(o.id)}&quot; aria-selected=&quot;${o.id === optionId}&quot;&gt;${esc(o.label)}&lt;/button&gt;`).join(&#39;&#39;);
     tabs.onclick = e =&gt; { const b = e.target.closest(&#39;button&#39;); if (!b) return; optionId = b.dataset.id; stepIndex = 0; [...tabs.children].forEach(t =&gt; t.setAttribute(&#39;aria-selected&#39;, t === b)); mount(); updateReset(); };
 
-    const axes = [[&#39;Call sites touched&#39;, o =&gt; o.axes?.callSites ? `${o.axes.callSites.count}${o.axes.callSites.list?.length ? &#39; · &#39; + o.axes.callSites.list.map(esc).join(&#39;, &#39;) : &#39;&#39;}` : &#39;&#39;], [&#39;Mechanical vs judgement&#39;, o =&gt; esc(o.axes?.mechanical || &#39;&#39;)], [&#39;Silent behaviour changes&#39;, o =&gt; esc(o.axes?.silent || &#39;&#39;)], [&#39;Invariant at risk&#39;, o =&gt; esc(o.axes?.invariant || &#39;&#39;)]];
+    // The comparison rows are the questions that matter for this decision: `spec.axes` = [{ key, label }], `option.axes[key]` = a short answer.
+    // Without `spec.axes`, the code-change defaults apply.
+    const axes = spec.axes
+      ? spec.axes.map(a =&gt; [esc(a.label), o =&gt; esc(o.axes?.[a.key] ?? &#39;&#39;)])
+      : [[&#39;Call sites touched&#39;, o =&gt; o.axes?.callSites ? `${o.axes.callSites.count}${o.axes.callSites.list?.length ? &#39; · &#39; + o.axes.callSites.list.map(esc).join(&#39;, &#39;) : &#39;&#39;}` : &#39;&#39;], [&#39;Mechanical vs judgement&#39;, o =&gt; esc(o.axes?.mechanical || &#39;&#39;)], [&#39;Silent behaviour changes&#39;, o =&gt; esc(o.axes?.silent || &#39;&#39;)], [&#39;Invariant at risk&#39;, o =&gt; esc(o.axes?.invariant || &#39;&#39;)]];
     if (spec.options.some(o =&gt; o.axes)) {
       $(&#39;compare&#39;).hidden = false;
       $(&#39;compare&#39;).innerHTML = `&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;&lt;/th&gt;${spec.options.map(o =&gt; `&lt;th&gt;${esc(o.label)}&lt;/th&gt;`).join(&#39;&#39;)}&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;${axes.map(([name, f]) =&gt; `&lt;tr&gt;&lt;td&gt;${name}&lt;/td&gt;${spec.options.map(o =&gt; `&lt;td&gt;${f(o)}&lt;/td&gt;`).join(&#39;&#39;)}&lt;/tr&gt;`).join(&#39;&#39;)}&lt;/tbody&gt;&lt;/table&gt;`;
@@ -2552,7 +2572,11 @@ body.has-expanded { overflow: hidden; }
     tabs.innerHTML = spec.options.map(o =&gt; `&lt;button role=&quot;tab&quot; data-id=&quot;${esc(o.id)}&quot; aria-selected=&quot;${o.id === optionId}&quot;&gt;${esc(o.label)}&lt;/button&gt;`).join(&#39;&#39;);
     tabs.onclick = e =&gt; { const b = e.target.closest(&#39;button&#39;); if (!b) return; optionId = b.dataset.id; stepIndex = 0; [...tabs.children].forEach(t =&gt; t.setAttribute(&#39;aria-selected&#39;, t === b)); mount(); updateReset(); };
 
-    const axes = [[&#39;Call sites touched&#39;, o =&gt; o.axes?.callSites ? `${o.axes.callSites.count}${o.axes.callSites.list?.length ? &#39; · &#39; + o.axes.callSites.list.map(esc).join(&#39;, &#39;) : &#39;&#39;}` : &#39;&#39;], [&#39;Mechanical vs judgement&#39;, o =&gt; esc(o.axes?.mechanical || &#39;&#39;)], [&#39;Silent behaviour changes&#39;, o =&gt; esc(o.axes?.silent || &#39;&#39;)], [&#39;Invariant at risk&#39;, o =&gt; esc(o.axes?.invariant || &#39;&#39;)]];
+    // The comparison rows are the questions that matter for this decision: `spec.axes` = [{ key, label }], `option.axes[key]` = a short answer.
+    // Without `spec.axes`, the code-change defaults apply.
+    const axes = spec.axes
+      ? spec.axes.map(a =&gt; [esc(a.label), o =&gt; esc(o.axes?.[a.key] ?? &#39;&#39;)])
+      : [[&#39;Call sites touched&#39;, o =&gt; o.axes?.callSites ? `${o.axes.callSites.count}${o.axes.callSites.list?.length ? &#39; · &#39; + o.axes.callSites.list.map(esc).join(&#39;, &#39;) : &#39;&#39;}` : &#39;&#39;], [&#39;Mechanical vs judgement&#39;, o =&gt; esc(o.axes?.mechanical || &#39;&#39;)], [&#39;Silent behaviour changes&#39;, o =&gt; esc(o.axes?.silent || &#39;&#39;)], [&#39;Invariant at risk&#39;, o =&gt; esc(o.axes?.invariant || &#39;&#39;)]];
     if (spec.options.some(o =&gt; o.axes)) {
       $(&#39;compare&#39;).hidden = false;
       $(&#39;compare&#39;).innerHTML = `&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;&lt;/th&gt;${spec.options.map(o =&gt; `&lt;th&gt;${esc(o.label)}&lt;/th&gt;`).join(&#39;&#39;)}&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;${axes.map(([name, f]) =&gt; `&lt;tr&gt;&lt;td&gt;${name}&lt;/td&gt;${spec.options.map(o =&gt; `&lt;td&gt;${f(o)}&lt;/td&gt;`).join(&#39;&#39;)}&lt;/tr&gt;`).join(&#39;&#39;)}&lt;/tbody&gt;&lt;/table&gt;`;
@@ -2990,7 +3014,11 @@ body.has-expanded { overflow: hidden; }
     tabs.innerHTML = spec.options.map(o =&gt; `&lt;button role=&quot;tab&quot; data-id=&quot;${esc(o.id)}&quot; aria-selected=&quot;${o.id === optionId}&quot;&gt;${esc(o.label)}&lt;/button&gt;`).join(&#39;&#39;);
     tabs.onclick = e =&gt; { const b = e.target.closest(&#39;button&#39;); if (!b) return; optionId = b.dataset.id; stepIndex = 0; [...tabs.children].forEach(t =&gt; t.setAttribute(&#39;aria-selected&#39;, t === b)); mount(); updateReset(); };
 
-    const axes = [[&#39;Call sites touched&#39;, o =&gt; o.axes?.callSites ? `${o.axes.callSites.count}${o.axes.callSites.list?.length ? &#39; · &#39; + o.axes.callSites.list.map(esc).join(&#39;, &#39;) : &#39;&#39;}` : &#39;&#39;], [&#39;Mechanical vs judgement&#39;, o =&gt; esc(o.axes?.mechanical || &#39;&#39;)], [&#39;Silent behaviour changes&#39;, o =&gt; esc(o.axes?.silent || &#39;&#39;)], [&#39;Invariant at risk&#39;, o =&gt; esc(o.axes?.invariant || &#39;&#39;)]];
+    // The comparison rows are the questions that matter for this decision: `spec.axes` = [{ key, label }], `option.axes[key]` = a short answer.
+    // Without `spec.axes`, the code-change defaults apply.
+    const axes = spec.axes
+      ? spec.axes.map(a =&gt; [esc(a.label), o =&gt; esc(o.axes?.[a.key] ?? &#39;&#39;)])
+      : [[&#39;Call sites touched&#39;, o =&gt; o.axes?.callSites ? `${o.axes.callSites.count}${o.axes.callSites.list?.length ? &#39; · &#39; + o.axes.callSites.list.map(esc).join(&#39;, &#39;) : &#39;&#39;}` : &#39;&#39;], [&#39;Mechanical vs judgement&#39;, o =&gt; esc(o.axes?.mechanical || &#39;&#39;)], [&#39;Silent behaviour changes&#39;, o =&gt; esc(o.axes?.silent || &#39;&#39;)], [&#39;Invariant at risk&#39;, o =&gt; esc(o.axes?.invariant || &#39;&#39;)]];
     if (spec.options.some(o =&gt; o.axes)) {
       $(&#39;compare&#39;).hidden = false;
       $(&#39;compare&#39;).innerHTML = `&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;&lt;/th&gt;${spec.options.map(o =&gt; `&lt;th&gt;${esc(o.label)}&lt;/th&gt;`).join(&#39;&#39;)}&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;${axes.map(([name, f]) =&gt; `&lt;tr&gt;&lt;td&gt;${name}&lt;/td&gt;${spec.options.map(o =&gt; `&lt;td&gt;${f(o)}&lt;/td&gt;`).join(&#39;&#39;)}&lt;/tr&gt;`).join(&#39;&#39;)}&lt;/tbody&gt;&lt;/table&gt;`;
@@ -3415,7 +3443,11 @@ Not: discussion, comment chain, issue, ticket</code></pre></li><li class="change
     tabs.innerHTML = spec.options.map(o =&gt; `&lt;button role=&quot;tab&quot; data-id=&quot;${esc(o.id)}&quot; aria-selected=&quot;${o.id === optionId}&quot;&gt;${esc(o.label)}&lt;/button&gt;`).join(&#39;&#39;);
     tabs.onclick = e =&gt; { const b = e.target.closest(&#39;button&#39;); if (!b) return; optionId = b.dataset.id; stepIndex = 0; [...tabs.children].forEach(t =&gt; t.setAttribute(&#39;aria-selected&#39;, t === b)); mount(); updateReset(); };
 
-    const axes = [[&#39;Call sites touched&#39;, o =&gt; o.axes?.callSites ? `${o.axes.callSites.count}${o.axes.callSites.list?.length ? &#39; · &#39; + o.axes.callSites.list.map(esc).join(&#39;, &#39;) : &#39;&#39;}` : &#39;&#39;], [&#39;Mechanical vs judgement&#39;, o =&gt; esc(o.axes?.mechanical || &#39;&#39;)], [&#39;Silent behaviour changes&#39;, o =&gt; esc(o.axes?.silent || &#39;&#39;)], [&#39;Invariant at risk&#39;, o =&gt; esc(o.axes?.invariant || &#39;&#39;)]];
+    // The comparison rows are the questions that matter for this decision: `spec.axes` = [{ key, label }], `option.axes[key]` = a short answer.
+    // Without `spec.axes`, the code-change defaults apply.
+    const axes = spec.axes
+      ? spec.axes.map(a =&gt; [esc(a.label), o =&gt; esc(o.axes?.[a.key] ?? &#39;&#39;)])
+      : [[&#39;Call sites touched&#39;, o =&gt; o.axes?.callSites ? `${o.axes.callSites.count}${o.axes.callSites.list?.length ? &#39; · &#39; + o.axes.callSites.list.map(esc).join(&#39;, &#39;) : &#39;&#39;}` : &#39;&#39;], [&#39;Mechanical vs judgement&#39;, o =&gt; esc(o.axes?.mechanical || &#39;&#39;)], [&#39;Silent behaviour changes&#39;, o =&gt; esc(o.axes?.silent || &#39;&#39;)], [&#39;Invariant at risk&#39;, o =&gt; esc(o.axes?.invariant || &#39;&#39;)]];
     if (spec.options.some(o =&gt; o.axes)) {
       $(&#39;compare&#39;).hidden = false;
       $(&#39;compare&#39;).innerHTML = `&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;&lt;/th&gt;${spec.options.map(o =&gt; `&lt;th&gt;${esc(o.label)}&lt;/th&gt;`).join(&#39;&#39;)}&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;${axes.map(([name, f]) =&gt; `&lt;tr&gt;&lt;td&gt;${name}&lt;/td&gt;${spec.options.map(o =&gt; `&lt;td&gt;${f(o)}&lt;/td&gt;`).join(&#39;&#39;)}&lt;/tr&gt;`).join(&#39;&#39;)}&lt;/tbody&gt;&lt;/table&gt;`;
@@ -3845,7 +3877,11 @@ export const Presence = Schema.Struct({ roomId: Id, participant: ParticipantId, 
     tabs.innerHTML = spec.options.map(o =&gt; `&lt;button role=&quot;tab&quot; data-id=&quot;${esc(o.id)}&quot; aria-selected=&quot;${o.id === optionId}&quot;&gt;${esc(o.label)}&lt;/button&gt;`).join(&#39;&#39;);
     tabs.onclick = e =&gt; { const b = e.target.closest(&#39;button&#39;); if (!b) return; optionId = b.dataset.id; stepIndex = 0; [...tabs.children].forEach(t =&gt; t.setAttribute(&#39;aria-selected&#39;, t === b)); mount(); updateReset(); };
 
-    const axes = [[&#39;Call sites touched&#39;, o =&gt; o.axes?.callSites ? `${o.axes.callSites.count}${o.axes.callSites.list?.length ? &#39; · &#39; + o.axes.callSites.list.map(esc).join(&#39;, &#39;) : &#39;&#39;}` : &#39;&#39;], [&#39;Mechanical vs judgement&#39;, o =&gt; esc(o.axes?.mechanical || &#39;&#39;)], [&#39;Silent behaviour changes&#39;, o =&gt; esc(o.axes?.silent || &#39;&#39;)], [&#39;Invariant at risk&#39;, o =&gt; esc(o.axes?.invariant || &#39;&#39;)]];
+    // The comparison rows are the questions that matter for this decision: `spec.axes` = [{ key, label }], `option.axes[key]` = a short answer.
+    // Without `spec.axes`, the code-change defaults apply.
+    const axes = spec.axes
+      ? spec.axes.map(a =&gt; [esc(a.label), o =&gt; esc(o.axes?.[a.key] ?? &#39;&#39;)])
+      : [[&#39;Call sites touched&#39;, o =&gt; o.axes?.callSites ? `${o.axes.callSites.count}${o.axes.callSites.list?.length ? &#39; · &#39; + o.axes.callSites.list.map(esc).join(&#39;, &#39;) : &#39;&#39;}` : &#39;&#39;], [&#39;Mechanical vs judgement&#39;, o =&gt; esc(o.axes?.mechanical || &#39;&#39;)], [&#39;Silent behaviour changes&#39;, o =&gt; esc(o.axes?.silent || &#39;&#39;)], [&#39;Invariant at risk&#39;, o =&gt; esc(o.axes?.invariant || &#39;&#39;)]];
     if (spec.options.some(o =&gt; o.axes)) {
       $(&#39;compare&#39;).hidden = false;
       $(&#39;compare&#39;).innerHTML = `&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;&lt;/th&gt;${spec.options.map(o =&gt; `&lt;th&gt;${esc(o.label)}&lt;/th&gt;`).join(&#39;&#39;)}&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;${axes.map(([name, f]) =&gt; `&lt;tr&gt;&lt;td&gt;${name}&lt;/td&gt;${spec.options.map(o =&gt; `&lt;td&gt;${f(o)}&lt;/td&gt;`).join(&#39;&#39;)}&lt;/tr&gt;`).join(&#39;&#39;)}&lt;/tbody&gt;&lt;/table&gt;`;

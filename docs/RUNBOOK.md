@@ -19,7 +19,7 @@ cmux panes: `just up` · a shell on main · `tail -f /tmp/gh-*.log` · the brows
 | Beat | Live | Twin (always works) | Fallback |
 |---|---|---|---|
 | Fresh clone, nobody at the keyboard | `git clone … && just up`, open `/login` and `/healthz` | `just demo cp-00` | the two curls in `scripts/demo.sh` |
-| A plan you look at | `/create_plan GH-12` in Claude Code; the hook builds the page | open `docs/plans/2026-10-28-resolve-thread.plan.html`: decision, components, phases | `just demo cp-01`, or `just plans` and open the page |
+| A plan you look at | `/create_plan` for the coding agent in Claude Code; it turns "where should the agent's work run?" into a report | open `docs/decisions/agent-loop.html`: compare the three places, choose one | `just demo cp-01`; the full plan page is `docs/plans/2026-10-28-resolve-thread.plan.html` |
 | Agent names it ThreadClosed | ask pi: "add resolve thread"; watch the names | `git checkout wrong/cp-02 && just domain-vocabulary-check` fails; on `cp-02` it passes | `just demo cp-02` |
 | Tests the agent learns from | ask pi for a test; it writes a mock | `just test`, then `cat packages/domain/src/thread/__expect__/resolve.snap.txt` | `just demo cp-03` |
 | Changing a recorded event | ask Claude Code to "add rationale to decisions"; it edits the schema | `cat packages/domain/src/upcast/__expect__/*.snap.txt` | `just demo cp-04` |

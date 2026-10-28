@@ -55,7 +55,7 @@ One JSON object. Prose fields are Markdown and are rendered; keep them to short 
     }
   ],
 
-  "references": ["`docs/ARCHITECTURE.md`", "`docs/decisions/gh-12.html`"]
+  "references": ["`docs/ARCHITECTURE.md`", "`docs/decisions/agent-loop.html`"]
 }
 ```
 

@@ -80,28 +80,28 @@
   "decisions": [
     {
       "id": "events",
-      "question": "Is a decision its own fact, or part of ThreadResolved?",
+      "question": "When someone resolves a comment, do we save one record or two?",
       "options": [
         {
           "id": "two-events",
-          "label": "Two events"
+          "label": "Two records"
         },
         {
           "id": "one-event",
-          "label": "One event"
+          "label": "One record"
         },
         {
           "id": "close-only",
-          "label": "ThreadClosed, no decision"
+          "label": "Close it, record nothing"
         }
       ],
       "chosen": "two-events",
       "by": "pratos",
       "at": "2026-10-27",
-      "why": "Two events keep a closed thread and a made decision as separate facts, so a projection can count decisions without reading thread state. Both explorations passed their expect tests.",
+      "why": "Two records keep \"the comment is closed\" and \"this was decided\" apart, so the decision log can count decisions on its own. Both were built and their tests passed.",
       "viz": {
         "kind": "decision-report",
-        "question": "Is a decision its own fact, or part of ThreadResolved?",
+        "question": "When someone resolves a comment, do we save one record or two?",
         "meta": {
           "builtBy": "agent · just explore GH-12",
           "builtAt": "2026-10-27",
@@ -110,8 +110,8 @@
         "options": [
           {
             "id": "two-events",
-            "label": "Two events",
-            "summary": "ThreadResolved, then DecisionRecorded; a thread can close without a decision.",
+            "label": "Two records",
+            "summary": "One record says it closed; a second says who decided what.",
             "diagram": "sequenceDiagram\n  participant P as Person\n  participant A as API\n  participant L as Event log\n  participant D as Decision log\n  P->>A: ResolveThread(thread-7, \"wrapper\")\n  A->>L: ThreadResolved\n  A->>L: DecisionRecorded\n  L->>D: project decision",
             "tried": {
               "kind": "exploration",
@@ -119,24 +119,16 @@
               "summary": "expect green, 2 projections touched"
             },
             "axes": {
-              "callSites": {
-                "count": 4,
-                "list": [
-                  "resolve.ts",
-                  "decision-log.ts",
-                  "thread-view.ts",
-                  "mcp/list-decisions.ts"
-                ]
-              },
-              "mechanical": "2 mechanical, 2 judgement (what a decision-less close means in the UI)",
-              "silent": "Decision log can lag the thread by one event",
-              "invariant": "\"A decision references exactly one thread\" stays a type; \"every resolved thread has a decision\" becomes a check"
+              "files": "4 files",
+              "closeWithout": "Allowed",
+              "risk": "The log can trail the comment by a moment",
+              "words": "Yes"
             }
           },
           {
             "id": "one-event",
-            "label": "One event",
-            "summary": "ThreadResolved carries the decision; closing without one is impossible.",
+            "label": "One record",
+            "summary": "One record says it closed and what was decided, together.",
             "diagram": "sequenceDiagram\n  participant P as Person\n  participant A as API\n  participant L as Event log\n  participant D as Decision log\n  P->>A: ResolveThread(thread-7, \"wrapper\")\n  A->>L: ThreadResolved{decision}\n  L->>D: project decision",
             "tried": {
               "kind": "exploration",
@@ -144,35 +136,23 @@
               "summary": "expect green, 1 projection touched"
             },
             "axes": {
-              "callSites": {
-                "count": 3,
-                "list": [
-                  "resolve.ts",
-                  "decision-log.ts",
-                  "mcp/list-decisions.ts"
-                ]
-              },
-              "mechanical": "3 mechanical, 0 judgement",
-              "silent": "None found",
-              "invariant": "Both invariants are types. Loses \"close without deciding\", which the domain vocabulary does not have"
+              "files": "3 files",
+              "closeWithout": "Impossible",
+              "risk": "Nothing found",
+              "words": "Yes"
             }
           },
           {
             "id": "close-only",
-            "label": "ThreadClosed, no decision",
-            "summary": "The thread closes and nothing is recorded. This is what the first pass wrote.",
+            "label": "Close it, record nothing",
+            "summary": "It closes and nothing is recorded. What the first attempt wrote.",
             "diagram": "sequenceDiagram\n  participant P as Person\n  participant A as API\n  participant L as Event log\n  P->>A: ResolveThread(thread-7)\n  A->>L: ThreadClosed",
             "tried": null,
             "axes": {
-              "callSites": {
-                "count": 1,
-                "list": [
-                  "resolve.ts"
-                ]
-              },
-              "mechanical": "1 mechanical",
-              "silent": "Decision ownership disappears",
-              "invariant": "Breaks the domain vocabulary: there is no ThreadClosed"
+              "files": "1 file",
+              "closeWithout": "Always, no decision kept",
+              "risk": "Who decided is lost",
+              "words": "No: ThreadClosed is not a word we use"
             }
           }
         ],
@@ -180,7 +160,7 @@
           {
             "id": "cmd",
             "option": "two-events",
-            "caption": "Pratos resolves thread 7 with one command and gives the decision in their own words.",
+            "caption": "Pratos resolves comment 7 and writes what was decided.",
             "edges": [
               "i0"
             ],
@@ -192,7 +172,7 @@
           {
             "id": "resolved",
             "option": "two-events",
-            "caption": "The log records that the thread is resolved.",
+            "caption": "The first record: the comment is resolved.",
             "edges": [
               "i1"
             ],
@@ -203,7 +183,7 @@
           {
             "id": "decided",
             "option": "two-events",
-            "caption": "The log records who decided what; this second event can be left out.",
+            "caption": "The second record: who decided what. It can be left out.",
             "edges": [
               "i2"
             ],
@@ -214,7 +194,7 @@
           {
             "id": "proj",
             "option": "two-events",
-            "caption": "The decision log is built from both events.",
+            "caption": "The decision log reads both records.",
             "edges": [
               "i3"
             ],
@@ -225,7 +205,7 @@
           {
             "id": "cmd",
             "option": "one-event",
-            "caption": "Pratos sends the same command.",
+            "caption": "Pratos does the same thing.",
             "edges": [
               "i0"
             ],
@@ -237,7 +217,7 @@
           {
             "id": "resolved",
             "option": "one-event",
-            "caption": "One event records the resolve and the decision; no decision, no resolve.",
+            "caption": "One record holds the resolve and the decision; no decision, no resolve.",
             "edges": [
               "i1"
             ],
@@ -248,7 +228,7 @@
           {
             "id": "proj",
             "option": "one-event",
-            "caption": "The decision log is built from that one event.",
+            "caption": "The decision log reads that one record.",
             "edges": [
               "i2"
             ],
@@ -259,7 +239,7 @@
           {
             "id": "cmd",
             "option": "close-only",
-            "caption": "Every test passes, and the word ThreadClosed is not in the domain vocabulary.",
+            "caption": "Every test passes, yet the name is not in our vocabulary.",
             "edges": [
               "i0",
               "i1"
@@ -267,6 +247,24 @@
             "focus": [
               "L"
             ]
+          }
+        ],
+        "axes": [
+          {
+            "key": "files",
+            "label": "Code that changes"
+          },
+          {
+            "key": "closeWithout",
+            "label": "Close without deciding?"
+          },
+          {
+            "key": "risk",
+            "label": "What could go wrong"
+          },
+          {
+            "key": "words",
+            "label": "Matches our vocabulary"
           }
         ]
       }
@@ -474,7 +472,6 @@
   ],
   "references": [
     "`docs/ARCHITECTURE.md` and the map at `docs/architecture/index.html#record`",
-    "`docs/decisions/gh-12.html`, the decision report",
     "`docs/RELEASE.md`, for the rollout once the page is done"
   ]
 }

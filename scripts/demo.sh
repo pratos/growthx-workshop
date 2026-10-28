@@ -18,7 +18,7 @@ case "$cp" in
     fi ;;
   cp-03) bun test packages/domain >/dev/null 2>&1 && pass "Thread decider expect snapshots pass, read as prose: packages/domain/src/thread/__expect__/" ;;
   cp-04) bun test packages/domain/src/upcast >/dev/null 2>&1 && pass "v1 DecisionRecorded upcasts to v2 with a defaulted rationale" ;;
-  cp-01) bun skills/viz-explainer/scripts/build.mjs docs/decisions/gh-12.spec.json docs/decisions/gh-12.html >/dev/null && pass "decision report built and every step validated: docs/decisions/gh-12.html" ;;
+  cp-01) bun skills/viz-explainer/scripts/build.mjs docs/decisions/agent-loop.spec.json docs/decisions/agent-loop.html >/dev/null && pass "where should the agent's work run? report built, every step validated: docs/decisions/agent-loop.html" ;;
   cp-05) test -f "apps/web/src/routes/plans.\$planId.tsx" && grep -q agentation apps/web/src/components/DevTools.tsx && grep -q DevTools apps/web/src/routes/__root.tsx && pass "plan page with resolve action exists; Agentation toolbar mounted in dev" ;;
   cp-06) scripts/review.sh main --dry-run >/dev/null && pass "review runs with a different model than the author" ;;
   cp-07)

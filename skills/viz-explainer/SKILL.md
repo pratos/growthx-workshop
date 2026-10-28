@@ -58,4 +58,4 @@ A single `.html` file, no build step, Pele and anime.js pinned from CDNs (`pele@
 - `references/protocol.md`: the host protocol so Greenhouse can record the decision as an event.
 - `scripts/build.mjs`: spec in, validated artifact out. Other skills (ddd-vocabulary, event-sourcing) call this.
 - `assets/template.html`: the shell. Change nothing unless the kind requires it.
-- `assets/example-gh12-decision.html`: a decision report; `spec` block inside is the reference for the JSON shape.
+- `assets/example-decision-report.html`: "Where should the agent's work run?", a decision report with its own comparison rows (`spec.axes`); the `spec` block inside is the reference for the JSON shape.

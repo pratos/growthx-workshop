@@ -1,0 +1,177 @@
+{
+  "kind": "decision-report",
+  "question": "Where should the agent's work run?",
+  "meta": {
+    "builtBy": "create-plan",
+    "builtAt": "2026-10-28"
+  },
+  "axes": [
+    {
+      "key": "tab",
+      "label": "Close the laptop"
+    },
+    {
+      "key": "crash",
+      "label": "The process crashes"
+    },
+    {
+      "key": "together",
+      "label": "Two people at once"
+    },
+    {
+      "key": "code",
+      "label": "Run code and tests"
+    },
+    {
+      "key": "idle",
+      "label": "Cost while nobody is using it"
+    }
+  ],
+  "options": [
+    {
+      "id": "browser",
+      "label": "In the browser tab",
+      "summary": "The tab runs the agent beside you; nothing else to deploy.",
+      "diagram": "flowchart LR\n  Y[\"You\"]\n  B[\"Browser tab · the agent runs here\"]\n  M[\"Model\"]\n  L[\"Work stops, nothing saved\"]\n  Y -- \"ask\" --> B\n  B -- \"think\" --> M\n  B -. \"close the tab\" .-> L",
+      "tried": null,
+      "axes": {
+        "tab": "The work stops",
+        "crash": "Lost",
+        "together": "No, one tab each",
+        "code": "No shell, no git",
+        "idle": "Free"
+      }
+    },
+    {
+      "id": "room",
+      "label": "In the plan room, on Cloudflare",
+      "summary": "A Durable Object per plan runs the agent and saves every step.",
+      "diagram": "flowchart LR\n  Y[\"You and teammates\"]\n  R[\"Plan room · the agent runs here\"]\n  M[\"Model\"]\n  S[(\"Room storage · every step\")]\n  C[\"Container · only to run code\"]\n  Y -- \"ask\" --> R\n  R -- \"think\" --> M\n  R -- \"saves\" --> S\n  R -- \"run tests\" --> C\n  R -. \"shows each step\" .-> Y",
+      "tried": {
+        "kind": "spike",
+        "ref": "cp-08 and packages/agent",
+        "summary": "rooms showed every step live; the agent resumed after kill -9"
+      },
+      "axes": {
+        "tab": "Keeps working",
+        "crash": "Resumes from the last step",
+        "together": "Yes, one room",
+        "code": "Yes, through a container",
+        "idle": "Almost nothing while asleep"
+      }
+    },
+    {
+      "id": "container",
+      "label": "In a container",
+      "summary": "One machine runs the agent and the code together.",
+      "diagram": "flowchart LR\n  Y[\"You\"]\n  C[\"Container · the agent and the code\"]\n  M[\"Model\"]\n  D[(\"Its own disk\")]\n  G[\"Disk wiped when it stops\"]\n  Y -- \"ask\" --> C\n  C -- \"think\" --> M\n  C -- \"saves\" --> D\n  C -. \"stopped when idle\" .-> G",
+      "tried": {
+        "kind": "spike",
+        "ref": "packages/agent",
+        "summary": "a local process resumed from its own SQLite file"
+      },
+      "axes": {
+        "tab": "Keeps working",
+        "crash": "Only if its disk survives",
+        "together": "Hard, one machine each",
+        "code": "Yes, directly",
+        "idle": "Pays while it runs"
+      }
+    }
+  ],
+  "steps": [
+    {
+      "id": "ask",
+      "option": "browser",
+      "caption": "You ask, and the tab runs the agent right next to you.",
+      "edges": [
+        "L_Y_B_0",
+        "L_B_M_0"
+      ],
+      "focus": [
+        "Y",
+        "B"
+      ]
+    },
+    {
+      "id": "close",
+      "option": "browser",
+      "caption": "Close the laptop and the work stops; nothing was saved.",
+      "edges": [
+        "L_B_L_0"
+      ],
+      "focus": [
+        "L"
+      ]
+    },
+    {
+      "id": "ask",
+      "option": "room",
+      "caption": "You and teammates ask in the same plan room.",
+      "edges": [
+        "L_Y_R_0"
+      ],
+      "focus": [
+        "Y",
+        "R"
+      ]
+    },
+    {
+      "id": "save",
+      "option": "room",
+      "caption": "The room saves every step, so a crash resumes where it stopped.",
+      "edges": [
+        "L_R_S_0"
+      ],
+      "focus": [
+        "S"
+      ]
+    },
+    {
+      "id": "code",
+      "option": "room",
+      "caption": "It wakes a container only to run code, then lets it sleep.",
+      "edges": [
+        "L_R_C_0"
+      ],
+      "focus": [
+        "C"
+      ]
+    },
+    {
+      "id": "see",
+      "option": "room",
+      "caption": "Everyone in the room sees each step as it happens.",
+      "edges": [
+        "L_R_Y_0"
+      ],
+      "focus": [
+        "Y"
+      ]
+    },
+    {
+      "id": "ask",
+      "option": "container",
+      "caption": "The agent and the code share one machine, which is simple.",
+      "edges": [
+        "L_Y_C_0",
+        "L_C_M_0"
+      ],
+      "focus": [
+        "Y",
+        "C"
+      ]
+    },
+    {
+      "id": "stop",
+      "option": "container",
+      "caption": "To save money it stops when idle, and its disk goes with it.",
+      "edges": [
+        "L_C_G_0"
+      ],
+      "focus": [
+        "G"
+      ]
+    }
+  ]
+}
