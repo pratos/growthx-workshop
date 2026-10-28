@@ -77,6 +77,12 @@ plans:
 artifact spec out:
     bun skills/viz-explainer/scripts/build.mjs {{spec}} {{out}}
 
+# Apply pending D1 migrations to a site's database, by hand, after reading them; deploy never does this.
+# just migrate-remote prod (greenhouse.tarp.sh) | demo (greenhouse-demo.tarp.sh)
+migrate-remote site="prod":
+    bash scripts/cf-account.sh
+    cd apps/api && e=$([ "{{site}}" = demo ] && echo "--env demo" || true) && bunx wrangler d1 migrations list DB --remote $e && bunx wrangler d1 migrations apply DB --remote $e
+
 # Can an agent clone, run, seed, log into, administer and browse this repo alone? ✓/✗ per item with the fix
 agent-ready:
     skills/agent-ready/scripts/check.sh
@@ -104,6 +110,20 @@ docs:
     bun scripts/docs-index.ts
     @echo "http://localhost:8781"
     cd docs && python3 -m http.server 8781 --bind 127.0.0.1
+
+# Cloudflare security and spending audit (Durable Object wake-ups, rate limits, sign-in on plan rooms, secrets); deploy runs it first
+cf-audit:
+    @bun scripts/cf-audit.ts
+
+# Deploy api then web: just deploy prod (greenhouse.tarp.sh, by hand from cp-10) | demo (greenhouse-demo.tarp.sh; GitHub does
+# this on every merge to main). Stops if a D1 migration is pending.
+deploy env="prod":
+    @scripts/deploy.sh {{env}}
+
+# Roll a Worker back to a previous version: just rollback api|web [version-id] [prod|demo]
+rollback app version="" site="prod":
+    bash scripts/cf-account.sh
+    cd apps/{{app}} && bunx wrangler rollback {{version}} $([ "{{site}}" = demo ] && echo "--env demo" || true)
 
 # On a workshop branch: the stage to build next, its phases, the files each may touch, how to check it
 next:

@@ -1,0 +1,96 @@
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: "deploy-${{ github.ref }}"
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }   # the migration check compares with the commit before this push
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run lint
+      - run: scripts/test.sh
+      - name: architecture map covers every app and package and is current
+        run: bun scripts/arch.ts --coverage && bun scripts/arch.ts --check
+      - name: Cloudflare security and spending audit
+        run: bun scripts/cf-audit.ts
+      - name: generated types are current
+        run: cd apps/api && bunx wrangler types && git diff --exit-code worker-configuration.d.ts
+      - name: no destructive migration without a flag
+        env:
+          BEFORE: "${{ github.event.before }}"
+          BASE_REF: "${{ github.base_ref }}"
+          MESSAGE: "${{ github.event.head_commit.message || github.event.pull_request.title }}"
+        run: |
+          # Compare with the commit before this push. A new branch (all zeros), a PR or a manual run has none: use the
+          # merge base with the target branch, or the first commit.
+          base="$BEFORE"
+          if [ -z "$base" ] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+            base="$(git merge-base HEAD "origin/${BASE_REF:-main}" 2>/dev/null || git rev-list --max-parents=0 HEAD | tail -1)"
+          fi
+          changed="$(git diff --name-only --diff-filter=AM "$base" HEAD -- 'apps/api/migrations/*.sql')"
+          echo "migrations changed since ${base:0:9}: ${changed:-none}"
+          [ -z "$changed" ] && exit 0
+          if grep -liE '\b(drop|rename)\b' $changed; then
+            grep -q 'ALLOW_DESTRUCTIVE' <<< "$MESSAGE" || { echo "destructive migration needs ALLOW_DESTRUCTIVE in the commit message"; exit 1; }
+          fi
+
+  preview:
+    if: github.event_name == 'pull_request'
+    needs: check
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: "${{ secrets.CLOUDFLARE_API_TOKEN }}"
+      CLOUDFLARE_ACCOUNT_ID: "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: upload versions without traffic
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then echo "::notice::no CLOUDFLARE_API_TOKEN secret: preview skipped (docs/DEPLOY.md)"; exit 0; fi
+          cd apps/api && bunx wrangler versions upload --env demo --tag "pr-${{ github.event.number }}"
+          cd ../web && CLOUDFLARE_ENV=demo bun run build && bunx wrangler versions upload --tag "pr-${{ github.event.number }}"
+
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: check
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      CLOUDFLARE_API_TOKEN: "${{ secrets.CLOUDFLARE_API_TOKEN }}"
+      CLOUDFLARE_ACCOUNT_ID: "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }   # git describe labels the version
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: secrets are set
+        run: '[ -n "$CLOUDFLARE_API_TOKEN" ] && [ -n "$CLOUDFLARE_ACCOUNT_ID" ] || { echo "::error::set CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID (docs/DEPLOY.md)"; exit 1; }'
+      - name: deploy main to the demo site (greenhouse-demo.tarp.sh), then smoke; stops if a D1 migration is pending
+        run: scripts/deploy.sh demo
+
+  migrate:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      CLOUDFLARE_API_TOKEN: "${{ secrets.CLOUDFLARE_API_TOKEN }}"
+      CLOUDFLARE_ACCOUNT_ID: "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: cd apps/api && bunx wrangler d1 migrations list DB --remote --env demo
+      - name: apply to the demo site's database (manual trigger only)
+        run: cd apps/api && bunx wrangler d1 migrations apply DB --remote --env demo
