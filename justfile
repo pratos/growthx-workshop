@@ -151,6 +151,11 @@ slop file:
 review base="main":
     @scripts/review.sh {{base}}
 
+# A secret for a site's API Worker, from your terminal without echo: just secret-remote ANTHROPIC_API_KEY prod|demo
+secret-remote name site="prod":
+    bash scripts/cf-account.sh
+    cd apps/api && bunx wrangler secret put {{name}} $([ "{{site}}" = demo ] && echo "--env demo" || true)
+
 # Store a secret in .dev.vars without echoing it: just secret put NAME
 secret action name:
     @[ "{{action}}" = "put" ] || { echo "usage: just secret put NAME"; exit 2; }

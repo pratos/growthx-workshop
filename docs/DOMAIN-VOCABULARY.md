@@ -3,7 +3,7 @@
 The ubiquitous language. The person says it, the code says it, the agent says it back. A noun appears here and in code before it appears anywhere else: commands and events in `packages/domain/src/<context>/decider.ts`, views and ids in `packages/schema`. `just domain-vocabulary-check` fails a build that disagrees with this file. A context's `Not:` words are banned in the files under its `Paths:`; a context without `Paths:` bans them everywhere.
 
 ## Context: Planning
-Paths: packages/domain/src/thread, packages/domain/src/upcast, packages/domain/src/index.ts, packages/schema
+Paths: packages/domain/src/thread, packages/domain/src/plan, packages/domain/src/upcast, packages/domain/src/index.ts, packages/schema
 
 ### Artifact
 An interactive page the agent built, embedded in a Block. A decision report, a state explorer, a trace.
@@ -32,7 +32,7 @@ Not: experiment, spike, branch, worktree
 ### Plan
 A document tied to one repo. Everything that happens to it is one stream of events, held by one PlanRoom.
 Example: "Fork the gh-12 Plan so we can try the other retry policy without touching this one."
-Carried by: `PlanView` schema · Events: `PlanForked` · Commands: `ForkPlan`
+Carried by: `PlanView`, `PlanBody` schemas · Events: `PlanForked`, `PlanEdited` · Commands: `ForkPlan`, `EditPlan`
 Not: document, doc, page, spec
 
 ### Reply

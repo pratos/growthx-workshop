@@ -1,0 +1,4 @@
+given  PlanEdited         by pratos content="{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Retries live in the wrapper.\"}]}]}"
+       PlanEdited         by sam content="{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Retries live in the client.\"}]}]}"
+when   EditPlan           by pratos content="{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Retries live in the wrapper!\"}]}]}" basedOn=1
+then   rejected           the plan changed after edit 1; it is at edit 2. Reload and edit again

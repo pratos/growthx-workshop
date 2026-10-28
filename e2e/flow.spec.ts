@@ -85,3 +85,24 @@ test('signed out, a plan asks you to sign in, and a malformed plan id is refused
   await expect(page.getByRole('alert')).toContainText('lowercase');
   await signOut(page);
 });
+// <cp-05>
+
+test('the plan is written in the editor: "/" makes a heading, and the text is saved for everyone', async ({ page }) => {
+  const plan = `e2e-${Date.now().toString(36)}`;
+  await signIn(page, logins.sam);
+  await ready(page, `/plans/${plan}`);
+  const text = page.getByRole('textbox', { name: 'Plan text' });
+  await text.click();
+  await page.keyboard.type('/head');
+  await expect(page.getByRole('option', { name: /Heading/ })).toBeVisible();
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('Rollout');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('Flag first, then everyone.');
+  await expect(page.locator('[data-save="saved"]')).toContainText('last edit by sam');
+  await ready(page, `/plans/${plan}`);
+  await expect(text.getByRole('heading', { name: 'Rollout' })).toBeVisible();
+  await expect(text).toContainText('Flag first, then everyone.');
+  await signOut(page);
+});
+// </cp-05>

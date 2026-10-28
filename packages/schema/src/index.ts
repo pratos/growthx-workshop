@@ -14,12 +14,17 @@ export const Thread = Schema.Struct({
 });
 export type Thread = typeof Thread.Type;
 
-export const PlanView = Schema.Struct({ threads: Schema.Array(Thread), decisions: Schema.Array(Decision), version: Schema.Int });
+// The Plan's text: the editor's JSON (ProseMirror), saved whole on every edit, by a person or the agent.
+export const PlanContent = Schema.String.check(Schema.isMaxLength(200_000));
+export const PlanBody = Schema.Struct({ content: PlanContent, edits: Schema.Int, by: Schema.optional(ParticipantId), at: Schema.optional(Schema.String) });
+export type PlanBody = typeof PlanBody.Type;
+
+export const PlanView = Schema.Struct({ body: PlanBody, threads: Schema.Array(Thread), decisions: Schema.Array(Decision), version: Schema.Int });
 export type PlanView = typeof PlanView.Type;
 
 // The wire shape of a command. `by` is the Participant issuing it; the api fills it from the session.
 export const CommandEnvelope = Schema.Struct({
-  type: Schema.Literals(['OpenThread', 'Reply', 'ResolveThread']),
+  type: Schema.Literals(['OpenThread', 'Reply', 'ResolveThread', 'EditPlan']),
   data: Schema.Record(Schema.String, Schema.Unknown),
   by: ParticipantId,
 });

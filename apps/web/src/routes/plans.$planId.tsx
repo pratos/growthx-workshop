@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react';
 import type { PlanView } from '@greenhouse/schema';
 import { apiGet, apiGetOrStatus, apiCommand } from '#/lib/api';
 import { rememberPlan } from '#/lib/recent-plans';
+import { PlanEditor, WRITE_PREFIX } from '#/components/PlanEditor';
+import { savePlanText } from '#/lib/plan-text';
+import { askToWrite } from '#/lib/sessions';
 import { currentAccount } from '#/lib/session';
 import { SessionsPanel } from '#/components/SessionsPanel';
 
@@ -44,7 +47,7 @@ export const Route = createFileRoute('/plans/$planId')({
 function PlanGate() {
   const { plan, status } = Route.useLoaderData();
   const { planId } = Route.useParams();
-  if (!plan) return <main className="mx-auto max-w-3xl px-4 py-16"><p className="gh-kicker">Plan</p><h1 className="text-3xl font-semibold tracking-tight">{planId}</h1><p role="alert" className="gh-muted mt-4 text-sm">{status === 401 ? <><Link to="/login" className="underline">Sign in</Link> to open this plan. Plans are for the people working on them.</> : status === 400 ? 'A plan id is 1 to 40 lowercase letters, digits or dashes.' : `This plan could not be opened (${status}).`}</p></main>;
+  if (!plan) return <main className="mx-auto max-w-3xl px-4 py-16"><h1 className="text-3xl font-semibold tracking-tight">{planId}</h1><p role="alert" className="gh-muted mt-4 text-sm">{status === 401 ? <><Link to="/login" className="underline">Sign in</Link> to open this plan. Plans are for the people working on them.</> : status === 400 ? 'A plan id is 1 to 40 lowercase letters, digits or dashes.' : `This plan could not be opened (${status}).`}</p></main>;
   return <PlanPage />;
 }
 
@@ -118,7 +121,7 @@ function PlanPage() {
           </span>
         </div>
         <div className="gh-views" role="tablist" aria-label="Plan views">
-          <button type="button" role="tab" aria-selected={view === 'document'} className="gh-view" onClick={() => setView('document')}>Document</button>
+          <button type="button" role="tab" aria-selected={view === 'document'} className="gh-view" onClick={() => setView('document')}>Plan</button>
           <button type="button" role="tab" aria-selected={view === 'decisions'} className="gh-view" onClick={() => setView('decisions')}>Decisions <span className="tabular-nums">{plan.decisions.length}</span></button>
         </div>
         <div className="gh-doc">
@@ -142,6 +145,8 @@ function PlanPage() {
             </section>
           ) : (
             <>
+              <PlanEditor body={plan.body} onSave={(content, basedOn) => savePlanText(planId, by, content, basedOn)}
+                onAsk={async (prompt) => { const refused = await askToWrite(planId, by, prompt, WRITE_PREFIX); setSessionTick((n) => n + 1); return refused; }} />
               <section className="mt-8 space-y-4" aria-label="Comment threads">
                 {plan.threads.length === 0 && <p className="gh-muted text-sm">No threads on this plan yet. Open the first one below: a question about one block that should end in a decision.</p>}
                 {plan.threads.map((t) => {

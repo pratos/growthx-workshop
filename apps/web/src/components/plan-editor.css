@@ -1,0 +1,28 @@
+/* The Plan's text, in Chopin's document roles: Inter body at 1.6, Lora headings at 400, a 650px measure. */
+.gh-plan-editor { position: relative; }
+.gh-plan-text { outline: none; min-height: 12rem; font-size: var(--ch-text-base); line-height: 1.6; color: var(--ch-ink); }
+.gh-plan-text > * + * { margin-top: 0.75em; }
+.gh-plan-text h2 { font-family: var(--font-document-heading); font-weight: 400; font-size: var(--ch-text-xl); line-height: 1.25; margin-top: 1.6em; }
+.gh-plan-text h3 { font-family: var(--font-document-heading); font-weight: 400; font-size: var(--ch-text-lg); line-height: 1.4; margin-top: 1.3em; }
+.gh-plan-text ul { list-style: disc; padding-left: 1.4em; }
+.gh-plan-text ol { list-style: decimal; padding-left: 1.4em; }
+.gh-plan-text li > p { margin: 0; }
+.gh-plan-text ul[data-type="taskList"] { list-style: none; padding-left: 0.2em; }
+.gh-plan-text ul[data-type="taskList"] li { display: flex; gap: 0.5em; align-items: baseline; }
+.gh-plan-text ul[data-type="taskList"] li > label { flex: none; }
+.gh-plan-text ul[data-type="taskList"] input { accent-color: var(--ch-brand); }
+.gh-plan-text blockquote { border-left: 2px solid var(--ch-gray-300); padding-left: 1em; color: var(--ch-ink-2); }
+.gh-plan-text pre { background: var(--ch-inset); border: 1px solid var(--ch-edge); border-radius: var(--ch-radius-md); padding: 0.75em 1em; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: var(--ch-text-sm); overflow-x: auto; }
+.gh-plan-text code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+.gh-plan-text hr { border: 0; border-top: 1px solid var(--ch-divider); margin: 1.5em 0; }
+.gh-plan-text a { color: var(--ch-brand-ink); text-decoration: underline; text-underline-offset: 2px; }
+.gh-plan-text p.is-editor-empty:first-child::before { content: attr(data-placeholder); float: left; height: 0; color: var(--ch-ink-4); pointer-events: none; }
+.gh-plan-status { margin-top: 0.75rem; font-size: var(--ch-text-xs); color: var(--ch-ink-3); }
+.gh-plan-status[data-save="refused"] { color: var(--ch-warning-ink); }
+
+/* The "/" menu: Chopin's menu (4px padding, 8px radius, hairline ring, overlay shadow, 28px items, selected tint). */
+.gh-slash { position: fixed; z-index: 50; width: 18rem; max-height: 20rem; overflow-y: auto; padding: 4px; background: var(--ch-page); border-radius: var(--ch-radius-lg); box-shadow: 0 0 0 1px var(--ch-edge), var(--ch-shadow-overlay); }
+.gh-slash-item { display: flex; width: 100%; align-items: baseline; justify-content: space-between; gap: 0.75rem; min-height: 28px; padding: 4px 6px; border-radius: var(--ch-radius-md); font-size: var(--ch-text-sm); color: var(--ch-ink); text-align: left; }
+.gh-slash-item[aria-selected="true"] { background: var(--ch-selected); }
+.gh-slash-hint { color: var(--ch-ink-3); font-size: var(--ch-text-xs); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gh-slash-empty { padding: 4px 6px; font-size: var(--ch-text-sm); color: var(--ch-ink-3); }

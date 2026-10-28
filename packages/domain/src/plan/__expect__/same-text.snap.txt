@@ -1,0 +1,2 @@
+given  PlanEdited         by pratos content="{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Retries live in the wrapper.\"}]}]}"
+when   EditPlan           by pratos content="{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Retries live in the wrapper.\"}]}]}" basedOn=1

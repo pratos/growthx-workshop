@@ -39,3 +39,20 @@ test('an admin sees the dashboard, the accounts, the event log with secrets mask
   // </cp-05>
   await signOut(page);
 });
+// <cp-04>
+
+test('an admin adds an account from the page, and it can sign in', async ({ page }) => {
+  const email = `added-${Date.now().toString(36)}@greenhouse.test`;
+  await signIn(page, logins.admin);
+  await ready(page, '/admin/accounts');
+  await page.getByLabel('Name').fill('Added');
+  await page.getByLabel('Email').fill(email);
+  await page.getByLabel('Starting password').fill('a-starting-password');
+  await page.getByRole('button', { name: 'Add account' }).click();
+  await expect(page.getByRole('status')).toContainText(`can sign in as ${email}`);
+  await expect(page.getByRole('row').filter({ hasText: email })).toBeVisible();
+  await signOut(page);
+  await signIn(page, { email, password: 'a-starting-password' });
+  await signOut(page);
+});
+// </cp-04>
