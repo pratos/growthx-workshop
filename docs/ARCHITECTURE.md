@@ -1,6 +1,6 @@
 # Architecture
 
-Two Workers joined by a service binding, one Durable Object per Plan, one D1. The event log is the system of record; everything else is a projection.
+Two Workers joined by a service binding, one Durable Object per Plan, one D1. The API is the orchestrator: it routes each plan to its own room and keeps the list of rooms in D1, with who is in each right now. The event log is the system of record; everything else is a projection.
 
 This file is the source of the architecture map. `just arch` turns the Mermaid block and the walkthrough below into `docs/architecture/index.html`, a plain-language map a person can step through. A hook runs it whenever this file changes, and refuses a new folder under `apps/` or `packages/` until the "Where it lives" table names it. The oxlint boundary rule enforces the edge that matters most today.
 
@@ -11,10 +11,10 @@ flowchart LR
   REL["You · releasing a feature"]
   subgraph cf["Runs on Cloudflare"]
     W["Web app"]
-    A["API"]
+    A["API · knows every plan room"]
     RW["Rules and shared words"]
     R[("Plan room · one per plan · what happened, in order")]
-    D[("Settings, accounts and summaries · feature switches, who can sign in")]
+    D[("Settings, accounts and the list of plan rooms · switches, who can sign in, who is where")]
   end
   subgraph ag["Agent"]
     AG["Agent · a participant like you"]
@@ -27,7 +27,8 @@ flowchart LR
   A -- "follows" --> RW
   A -- "records it" --> R
   R -- "shows it at once" --> P2
-  AG -- "works through the same steps" --> A
+  R -- "says who is here" --> D
+  AG -- "answers @agent, streams, writes into the plan" --> A
   AG -- "saves each step" --> CP
   REL -- "on for a few, then everyone" --> D
 ```
@@ -41,11 +42,11 @@ The map is plain language: no file names, no code. Each row is a state a person 
 | Step | Focus | Edges | Caption |
 |---|---|---|---|
 | open | P W | P->W | You open a plan in the web app and write, reply or decide. |
-| ask | W A | W->A | The web app asks the API on your behalf and never touches data itself. |
+| ask | W A | W->A | The web app asks the API, which knows every plan room and who is in each. |
 | check | A D | A->D | The API checks whether this feature is switched on for you. |
 | record | A RW R | A->RW A->R | If it is, the API follows the rules and the plan room records what happened. |
-| share | R P2 | R->P2 | Everyone watching the plan sees the change at once, without refreshing. |
-| agent | ag AG A | AG->A | The agent joins the same plan and goes through the same steps as a person. |
+| share | R P2 D | R->P2 R->D | Everyone in the plan sees the change at once, and the room tells the API who is here. |
+| agent | ag AG A | AG->A | Mention @agent in chat: it answers as it writes, draws or edits the plan, through the same steps as you. |
 | resume | AG CP | AG->CP | The agent saves every step, so a crash picks up exactly where it stopped. |
 | release | REL D | REL->D | A new feature starts switched off, then goes on for you, a few people, and everyone. |
 
@@ -59,7 +60,7 @@ The map's parts, and the folders that hold them. `just arch` refuses a folder un
 | API | `apps/api` |
 | Plan room | `apps/api` (the PlanRoom Durable Object), `packages/domain`, `packages/engine` (the event log every stream is written through) |
 | Rules and shared words | `packages/domain`, `packages/schema`, `docs/DOMAIN-VOCABULARY.md` |
-| Settings, accounts and summaries | `apps/api/migrations`, `packages/db`, `packages/engine` (accounts are a stream in D1) |
+| Settings, accounts and the list of plan rooms | `apps/api/migrations`, `packages/db`, `packages/engine` (accounts are a stream in D1) |
 | Agent | `packages/agent` |
 | Agent memory | `packages/agent` (SQLite checkpoints) |
 | Workshop check-in | `apps/checkin` |

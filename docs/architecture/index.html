@@ -145,7 +145,7 @@
     "builtAt": "2026-10-28",
     "source": "docs/ARCHITECTURE.md"
   },
-  "diagram": "flowchart LR\n  P[\"You · in a plan\"]\n  P2[\"Teammate · watching the same plan\"]\n  REL[\"You · releasing a feature\"]\n  subgraph cf[\"Runs on Cloudflare\"]\n    W[\"Web app\"]\n    A[\"API\"]\n    RW[\"Rules and shared words\"]\n    R[(\"Plan room · one per plan · what happened, in order\")]\n    D[(\"Settings, accounts and summaries · feature switches, who can sign in\")]\n  end\n  subgraph ag[\"Agent\"]\n    AG[\"Agent · a participant like you\"]\n    CP[(\"Agent memory · every step saved\")]\n  end\n  CK[\"Workshop check-in · a separate small app\"]\n  P -- \"opens a plan, writes, decides\" --> W\n  W -- \"asks on your behalf\" --> A\n  A -- \"is this on for you?\" --> D\n  A -- \"follows\" --> RW\n  A -- \"records it\" --> R\n  R -- \"shows it at once\" --> P2\n  AG -- \"works through the same steps\" --> A\n  AG -- \"saves each step\" --> CP\n  REL -- \"on for a few, then everyone\" --> D",
+  "diagram": "flowchart LR\n  P[\"You · in a plan\"]\n  P2[\"Teammate · watching the same plan\"]\n  REL[\"You · releasing a feature\"]\n  subgraph cf[\"Runs on Cloudflare\"]\n    W[\"Web app\"]\n    A[\"API · knows every plan room\"]\n    RW[\"Rules and shared words\"]\n    R[(\"Plan room · one per plan · what happened, in order\")]\n    D[(\"Settings, accounts and the list of plan rooms · switches, who can sign in, who is where\")]\n  end\n  subgraph ag[\"Agent\"]\n    AG[\"Agent · a participant like you\"]\n    CP[(\"Agent memory · every step saved\")]\n  end\n  CK[\"Workshop check-in · a separate small app\"]\n  P -- \"opens a plan, writes, decides\" --> W\n  W -- \"asks on your behalf\" --> A\n  A -- \"is this on for you?\" --> D\n  A -- \"follows\" --> RW\n  A -- \"records it\" --> R\n  R -- \"shows it at once\" --> P2\n  R -- \"says who is here\" --> D\n  AG -- \"answers @agent, streams, writes into the plan\" --> A\n  AG -- \"saves each step\" --> CP\n  REL -- \"on for a few, then everyone\" --> D",
   "steps": [
     {
       "id": "open",
@@ -160,7 +160,7 @@
     },
     {
       "id": "ask",
-      "caption": "The web app asks the API on your behalf and never touches data itself.",
+      "caption": "The web app asks the API, which knows every plan room and who is in each.",
       "focus": [
         "W",
         "A"
@@ -195,18 +195,20 @@
     },
     {
       "id": "share",
-      "caption": "Everyone watching the plan sees the change at once, without refreshing.",
+      "caption": "Everyone in the plan sees the change at once, and the room tells the API who is here.",
       "focus": [
         "R",
-        "P2"
+        "P2",
+        "D"
       ],
       "edges": [
-        "L_R_P2_0"
+        "L_R_P2_0",
+        "L_R_D_0"
       ]
     },
     {
       "id": "agent",
-      "caption": "The agent joins the same plan and goes through the same steps as a person.",
+      "caption": "Mention @agent in chat: it answers as it writes, draws or edits the plan, through the same steps as you.",
       "focus": [
         "ag",
         "AG",
