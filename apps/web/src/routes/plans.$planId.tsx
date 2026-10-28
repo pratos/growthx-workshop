@@ -4,9 +4,11 @@ import { useEffect, useState } from 'react';
 import type { PlanView } from '@greenhouse/schema';
 import { apiGetOrStatus, apiCommand } from '#/lib/api';
 import { rememberPlan } from '#/lib/recent-plans';
-import { PlanEditor } from '#/components/PlanEditor';
+import { PlanEditor, WRITE_PREFIX } from '#/components/PlanEditor';
 import { savePlanText } from '#/lib/plan-text';
+import { askToWrite } from '#/lib/sessions';
 import { currentAccount } from '#/lib/session';
+import { SessionsPanel } from '#/components/SessionsPanel';
 
 // Form fields are strings; a File here is a bug, so it reads as empty.
 const field = (f: FormData, name: string): string => { const v = f.get(name); return typeof v === 'string' ? v : ''; };
@@ -48,6 +50,7 @@ function PlanPage() {
   useEffect(() => rememberPlan(opened), [opened]);
   const { plan: loaded, account } = Route.useLoaderData();
   const plan = loaded!;
+  const [sessionTick, setSessionTick] = useState(0);
   const { planId } = Route.useParams();
   const router = useRouter();
   // Comments are written as the signed-in account; the API sets `by` from the sign-in.
@@ -62,7 +65,13 @@ function PlanPage() {
     ws.onopen = () => setLive('live');
     ws.onclose = () => setLive('off');
     ws.onerror = () => setLive('off');
-    ws.onmessage = (m) => { try { if (JSON.parse(String(m.data)).type === 'events') void router.invalidate(); } catch {} };
+    ws.onmessage = (m) => {
+      try {
+        const type = (JSON.parse(String(m.data)) as { type?: string }).type;
+        if (type === 'events') void router.invalidate();
+        if (type === 'session') setSessionTick((n) => n + 1);
+      } catch {}
+    };
     return () => ws.close();
   }, [planId, router]);
 
@@ -74,7 +83,8 @@ function PlanPage() {
   }
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10">
+    <main className="mx-auto grid max-w-6xl gap-8 px-4 py-10 lg:grid-cols-[minmax(0,1fr)_380px]">
+      <div>
       <header className="flex items-baseline justify-between gap-4">
         <h1 className="text-2xl font-semibold tracking-tight">Plan {planId}</h1>
         <p className="text-sm text-gray-500">as {by}</p>
@@ -82,7 +92,8 @@ function PlanPage() {
       <p className="mt-1 text-sm text-gray-500">{plan.threads.length} threads · {plan.decisions.length} decisions · version {plan.version} · <span data-live={live} className={live === 'live' ? 'text-emerald-700' : 'text-gray-400'}>{live === 'live' ? '● live' : live === 'off' ? '○ offline' : '○ connecting'}</span></p>
       {error && <p role="alert" className="mt-4 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">{error}</p>}
 
-      <div className="mt-8"><PlanEditor body={plan.body} onSave={(content, basedOn) => savePlanText(planId, by, content, basedOn)} /></div>
+      <div className="mt-8"><PlanEditor body={plan.body} onSave={(content, basedOn) => savePlanText(planId, by, content, basedOn)}
+        onAsk={async (prompt) => { const refused = await askToWrite(planId, by, prompt, WRITE_PREFIX); setSessionTick((n) => n + 1); return refused; }} /></div>
       <section className="mt-8 space-y-4">
         {plan.threads.map((t) => {
           const decision = plan.decisions.find((d) => d.threadId === t.threadId);
@@ -111,6 +122,8 @@ function PlanPage() {
           <button type="submit" className="rounded border border-gray-300 px-3 py-2 text-sm">Open</button>
         </div>
       </form>
+      </div>
+      <SessionsPanel planId={planId} me={account?.accountId ?? null} tick={sessionTick} />
     </main>
   );
 }

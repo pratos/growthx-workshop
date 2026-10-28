@@ -1,0 +1,12 @@
+when   Pratos starts a session on plan gh-12
+then   SessionStarted     s1 gh-12 by pratos title="rollout"
+when   Pratos posts a message to the session
+then   MessagePosted      s1 r1 by pratos "Sam, can you look at the retries block first?"
+when   Sam posts before joining
+then   rejected           sam has not joined this session
+when   Sam joins and replies
+then   ParticipantJoined  s1 by sam
+when   Sam posts
+then   MessagePosted      s1 r2 by sam "On it, then we ask the agent."
+read   messages           r1  pratos  Sam, can you look at the retries block first?
+                          r2  sam  On it, then we ask the agent.

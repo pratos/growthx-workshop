@@ -68,6 +68,31 @@ app.post('/plans/:planId/commands', byAccount, async (c) => {
   return c.json(outcome.body, outcome.status);
 });
 
+// Sessions: a signed-in Participant starts, joins, asks, steers. `by` is the signed-in account; the body never sets it.
+app.post('/plans/:planId/sessions', byAccount, async (c) => {
+  const id = planId(c.req.param('planId'));
+  const body = (await c.req.json().catch(() => null)) as { type?: unknown; data?: unknown } | null;
+  const result = await c.env.PLAN_ROOM.getByName(id).sessionCommand(id, typeof body?.type === 'string' ? body.type : '', body?.data ?? {}, c.get('account').accountId);
+  return 'rejected' in result ? c.json(result, 409) : c.json(result, 201);
+});
+
+app.get('/plans/:planId/sessions', requireSignIn, async (c) => {
+  return c.json({ sessions: await c.env.PLAN_ROOM.getByName(planId(c.req.param('planId'))).sessionList() });
+});
+
+// The agent's answer as it is written: relayed to the room's sockets, not stored. Only the Run's runner may send it.
+app.post('/plans/:planId/sessions/:sessionId/runs/:runId/partial', async (c) => {
+  const body = (await c.req.json().catch(() => null)) as { text?: unknown } | null;
+  if (typeof body?.text !== 'string') return c.json({ rejected: 'text is required' }, 400);
+  const r = await c.env.PLAN_ROOM.getByName(planId(c.req.param('planId'))).runPartial(c.req.param('sessionId'), c.req.param('runId'), c.get('account').accountId, body.text);
+  return 'rejected' in r ? c.json(r, 409) : c.json(r);
+});
+
+app.get('/plans/:planId/sessions/:sessionId', requireSignIn, async (c) => {
+  const view = await c.env.PLAN_ROOM.getByName(planId(c.req.param('planId'))).sessionView(c.req.param('sessionId'));
+  return view ? c.json(view) : c.json({ error: 'no such session' }, 404);
+});
+
 // Live stream of the plan: the Durable Object accepts the socket and fans out every append.
 app.get('/plans/:planId/ws', (c) => {
   const upgrade = new Request(c.req.raw);

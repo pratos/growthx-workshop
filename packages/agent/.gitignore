@@ -1,0 +1,4 @@
+agent.sqlite
+agent.sqlite-wal
+agent.sqlite-shm
+agent-serve.sqlite*
