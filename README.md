@@ -6,7 +6,7 @@ A planning room in the spirit of GitHub Next's Chopin: people and an agent write
 
 ```sh
 git clone … greenhouse && cd greenhouse
-nix develop        # or: have bun, just, jq on PATH
+nix develop        # everything a recipe needs (bun, just, jq, python3, perl…); or have them on PATH
 just up            # api + web locally; http://localhost:3000
 just test
 ```

@@ -12,6 +12,8 @@
 # Scope: packages/domain and packages/schema. Tests, *.d.ts, generated files and the kernel are out.
 # usage: check-domain-vocabulary.sh docs/DOMAIN-VOCABULARY.md packages [apps …]
 set -euo pipefail
+# perl balances the braces of a schema; without it the field check would pass silently, so stop instead.
+command -v perl >/dev/null || { echo "✗ perl is required (nix develop has it)"; exit 2; }
 vocab="${1:?domain vocabulary path}"; shift
 [ -f "$vocab" ] || { echo "no domain vocabulary at $vocab"; exit 2; }
 files=$(find "$@" -type f \( -name '*.ts' -o -name '*.tsx' \) \

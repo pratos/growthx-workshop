@@ -8,7 +8,8 @@
     in {
       devShells = forAll (pkgs: {
         default = pkgs.mkShell {
-          packages = with pkgs; [ bun nodejs_24 just jq curl git uv sops age ];
+          # python3: skills-sync and `just deck`; perl: the vocabulary check. Everything else a recipe calls comes from bun.
+          packages = with pkgs; [ bun nodejs_24 just jq curl git uv sops age python3 perl ];
           shellHook = ''
             export PATH="$PWD/node_modules/.bin:$PATH"   # wrangler, oxlint, oxfmt pinned by bun, not by nix
             echo "greenhouse · bun $(bun --version) · just $(just --version | cut -d' ' -f2)"

@@ -95,3 +95,4 @@ checkin/
 
 # deploy worktrees (git worktree add .deploy/<name>): inside the repo so its wrangler profile applies
 /.deploy/
+/.amp/guard.log

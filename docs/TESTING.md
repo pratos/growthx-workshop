@@ -5,6 +5,7 @@ The finished product, on your laptop: a planning room where people and an agent 
 ## Start it
 
 ```sh
+nix develop         # optional: the whole toolchain, same on every laptop and agent sandbox
 just install        # once: dependencies, skills, git hooks
 just reset          # fresh local database and plan rooms, migrated and seeded
 just up             # web and API on http://localhost:3000
