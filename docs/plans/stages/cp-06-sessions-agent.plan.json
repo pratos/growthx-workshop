@@ -1,10 +1,10 @@
 {
-  "title": "Chat with the agent: sessions and a durable agent",
+  "title": "Chat with the agent, and the agent writes",
   "ticket": "cp-06",
   "date": "2026-10-28",
   "status": "final",
   "author": "pratos with Claude Code",
-  "summary": "Beside the plan document, Participants start a Session, ask the agent, and steer a Run while it works. The agent is a Participant too: `just agent-serve` signs in as itself, answers queued Runs in order through the same API, and survives `kill -9` by resuming its pi-durable conversation.",
+  "summary": "Beside the plan, people start a Session, ask the agent and steer its Run. The agent is a Participant: `just agent-serve` answers queued Runs through the same API, and \"/ask\" in the editor has it write into the plan with EditPlan, credited. It survives `kill -9` through pi-durable.",
   "current": "cp-05 has the plan document: Threads and Decisions in each PlanRoom's `events` table, the live socket, `resolve-thread` checked in `decide()`, and `just review`. Nobody can ask the agent anything, no route sets `by` from the sign-in, and `packages/agent` does not exist.",
   "discoveries": [
     "Sessions run on the engine over the room's own SQLite (the `durableObject` adapter), so events and their projections commit in one transaction.",
@@ -13,7 +13,7 @@
     "The panel's server functions reach the API over the binding, but `agent-serve` and curl need an HTTP door: `/api` on the web origin.",
     "With no model key, `chooseModelOrFaux` answers through pi-durable all the same, with a faux model that echoes the question."
   ],
-  "endState": "Signed in on `/plans/gh-12`, start a Session and ask; `just agent-serve` answers within seconds. A second browser joins and steers. Kill the agent mid-answer and start it again: the Run finishes once.",
+  "endState": "On `/plans/gh-12`, ask in a Session and `just agent-serve` answers within seconds. \"/ask a three step rollout plan\" in the editor: the agent's text replaces the line. Kill the agent mid-answer and restart it: the Run finishes once.",
   "notDoing": [
     "Failing a Run after repeated errors; `FailRun` arrives in a later stage.",
     "Tools for the agent; it answers in words, three sentences at most.",
@@ -826,6 +826,6 @@
     "`packages/agent/README.md`: pi-durable on Bun, and the kill -9 story"
   ],
   "change": {
-    "intent": "\"/ask\" as a component with its states."
+    "intent": "Title, summary and end state match what the stage now builds."
   }
 }

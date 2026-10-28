@@ -1,19 +1,19 @@
 {
-  "title": "UI and UX with Impeccable, Emil Kowalski's skill and Agentation",
+  "title": "UI and UX in Chopin's language, with Impeccable, Emil Kowalski's skill and Agentation",
   "ticket": "cp-07",
   "date": "2026-10-28",
   "status": "final",
   "author": "pratos with Claude Code",
-  "summary": "The plan page and sessions panel work but read as a wireframe. This stage gives them one component language from the theme tokens, a top bar that names you, and clear empty and decided states. The process is the lesson: Impeccable critiques, Emil's `animate` decides motion, Agentation carries notes.",
+  "summary": "The plan page and sessions panel work but read as a wireframe. This stage lays them out as Chopin's workspace: Chat on the ground, the plan as a raised white sheet with Plan and Decisions views, one petrol accent. Impeccable critiques, Emil's `animate` decides motion, Agentation carries notes.",
   "current": "cp-06 ends with the plan page (threads ending in decisions), sessions in a chat panel beside it, and `just agent-serve` answering through pi-durable. The screens use grey Tailwind defaults, the top bar always says Sign in, and the `as` field starts as `pratos` whoever signed in.",
   "discoveries": [
-    "`apps/web/src/styles.css` already defines light and dark tokens (`--sea-ink`, `--lagoon`, `--surface`, `--line`); classes built on them hold in both themes.",
+    "`apps/web/src/styles.css` holds Chopin's tokens (`--ch-*`); the older names (`--sea-ink`, `--lagoon`, `--surface`, `--line`) point at them, so classes built on either follow. Light only.",
     "`PRODUCT.md` and `DESIGN.md` describe the workshop deck, not the app; the critique works from the app's tokens.",
     "Agentation mounts in `DevTools.tsx` behind `import.meta.env.DEV`, and `.mcp.json` runs `agentation-mcp`, so notes reach the agent.",
     "The warn tone `#b45309` reads 3.7:1 on the dark background, under AA for small text: a good first note.",
     "A Sign out in the top bar makes two on `/`; `signOut` in `e2e/helpers.ts` must scope to `header-account`."
   ],
-  "endState": "`/plans/gh-12` in dark mode, before and after: cards, one lagoon action per form, pills for counts and live, bubbles that settle in once. The top bar names you; acting as starts as you. One Agentation note fixed live.",
+  "endState": "`/plans/gh-12` before and after: Chat on the left with no card, the plan as a raised sheet with a title bar and Plan and Decisions views, one petrol action per form, no middle dots. One Agentation note fixed live.",
   "notDoing": [
     "A new palette or font; the tokens and Manrope stay.",
     "Showing failed runs; the bubble is styled here, `RunFailed` arrives in cp-08.",
@@ -329,7 +329,7 @@
         },
         {
           "name": "Thread",
-          "notes": "One field, one lagoon action. Decided reads at a glance: a palm pill, the decision in bold, who and when.",
+          "notes": "One field, one petrol action. Decided reads at a glance: a green pill, the decision in bold, who and when.",
           "height": 215,
           "css": ".gh-card { border: 1px solid var(--line); background: var(--surface); border-radius: var(--radius-lg); padding: var(--space-5); max-width: 560px; }\n.gh-muted { color: var(--muted); }\n.gh-kicker { margin: 0; color: var(--muted); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }\n.gh-input { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--surface-strong); color: var(--fg); border-radius: var(--radius-md); padding: 8px 12px; font: inherit; font-size: 14px; }\n.gh-btn { border: 1px solid var(--line); border-radius: var(--radius-md); padding: 8px 13px; font: inherit; font-size: 14px; font-weight: 600; color: var(--fg); background: var(--chip); white-space: nowrap; }\n.gh-btn-primary { background: var(--accent); border-color: transparent; color: var(--bg); }\n.gh-pill { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--chip-line); background: var(--chip); border-radius: 999px; padding: 1px 9px; font-size: 11.5px; color: var(--muted); }\n.gh-pill[data-tone=\"live\"] { color: var(--palm); border-color: color-mix(in oklab, var(--palm) 45%, transparent); }\n.gh-pill[data-tone=\"warn\"] { color: var(--warn); border-color: rgba(180, 83, 9, 0.35); }\n.gh-bubble { margin: 0; border-radius: var(--radius-lg); padding: 9px 13px; font-size: 14px; line-height: 1.45; max-width: 92%; }\n.gh-bubble-asked { align-self: flex-end; background: color-mix(in oklab, var(--lagoon) 16%, var(--surface-strong)); border-bottom-right-radius: 4px; }\n.gh-bubble-answer { align-self: flex-start; border: 1px solid var(--line); background: var(--surface-strong); border-bottom-left-radius: 4px; }\n.gh-bubble-failed { align-self: flex-start; border: 1px solid rgba(180, 83, 9, 0.35); color: var(--warn); }\n.who { display: block; font-size: 11px; color: var(--muted); }\n.gh-bubble-failed .who { color: var(--warn); }\n.row { display: flex; gap: var(--space-2); align-items: center; }\n.col { display: flex; flex-direction: column; gap: 10px; }\n.wrap { display: flex; flex-wrap: wrap; gap: var(--space-2); }\n.small { margin: 0; font-size: 13px; }\n.meta { font-size: 12px; color: var(--muted); }\n.list { list-style: none; margin: 0; padding: 0; }\n.tight { gap: 6px; }\n.panel { max-width: 380px; }\n.divider { border-top: 1px solid var(--line); padding-top: var(--space-4); }\n.tab { padding: 4px 12px; font-size: 12px; }\n.tab[aria-pressed=\"true\"] { border-color: var(--lagoon); }\n.body { font-weight: 500; }\nh2 { margin: 0; font-size: 18px; font-weight: 600; }\np { margin: 0; }\na { color: var(--accent); }\n.gh-arrive { animation: gh-arrive 180ms cubic-bezier(0.23, 1, 0.32, 1); }\n@keyframes gh-arrive { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }\n.gh-working::after { content: \"…\"; display: inline-block; width: 1ch; overflow: hidden; vertical-align: bottom; animation: gh-blink 1.2s steps(4, end) infinite; }\n@keyframes gh-blink { from { width: 0; } to { width: 1.1ch; } }\n@media (prefers-reduced-motion: reduce) { .gh-arrive { animation: none; } .gh-working::after { animation: none; width: auto; } }",
           "states": [
@@ -365,7 +365,7 @@
             "done": false
           },
           {
-            "text": "A decided thread reads at a glance in dark mode.",
+            "text": "A decided thread reads at a glance.",
             "done": false
           }
         ]
@@ -462,7 +462,7 @@
             "done": false
           },
           {
-            "text": "The before and after of `/plans/gh-12` in dark mode, side by side.",
+            "text": "The before and after of `/plans/gh-12`, side by side.",
             "done": false
           }
         ]
@@ -474,6 +474,6 @@
     "the `impeccable`, `animate` and `agentation` skills"
   ],
   "change": {
-    "intent": "Chopin's tokens replace the dark lagoon ones."
+    "intent": "Title, summary and end state match what the stage now builds."
   }
 }

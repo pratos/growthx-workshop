@@ -1,10 +1,10 @@
 {
-  "title": "The plan document: comments that end in decisions, live",
+  "title": "The plan, written in an editor: comments that end in decisions, live",
   "ticket": "cp-05",
   "date": "2026-10-28",
   "status": "final",
   "author": "pratos with Claude Code",
-  "summary": "A Plan gets its document: Participants open a Thread on a Block and resolve it into a Decision that stays attached to that Block. Every tab on the Plan sees each change at once, through the PlanRoom's hibernating sockets. Resolving ships behind `resolve-thread`, checked in `decide()`.",
+  "summary": "A Plan gets its text and its comments. People write it in a Tiptap editor (\"/\" opens a block menu); every save is an EditPlan event, refused when stale. A Thread on a Block resolves into a Decision. Every tab sees each change at once. Resolving ships behind `resolve-thread`.",
   "current": "cp-04 has accounts and sign-in, the Flags service with `resolve-thread` seeded off but allowlisted for admin and pratos, admin pages and Playwright. There is no Plan yet. No Durable Object, thread commands, event log per Plan or page at `/plans/:id`.",
   "discoveries": [
     "The PlanRoom appends a command's events in one synchronous block, so `ThreadResolved` and `DecisionRecorded` land together or not at all.",
@@ -13,7 +13,7 @@
     "`docs/DOMAIN-VOCABULARY.md` has no `ThreadClosed` and bans *verdict*, so the vocabulary check catches the first pass by name alone.",
     "The upcaster is a pure function tested on a verbatim v1 stream; `PlanRoom.read()` does not call it yet."
   ],
-  "endState": "Two tabs on `/plans/gh-12`: a Thread opened in one appears in the other, and resolving it shows who decided what. A first pass that calls the event `ThreadClosed` fails `just domain-vocabulary-check`, and `just review main` flags it.",
+  "endState": "Home opens or starts a plan. Two tabs on `/plans/gh-12`: text written in one appears in the other, and so does a Thread; resolving it shows who decided. Calling the event `ThreadClosed` fails `just domain-vocabulary-check`.",
   "notDoing": [
     "Hiding Resolve without the flag; until the release stage the page shows the refusal.",
     "Reopening a Thread or editing a Decision; a change of mind is a new Thread.",
@@ -762,6 +762,6 @@
     "`docs/ARCHITECTURE.md`: flags in `decide()`, multiplayer is the Durable Object's job"
   ],
   "change": {
-    "intent": "The editor as a component with its states; Chopin tokens."
+    "intent": "Title, summary and end state match what the stage now builds."
   }
 }

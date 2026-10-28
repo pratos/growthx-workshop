@@ -12,7 +12,7 @@
     "`bun scripts/arch.ts --coverage` blocks `packages/schema` until \"Where it lives\" names it, so the map changes with the package.",
     "A sign-in is never called a session: in this product, a Session is where Participants ask the agent."
   ],
-  "endState": "`just domain-vocabulary-check` passes, and fails when a banned word such as `Verdict` is exported. The architecture map and the agent-loop decision report open in the browser and show the plan room design.",
+  "endState": "`just domain-vocabulary-check` passes, and fails when a banned word such as `Verdict` is exported. The architecture map and the agent-loop decision report open in the browser. The app wears Chopin's tokens: warm ground, white page, one petrol accent.",
   "notDoing": [
     "The engine or any decider; cp-03 builds the engine, later stages the Thread and Session.",
     "Routes or pages; the API and the web app stay as cp-01 left them.",
@@ -696,7 +696,7 @@
     "`docs/plans/2026-10-28-domain-vocabulary.plan.json`, the next round of words"
   ],
   "change": {
-    "intent": "Chopin's design language as the plan's design block."
+    "intent": "Title, summary and end state match what the stage now builds."
   },
   "design": {
     "notes": "Chopin's language (GitHub Next, MIT): a white page on a warm olive ground; petrol is the one accent, for the action you can take; colour otherwise only for outcomes. Inter for the interface, Lora for document headings; light only.",

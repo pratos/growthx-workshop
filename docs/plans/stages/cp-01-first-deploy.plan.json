@@ -13,7 +13,7 @@
     "The API deploys before the web Worker, so the binding's target exists; the web Worker needs `bun run build` first.",
     "The smoke check reads `greenhouse-api.<subdomain>.workers.dev/healthz`; the subdomain differs per Cloudflare account, hence the `WORKERS_SUBDOMAIN` variable."
   ],
-  "endState": "A push to main runs `check`, then deploys api then web; the live `/healthz` shows the `git describe` label. `just rollback api <id>` returns to the previous version. A pending migration stops `just deploy`.",
+  "endState": "A push to main runs `check`, then deploys api then web; the live `/healthz` shows the `git describe` label. `just rollback api <id>` returns to the previous version. A pending migration, the wrong Cloudflare login, or a failing `just cf-audit` stops `just deploy`.",
   "notDoing": [
     "Migrating on deploy; migrations are applied by hand, locally or by the manual workflow.",
     "Feature flags; `docs/RELEASE.md` names the flag step, and its commands arrive later.",
@@ -325,6 +325,6 @@
     "`skills/vendor/wrangler/SKILL.md`, `skills/scaffold/SKILL.md`"
   ],
   "change": {
-    "intent": "Intents cut to the 15-word budget."
+    "intent": "Title, summary and end state match what the stage now builds."
   }
 }

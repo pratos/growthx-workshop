@@ -270,67 +270,78 @@
     }
   ],
   "design": {
-    "notes": "The plan page is an Operate surface, read often by people working together. Quiet cards from the theme tokens; one lagoon accent marks the action you can take; palm only for live and decided; amber only for what failed.",
+    "notes": "Chopin's language (GitHub Next, MIT): a white page on a warm olive ground; petrol is the one accent, for the action you can take; colour otherwise only for outcomes. Inter for the interface, Lora for document headings; light only.",
     "tokens": {
       "color": {
-        "bg": "#0a1418",
-        "fg": "#d7ece8",
-        "muted": "#afcdc8",
-        "line": "rgba(141, 229, 219, 0.18)",
-        "surface": "rgba(16, 30, 34, 0.8)",
-        "surface-strong": "rgba(15, 27, 31, 0.92)",
-        "chip": "rgba(13, 28, 32, 0.9)",
-        "chip-line": "rgba(141, 229, 219, 0.24)",
-        "lagoon": "#60d7cf",
-        "accent": "#8de5db",
-        "palm": "#6ec89a",
-        "warn": "#b45309"
+        "bg": "#f4f4f1",
+        "fg": "#0e0d0a",
+        "muted": "#47453f",
+        "line": "rgba(0, 0, 0, 0.07)",
+        "surface": "#ffffff",
+        "inset": "#f8f8f6",
+        "selected": "#ecece9",
+        "accent": "#06707e",
+        "accent-hover": "#045a66",
+        "ok": "#236228",
+        "warn": "#704a02"
       },
       "type": [
         {
           "name": "title",
           "size": 30,
-          "weight": 600,
-          "lineHeight": 1.2,
+          "weight": 400,
+          "lineHeight": 1.15,
           "sample": "gh-12"
+        },
+        {
+          "name": "section",
+          "size": 23,
+          "weight": 400,
+          "lineHeight": 1.25,
+          "sample": "Retry policy"
         },
         {
           "name": "body",
           "size": 16,
-          "weight": 500,
-          "lineHeight": 1.5,
-          "sample": "Should retries live in the client or the wrapper?"
+          "weight": 400,
+          "lineHeight": 1.6,
+          "sample": "Retries live in the wrapper, so there is one place to change them."
         },
         {
-          "name": "small",
+          "name": "interface",
           "size": 14,
           "weight": 400,
-          "lineHeight": 1.45,
-          "sample": "The agent is working on it"
+          "lineHeight": 1.5,
+          "sample": "Saved, last edit by agent"
         },
         {
-          "name": "kicker",
-          "size": 11,
+          "name": "meta",
+          "size": 12,
           "weight": 400,
-          "lineHeight": 1.4,
-          "sample": "BLOCK B3 · 2 REPLIES"
+          "lineHeight": 1.35,
+          "sample": "Block b3   2 replies"
         }
       ],
       "space": [
+        2,
         4,
+        6,
         8,
         12,
         16,
-        20,
-        24
+        24,
+        32
       ],
       "radius": {
-        "md": 10,
-        "lg": 14
+        "sm": 4,
+        "md": 6,
+        "lg": 8,
+        "xl": 10
       },
       "font": {
-        "sans": "Manrope, ui-sans-serif, system-ui, sans-serif",
-        "mono": "ui-monospace, SF Mono, Menlo, monospace"
+        "sans": "Inter, ui-sans-serif, system-ui, sans-serif",
+        "serif": "Lora, Georgia, serif",
+        "mono": "ui-monospace, Menlo, monospace"
       }
     }
   },
@@ -530,6 +541,6 @@
     "`docs/plans/2026-10-28-resolve-thread.plan.json`"
   ],
   "change": {
-    "intent": "Write the cp-10 stage plan: the screen asks the Flags service, then RELEASE.md's three questions on production."
+    "intent": "Chopin's tokens and notes replace the dark lagoon ones."
   }
 }

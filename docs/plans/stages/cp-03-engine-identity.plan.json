@@ -13,7 +13,7 @@
     "An unknown email is verified against a decoy hash, so it takes as long as a wrong password and gets the same answer.",
     "D1 tables come from migrations, not `setup()`; a test checks that `0002_accounts.sql` holds exactly the DDL the engine and projection declare."
   ],
-  "endState": "Sign up at localhost:3000/signup and land signed in, your name in the header. `sign-up.snap.txt` reads as a story. `just agent-ready` reports one gap, the admin API, which cp-04 adds.",
+  "endState": "Sign up at localhost:3000/signup and land signed in, your name in the header. `sign-up.snap.txt` reads as a story. A 21st sign-in in a minute from one address gets 429. `just agent-ready` reports one gap, the admin API, which cp-04 adds.",
   "notDoing": [
     "An admin API or page; it arrives with the flags in cp-04.",
     "Password reset, email confirmation or OAuth; the workshop needs none of them.",
@@ -585,6 +585,6 @@
     "`docs/DOMAIN-VOCABULARY.md`, Identity: Account and Sign-in"
   ],
   "change": {
-    "intent": "Intents cut to the 15-word budget."
+    "intent": "Title, summary and end state match what the stage now builds."
   }
 }

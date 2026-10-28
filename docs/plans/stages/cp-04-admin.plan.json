@@ -4,7 +4,7 @@
   "date": "2026-10-28",
   "status": "final",
   "author": "pratos with Claude Code",
-  "summary": "An admin can now see and steer the running product: a dashboard, every account, the event log with secrets masked, and the flags that switch behaviour on. Every page is an API call first, behind one admin check. The first Playwright test proves it in a real browser.",
+  "summary": "An admin can now see and steer the product: a dashboard, every account, the event log with secrets masked, flags, and a form to add an account. Every page is an API call first, behind one admin check. The first Playwright test proves it in a real browser.",
   "current": "cp-03 ended with the engine (`packages/engine`), sign-up, sign-in and sign-out on it, and three seeded accounts: Admin, Sam and the agent. Accounts carry an `admin` bit, but nothing reads it yet, there are no flags, and no test drives a browser.",
   "discoveries": [
     "`AccountOpened` records a `passwordHash` and `SignedIn` a `tokenHash`; the event log shows both unless the API masks every key matching hash, password or token.",
@@ -13,7 +13,7 @@
     "`currentAccount` in `apps/api/src/auth.ts` already returns the `admin` bit, so `requireAdmin` is one more check on the same sign-in.",
     "Under `just up` the API is reached only over the service binding, so pages and Playwright test it; nothing curls it yet."
   ],
-  "endState": "Signed in as Admin, `/admin` shows counts, accounts, the event log with `passwordHash=\"•••\"`, and flags you can switch. Sam is refused with the reason. `just e2e admin` passes in Chromium against the migrated, seeded app.",
+  "endState": "Signed in as Admin, `/admin` shows counts, accounts, the event log with `passwordHash=\"•••\"`, and flags you can switch; Add an account opens one that can sign in. Sam is refused with the reason. `just e2e admin` passes in Chromium.",
   "notDoing": [
     "Writing accounts from the dashboard; `just user-add` opens them.",
     "Reading flags in `decide()`; the first flagged command, `ResolveThread`, arrives at cp-05.",
@@ -629,6 +629,6 @@
     "`docs/TESTING.md`, step 2: Admin"
   ],
   "change": {
-    "intent": "Intents cut to the 15-word budget."
+    "intent": "Title, summary and end state match what the stage now builds."
   }
 }
