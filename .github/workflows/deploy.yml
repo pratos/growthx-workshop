@@ -1,9 +1,15 @@
 name: deploy
+
 on:
-  push: { branches: [main] }
+  push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
-concurrency: { group: deploy-${{ github.ref }}, cancel-in-progress: false }
+
+concurrency:
+  group: "deploy-${{ github.ref }}"
+  cancel-in-progress: false
+
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -16,42 +22,54 @@ jobs:
       - name: generated types are current
         run: cd apps/api && bunx wrangler types && git diff --exit-code worker-configuration.d.ts
       - name: no destructive migration without a flag
+        env:
+          BEFORE: "${{ github.event.before || 'HEAD~1' }}"
+          MESSAGE: "${{ github.event.head_commit.message }}"
         run: |
-          if git diff --name-only ${{ github.event.before || 'HEAD~1' }} -- apps/api/migrations | xargs -r grep -liE '\b(drop|rename)\b'; then
-            grep -q 'ALLOW_DESTRUCTIVE' <<< "${{ github.event.head_commit.message }}" || { echo "destructive migration needs ALLOW_DESTRUCTIVE in the commit message"; exit 1; }
+          if git diff --name-only "$BEFORE" -- apps/api/migrations | xargs -r grep -liE '\b(drop|rename)\b'; then
+            grep -q 'ALLOW_DESTRUCTIVE' <<< "$MESSAGE" || { echo "destructive migration needs ALLOW_DESTRUCTIVE in the commit message"; exit 1; }
           fi
+
   preview:
     if: github.event_name == 'pull_request'
     needs: check
     runs-on: ubuntu-latest
-    env: { CLOUDFLARE_API_TOKEN: "${{ secrets.CLOUDFLARE_API_TOKEN }}", CLOUDFLARE_ACCOUNT_ID: "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" }
+    env:
+      CLOUDFLARE_API_TOKEN: "${{ secrets.CLOUDFLARE_API_TOKEN }}"
+      CLOUDFLARE_ACCOUNT_ID: "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
-      - name: preview as a versioned upload (no traffic)
+      - name: upload versions without traffic
         run: |
-          cd apps/api && bunx wrangler versions upload --tag pr-${{ github.event.number }}
-          cd ../web && bun run build && bunx wrangler versions upload --tag pr-${{ github.event.number }}
+          cd apps/api && bunx wrangler versions upload --tag "pr-${{ github.event.number }}"
+          cd ../web && bun run build && bunx wrangler versions upload --tag "pr-${{ github.event.number }}"
+
   deploy:
     if: github.event_name != 'pull_request'
     needs: check
     runs-on: ubuntu-latest
     environment: production
-    env: { CLOUDFLARE_API_TOKEN: "${{ secrets.CLOUDFLARE_API_TOKEN }}", CLOUDFLARE_ACCOUNT_ID: "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" }
+    env:
+      CLOUDFLARE_API_TOKEN: "${{ secrets.CLOUDFLARE_API_TOKEN }}"
+      CLOUDFLARE_ACCOUNT_ID: "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
-      - name: stop if a D1 migration is pending (migrations are applied by hand, never here)
+      - name: deploy api then web; stops if a D1 migration is pending (migrations are applied by hand, never here)
         run: scripts/deploy.sh
       - name: smoke
         run: curl -sf "https://greenhouse-api.${{ vars.WORKERS_SUBDOMAIN }}.workers.dev/healthz" | jq -e '.ok == true'
+
   migrate:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     environment: production
-    env: { CLOUDFLARE_API_TOKEN: "${{ secrets.CLOUDFLARE_API_TOKEN }}", CLOUDFLARE_ACCOUNT_ID: "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" }
+    env:
+      CLOUDFLARE_API_TOKEN: "${{ secrets.CLOUDFLARE_API_TOKEN }}"
+      CLOUDFLARE_ACCOUNT_ID: "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
