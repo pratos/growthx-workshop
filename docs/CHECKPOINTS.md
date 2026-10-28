@@ -10,10 +10,10 @@
 | `cp-01-first-deploy` | First deploy of web and API | merge into `main`; GitHub deploys greenhouse-demo.tarp.sh, whose `/healthz` shows the version; roll back | `cp-01-first-deploy` |
 | `cp-02-design` | Vocabulary, architecture and event design | the map and the agent-loop decision report; the vocabulary check rejects a banned word | `cp-02-design` |
 | `cp-03-engine-identity` | Event-sourcing engine; sign-up and sign-in | sign up in the browser; read the sign-up story | `cp-03-engine-identity` |
-| `cp-04-admin` | Admin workflows and the first browser test | the dashboard and the masked event log; a participant refused; `just e2e admin` | `cp-04-admin` |
-| `cp-05-plan-document` | The plan document: comments to decisions, live | two tabs, one thread; the check and a second model catch ThreadClosed | `cp-05-plan-document` |
-| `cp-06-sessions-agent` | Chat with the agent | ask in a session; `just agent-serve` answers through pi-durable | `cp-06-sessions-agent` |
-| `cp-07-ui` | UI and UX with Impeccable, Emil's skill and Agentation | before and after of the plan page; one Agentation note fixed live | `cp-07-ui` |
+| `cp-04-admin` | Admin workflows and the first browser test | the dashboard and the masked event log; an admin adds an account; a participant refused; `just e2e admin` | `cp-04-admin` |
+| `cp-05-plan-document` | The plan, written in an editor: comments to decisions, live | home opens a plan; write it in the editor ("/" for blocks), two tabs see each save; one thread to a decision; the check and a second model catch ThreadClosed | `cp-05-plan-document` |
+| `cp-06-sessions-agent` | Chat with the agent, and the agent writes | ask in a session; `/ask` in the editor and the agent writes into the plan; `just agent-serve` through pi-durable | `cp-06-sessions-agent` |
+| `cp-07-ui` | UI and UX in Chopin's language, with Impeccable, Emil's skill and Agentation | before and after: Chat on the ground, the plan as a raised sheet; one Agentation note fixed live | `cp-07-ui` |
 | `cp-08-agent-failures` | The agent's failures as expect tests | the failing-agent stories; `just test` | `cp-08-agent-failures` |
 | `cp-09-e2e` | End-to-end tests across the product | `just e2e`: seven tests in a real browser | `cp-09-e2e` |
 | `cp-10-release` | Release behind a flag | `just deploy prod` to greenhouse.tarp.sh; Resolve appears for you without a deploy, and goes again | `cp-10-release` |
@@ -32,7 +32,7 @@ What each stage needs on your machine, in the cloud, and in the database before 
 | cp-03 | `just reset` (migrates and seeds the admin, Sam and the agent locally) | none | demo: `just migrate-remote demo` (0002 accounts), then `GH_REMOTE=1 GH_ENV=demo just user-add you@… "You" member` | demo site: sign up |
 | cp-04 | `just e2e-install` (Chromium for Playwright) | none | demo: `just migrate-remote demo` (0001 flags); `GH_REMOTE=1 GH_ENV=demo just user-add you@… "You" admin` | demo site: `/admin` |
 | cp-05 | `just reset` (adds the `resolve-thread` flag) | Claude Code or pi signed in, for `just review` | demo: `GH_REMOTE=1 GH_ENV=demo just flag user resolve-thread <you>` | demo site: `/plans/gh-12` |
-| cp-06 | `just agent-serve` in a second terminal | optional `ANTHROPIC_API_KEY` (or OpenAI) in that shell for real answers; without one a faux model answers | none new | demo site; the agent against it: `GREENHOUSE_URL=https://greenhouse-demo.tarp.sh/api` plus an agent account made with `user-add` |
+| cp-06 | `just agent-serve` in a second terminal | optional `just secret put ANTHROPIC_API_KEY` (agent-serve reads `.dev.vars`) for real answers; without one a faux model answers | none new | demo site; the agent against it: `GREENHOUSE_URL=https://greenhouse-demo.tarp.sh/api` plus an agent account made with `user-add` |
 | cp-07 | `just up`; the Agentation toolbar shows in dev | none | none | demo site |
 | cp-08 | nothing new | none | none | `just test` |
 | cp-09 | `just e2e-install` once | none | none | `just e2e` locally |
