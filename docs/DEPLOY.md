@@ -29,7 +29,8 @@ The web Worker serves the domain; it reaches its own API over the service bindin
    ```
    `CLOUDFLARE_ACCOUNT_ID` is already set.
 3. **Optional: a reviewer gate.** Settings → Environments → `production` → Required reviewers → you.
-4. **The databases exist**: `greenhouse` (finished site) and `greenhouse-demo` (demo site), both named in `apps/api/wrangler.jsonc`. On a new account, create each with `cd apps/api && bunx wrangler d1 create <name>` and put its id in that file.
+4. **Wrangler logged in to the right account.** Everything is in the account pinned as `account_id` in both `wrangler.jsonc` files. Every command that reaches Cloudflare (`deploy`, `migrate-remote`, `rollback`, and `flag` and `user-add` with `GH_REMOTE=1`) first runs `scripts/cf-account.sh`, which stops if wrangler here is logged in elsewhere. A wrangler profile is bound to a folder, so a worktree outside the repo uses the default login; put deploy worktrees under the repo (`git worktree add .deploy/prod cp-10-release`, ignored by git). On your own account, change `account_id` in both files.
+5. **The databases exist**: `greenhouse` (finished site) and `greenhouse-demo` (demo site), both named in `apps/api/wrangler.jsonc`. On a new account, create each with `cd apps/api && bunx wrangler d1 create <name>` and put its id in that file.
 
 ## The finished site, greenhouse.tarp.sh
 

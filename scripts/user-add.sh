@@ -13,6 +13,7 @@ printf '%s' "$pw" | bun "$root/packages/db/add-account.ts" "$email" "$name" "$ro
 remote="--local"; [ "${GH_REMOTE:-}" = "1" ] && remote="--remote"
 # GH_ENV=demo with GH_REMOTE=1 targets the demo site's database (greenhouse-demo.tarp.sh); otherwise the finished site's.
 [ "${GH_ENV:-}" = "demo" ] && remote="$remote --env demo"
+[ "${GH_REMOTE:-}" = "1" ] && bash "$(dirname "$0")/cf-account.sh"
 cd "$root/apps/api"
 if bunx wrangler d1 execute DB $remote --file "$tmp" >/dev/null 2>"$tmp.err"; then echo "✓ $email opened as $role ($remote)"
 elif grep -q UNIQUE "$tmp.err"; then echo "✗ $email already has an account ($remote)"; rm -f "$tmp.err"; exit 1

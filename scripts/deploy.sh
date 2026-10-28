@@ -13,6 +13,7 @@ bun scripts/cf-audit.ts | grep -E "^✗|fix:|failed|pass" || true
 bun scripts/cf-audit.ts >/dev/null || { echo "✗ cf-audit failed: deploy stopped (just cf-audit for the details)"; exit 1; }
 
 # Pending migrations. If wrangler cannot even list them (credentials, network), stop: unknown is not "none".
+bash scripts/cf-account.sh
 if ! list="$(cd apps/api && bunx wrangler d1 migrations list DB --remote "${env_flag[@]}" 2>&1)"; then
   echo "✗ could not list remote D1 migrations; deploy stopped:"; echo "$list" | tail -5; exit 1
 fi

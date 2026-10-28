@@ -121,6 +121,7 @@ user-add email name role="member":
 # Apply pending D1 migrations to a site's database, by hand, after reading them; deploy never does this.
 # just migrate-remote prod (greenhouse.tarp.sh) | demo (greenhouse-demo.tarp.sh)
 migrate-remote site="prod":
+    bash scripts/cf-account.sh
     cd apps/api && e=$([ "{{site}}" = demo ] && echo "--env demo" || true) && bunx wrangler d1 migrations list DB --remote $e && bunx wrangler d1 migrations apply DB --remote $e
 
 # End-to-end tests in a real browser against the local app (starts it if :3000 is free): just e2e [filter]
@@ -167,6 +168,7 @@ deploy env="prod":
 
 # Roll a Worker back to a previous version: just rollback api|web [version-id] [prod|demo]
 rollback app version="" site="prod":
+    bash scripts/cf-account.sh
     cd apps/{{app}} && bunx wrangler rollback {{version}} $([ "{{site}}" = demo ] && echo "--env demo" || true)
 
 # Serve the deck from the repo root so its diagram links resolve: http://localhost:8777/deck/

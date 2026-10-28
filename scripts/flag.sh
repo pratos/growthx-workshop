@@ -7,6 +7,7 @@ action="${1:?}"; name="${2:-}"; arg="${3:-}"
 remote=""; [ "${GH_REMOTE:-}" = "1" ] && remote="--remote" || remote="--local"
 # GH_ENV=demo with GH_REMOTE=1 targets the demo site's database (greenhouse-demo.tarp.sh); otherwise the finished site's.
 [ "${GH_ENV:-}" = "demo" ] && remote="$remote --env demo"
+[ "${GH_REMOTE:-}" = "1" ] && bash "$(dirname "$0")/cf-account.sh"
 case "$action" in
   on)   sql="INSERT INTO flags (name, enabled) VALUES ('$name', 1) ON CONFLICT(name) DO UPDATE SET enabled=1" ;;
   off)  sql="INSERT INTO flags (name, enabled, allowlist, percent) VALUES ('$name', 0, NULL, 0) ON CONFLICT(name) DO UPDATE SET enabled=0, allowlist=NULL, percent=0" ;;
