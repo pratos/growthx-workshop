@@ -29,10 +29,14 @@ Read `AGENTS.md` first, then `docs/DOMAIN-VOCABULARY.md` and `docs/ARCHITECTURE.
 
 One task, end to end, in nine steps: [`docs/WORKFLOW.md`](docs/WORKFLOW.md). Before anything ships, three questions: [`docs/RELEASE.md`](docs/RELEASE.md); every pull request asks them.
 
+<!-- <cp-10> -->
 ## Trying it
 
 Start it, sign in as the seeded accounts, and the things worth trying: [`docs/TESTING.md`](docs/TESTING.md).
 
+<!-- </cp-10> -->
+<!-- <cp-01> -->
 ## Deploying
 
 GitHub Actions deploys `main` to Cloudflare Workers; migrations are applied by hand. One-time setup, the first deploy, and what each failure means: [`docs/DEPLOY.md`](docs/DEPLOY.md).
+<!-- </cp-01> -->

@@ -463,6 +463,7 @@ a {
 }
 
 
+/* <cp-07> */
 /* ---- Greenhouse components: the plan page, the sessions panel, admin. Colours come from the theme tokens above,
    so light and dark both hold; one accent (lagoon) marks the action you can take. */
 @layer components {
@@ -492,3 +493,4 @@ a {
   @keyframes gh-blink { from { width: 0; } to { width: 1.1ch; } }
   @media (prefers-reduced-motion: reduce) { .gh-arrive { animation: none; } .gh-working::after { animation: none; width: auto; } .gh-btn { transition: none; } }
 }
+/* </cp-07> */

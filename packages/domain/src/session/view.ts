@@ -22,7 +22,9 @@ export const sessionsView: Projection = {
       case 'RunStarted':  return [stmt("UPDATE runs SET status = 'running', run_by = ? WHERE run_id = ?", d.by, d.runId)];
       case 'RunSteered':  return [stmt('UPDATE runs SET steers = steers + 1 WHERE run_id = ?', d.runId)];
       case 'RunFinished': return [stmt("UPDATE runs SET status = 'finished', result = ? WHERE run_id = ?", d.result, d.runId)];
+      // <cp-08>
       case 'RunFailed':   return [stmt("UPDATE runs SET status = 'failed', result = ? WHERE run_id = ?", d.reason, d.runId)];
+      // </cp-08>
       case 'SessionEnded': return [stmt("UPDATE sessions SET status = 'ended' WHERE session_id = ?", d.sessionId)];
       default: return [];
     }

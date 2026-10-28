@@ -1,13 +1,29 @@
 import { Hono } from 'hono';
-import { Effect, Schema } from 'effect';
-import { Commands, Flags, PlanRooms, readiness, runtimeFor, type Env } from './services';
-import { PlanRoom } from './plan-room';
+import { Schema } from 'effect';
+import type { Env } from './services';
+import type { Account } from '@greenhouse/schema';
+// <cp-03>
+import { auth } from './auth';
+// </cp-03>
+// <cp-04>
 import { flagsAdmin } from './flags-admin';
 import { admin } from './admin';
-import { auth, requireSignIn } from './auth';
-import type { Account } from '@greenhouse/schema';
-
+// </cp-04>
+// <cp-05>
+import { Effect } from 'effect';
+import { Commands, PlanRooms, readiness, runtimeFor } from './services';
+import { PlanRoom } from './plan-room';
 export { PlanRoom };
+// </cp-05>
+// <cp-06>
+import { requireSignIn } from './auth';
+// </cp-06>
+// <cp-10>
+import { Flags } from './services';
+// </cp-10>
+
+// Stage markers (<cp-NN> … </cp-NN>) say which workshop stage adds the code between them; the stage branches are
+// built from main by keeping only what each stage has. On main they are plain comments.
 
 // Hono is the edge: routing, status codes, JSON. Everything behind it is an Effect program run through one runtime per env.
 const app = new Hono<{ Bindings: Env; Variables: { account: Account } }>();
@@ -16,18 +32,26 @@ const planId = Schema.decodeUnknownSync(Schema.String.check(Schema.isMinLength(1
 // Health: public, dumb. `label` is what a person reads (git describe, passed in at deploy); `id` is what rollback needs.
 app.get('/healthz', (c) => c.json({ ok: true, version: { label: c.env.GIT_DESCRIBE ?? 'dev', id: c.env.VERSION?.id ?? 'dev', tag: c.env.VERSION?.tag ?? '' }, at: new Date().toISOString() }));
 
-// Readiness: D1 and one Durable Object, through the services.
+// Readiness: touch each dependency and name the one that fails. Each stage adds the check for what it depends on.
 app.get('/readyz', async (c) => {
   try {
+    const checks: Record<string, string> = {};
     await c.env.DB.prepare('SELECT 1').first();
-    const accounts = await c.env.DB.prepare('SELECT count(*) AS n FROM accounts').first<{ n: number }>().then((r) => `ok, ${r?.n ?? 0} accounts`, () => 'not migrated: apply 0002_accounts');
-    const r = await runtimeFor(c.env).runPromise(readiness.pipe(Effect.catchTag('NotReady', (e) => Effect.succeed({ planRoom: `not ready: ${e.message}`, version: -1 }))));
-    const ok = r.version >= 0 && accounts.startsWith('ok');
-    return c.json({ ok, d1: 'ok', accounts, ...r }, ok ? 200 : 503);
+    checks.d1 = 'ok';
+    // <cp-03>
+    checks.accounts = await c.env.DB.prepare('SELECT count(*) AS n FROM accounts').first<{ n: number }>().then((r) => `ok, ${r?.n ?? 0} accounts`, () => 'not migrated: apply 0002_accounts');
+    // </cp-03>
+    // <cp-05>
+    const room = await runtimeFor(c.env).runPromise(readiness.pipe(Effect.catchTag('NotReady', (e) => Effect.succeed({ planRoom: `not ready: ${e.message}`, version: -1 }))));
+    checks.planRoom = room.planRoom;
+    // </cp-05>
+    const ok = Object.values(checks).every((v) => v.startsWith('ok'));
+    return c.json({ ok, ...checks }, ok ? 200 : 503);
   } catch (e) {
     return c.json({ ok: false, error: e instanceof Error ? e.message : String(e) }, 503);
   }
 });
+// <cp-05>
 
 app.post('/plans/:planId/commands', async (c) => {
   const id = planId(c.req.param('planId'));
@@ -44,6 +68,8 @@ app.post('/plans/:planId/commands', async (c) => {
   return c.json(outcome.body, outcome.status);
 });
 
+// </cp-05>
+// <cp-06>
 // Sessions: a signed-in Participant starts, joins, asks, steers. `by` is the signed-in account; the body never sets it.
 app.post('/plans/:planId/sessions', requireSignIn, async (c) => {
   const id = planId(c.req.param('planId'));
@@ -61,6 +87,8 @@ app.get('/plans/:planId/sessions/:sessionId', requireSignIn, async (c) => {
   return view ? c.json(view) : c.json({ error: 'no such session' }, 404);
 });
 
+// </cp-06>
+// <cp-10>
 // Which flags are on for a participant: what the screen asks before it offers a flagged action. Same Flags service
 // decide() reads, so the screen and the domain never disagree. Names only, no allowlists.
 app.get('/participants/:participant/flags', async (c) => {
@@ -69,6 +97,8 @@ app.get('/participants/:participant/flags', async (c) => {
   return c.json({ participant, on });
 });
 
+// </cp-10>
+// <cp-05>
 // Live stream of the plan: the Durable Object accepts the socket and fans out every append.
 app.get('/plans/:planId/ws', (c) => c.env.PLAN_ROOM.getByName(planId(c.req.param('planId'))).fetch(c.req.raw));
 
@@ -82,14 +112,19 @@ app.get('/plans/:planId', async (c) => {
   return c.json(await runtimeFor(c.env).runPromise(PlanRooms.use((r) => r.read(id))));
 });
 
+// </cp-05>
+// <cp-03>
 // Identity: POST /auth/sign-up, /auth/sign-in, /auth/sign-out, GET /auth/me.
 app.route('/auth', auth);
 
+// </cp-03>
+// <cp-04>
 // Flags admin: list and set the D1 flags that `decide()` reads. GET /flags, PUT /flags/:name. Admins only.
 app.route('/flags', flagsAdmin);
 
 // Admin dashboard: GET /admin/summary, /admin/accounts, /admin/events. Admins only.
 app.route('/admin', admin);
+// </cp-04>
 
 app.notFound((c) => c.json({ error: 'not found' }, 404));
 app.onError((e, c) => {

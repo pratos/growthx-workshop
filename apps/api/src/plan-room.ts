@@ -1,29 +1,48 @@
 import { DurableObject } from 'cloudflare:workers';
+import { route, type Command, type DomainEvent, type Rejection, type StoredEvent, project } from '@greenhouse/domain';
+import type { Env } from './services';
+// <cp-06>
 import { Effect, Layer, ManagedRuntime } from 'effect';
 import { EventStore, type Recorded } from '@greenhouse/engine';
 import { durableObject } from '@greenhouse/engine/adapters/durable-object';
-import { route, type Command, type DomainEvent, type Rejection, type StoredEvent, project } from '@greenhouse/domain';
-import { session, sessionStream, sessionsView, readSession, listSessions, StartSession, JoinSession, Ask, StartRun, Steer, FinishRun, FailRun, EndSession } from '@greenhouse/domain';
-import type { Env } from './services';
+import { session, sessionStream, sessionsView, readSession, listSessions, StartSession, JoinSession, Ask, StartRun, Steer, FinishRun, EndSession } from '@greenhouse/domain';
+// </cp-06>
+// <cp-08>
+import { FailRun } from '@greenhouse/domain';
+// </cp-08>
 
-const sessionCommands = { StartSession, JoinSession, Ask, StartRun, Steer, FinishRun, FailRun, EndSession } as const;
+// <cp-06>
+const sessionCommands = {
+  StartSession, JoinSession, Ask, StartRun, Steer, FinishRun, EndSession,
+  // <cp-08>
+  FailRun,
+  // </cp-08>
+} as const;
 export type SessionResult = { events: Recorded[] } | Rejection;
+// </cp-06>
 
 // One Durable Object per Plan. Its SQLite is the plan's event log: the system of record.
 export class PlanRoom extends DurableObject<Env> {
+  // <cp-06>
   // Sessions run on the engine over this object's own SQLite: synchronous, single writer, projections in the same transaction.
   private readonly sessions: ManagedRuntime.ManagedRuntime<EventStore, never>;
+  // </cp-06>
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
+    // <cp-06>
     this.sessions = ManagedRuntime.make(EventStore.layer([sessionsView]).pipe(Layer.provide(durableObject(ctx.storage))));
+    // </cp-06>
     void ctx.blockConcurrencyWhile(async () => {
       this.ctx.storage.sql.exec(`CREATE TABLE IF NOT EXISTS events (
         version INTEGER PRIMARY KEY, type TEXT NOT NULL, at TEXT NOT NULL, by TEXT NOT NULL, data TEXT NOT NULL)`);
+      // <cp-06>
       await this.sessions.runPromise(EventStore.use((s) => s.setup()));
+      // </cp-06>
     });
   }
 
+  // <cp-06>
   // A Session command from a signed-in Participant. `by` comes from the sign-in, never from the body.
   async sessionCommand(planId: string, type: string, data: unknown, by: string): Promise<SessionResult> {
     const make = sessionCommands[type as keyof typeof sessionCommands];
@@ -45,6 +64,7 @@ export class PlanRoom extends DurableObject<Env> {
   async sessionView(sessionId: string) {
     return this.sessions.runPromise(readSession(sessionId).pipe(Effect.provide(durableObject(this.ctx.storage))));
   }
+  // </cp-06>
 
   version(): number {
     return this.ctx.storage.sql.exec<{ v: number }>('SELECT COALESCE(MAX(version),0) AS v FROM events').one().v;

@@ -25,7 +25,7 @@ checkin action:
 
 # Expect tests (ms), then api tests
 test:
-    bun test packages/engine packages/domain packages/schema packages/agent/test apps/api/test
+    scripts/test.sh
 
 # Lint and typecheck: oxlint (type-aware, repo config), tsc. `just fmt` formats; the format check is not enforced yet.
 lint:
@@ -38,7 +38,8 @@ migrate-local:
 
 # Seed the local D1 through the engine: an admin, Sam and the agent (logins in .dev.vars.example), flags default off
 seed:
-    @mkdir -p apps/api/.wrangler && bun packages/db/seed.ts > apps/api/.wrangler/seed.sql
+    @[ -f packages/db/seed.ts ] || { echo "nothing to seed yet"; exit 0; }; \
+    mkdir -p apps/api/.wrangler && bun packages/db/seed.ts > apps/api/.wrangler/seed.sql && \
     cd apps/api && bunx wrangler d1 execute greenhouse --local --file .wrangler/seed.sql >/dev/null
 
 # Reset local state (D1 + Durable Objects), then migrate and seed again

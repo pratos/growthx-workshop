@@ -13,4 +13,6 @@ process.stdout.write(await accountsSql([
   { email: need('USER_EMAIL'), name: 'Sam', password: need('USER_PASSWORD'), admin: false },
   { email: need('AGENT_EMAIL'), name: 'Agent', password: need('AGENT_PASSWORD'), admin: false },
 ], 'seed'));
+// <cp-05>
 process.stdout.write("INSERT OR REPLACE INTO flags (name, enabled, allowlist, percent) VALUES ('resolve-thread', 0, 'admin,pratos', 0);\n");
+// </cp-05>

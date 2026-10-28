@@ -1,15 +1,18 @@
+// The domain's contexts: Identity from cp-03, comments and decisions from cp-05, sessions from cp-06.
+export * from './kernel';
+export * from './account/decider';
+export * from './account/view';
+export * from './account/accounts';
+// <cp-06>
+export * from './session/decider';
+export * from './session/view';
+// </cp-06>
+// <cp-05>
 import type { PlanView, Thread, Decision } from '@greenhouse/schema';
 import { Schema } from 'effect';
 import { handle, isRejection, type Ctx, type Message, type Rejection } from './kernel';
 import { thread, threadKey, OpenThread, Reply, ResolveThread, type ThreadEvent } from './thread/decider';
-
-export * from './kernel';
 export * from './thread/decider';
-export * from './account/decider';
-export * from './account/view';
-export * from './account/accounts';
-export * from './session/decider';
-export * from './session/view';
 
 export type Command = Message & { by: string };
 export type DomainEvent = ThreadEvent;
@@ -49,3 +52,4 @@ export function project(events: readonly StoredEvent[]): PlanView {
   }
   return { threads: [...threads.values()], decisions, version: events.at(-1)?.version ?? 0 };
 }
+// </cp-05>

@@ -1,5 +1,7 @@
 import { env } from 'cloudflare:workers';
+// <cp-03>
 import { getCookie } from '@tanstack/react-start/server';
+// </cp-03>
 
 // The only way the web Worker reaches data: the API over its service binding. No database import exists in this app, and the lint keeps it that way.
 // The browser's session lives in a cookie on the web origin; every call forwards it to the API as a bearer token.
@@ -9,8 +11,10 @@ export const SESSION_COOKIE = 'gh_session';
 
 function headers(json = false): Record<string, string> {
   const h: Record<string, string> = json ? { 'content-type': 'application/json' } : {};
+  // <cp-03>
   const token = getCookie(SESSION_COOKIE);
   if (token) h.authorization = `Bearer ${token}`;
+  // </cp-03>
   return h;
 }
 
@@ -19,6 +23,7 @@ export async function apiGet<T>(path: string): Promise<T> {
   if (!r.ok) throw new Error(`api ${path} → ${r.status}`);
   return r.json() as Promise<T>;
 }
+// <cp-03>
 // Like apiGet, but a 401 or 403 is an answer, not an error: the page says who may see it.
 export async function apiGetOrStatus<T>(path: string): Promise<{ status: number; data?: T; rejected?: string }> {
   const r = await api().fetch(`https://api${path}`, { headers: headers() });
@@ -30,13 +35,18 @@ export async function apiPost<T extends Record<string, unknown>>(path: string, b
   const data = (await r.json().catch(() => ({}))) as T;
   return { status: r.status, ...data };
 }
+// </cp-03>
+// <cp-05>
 export async function apiCommand(planId: string, type: string, by: string, data: Record<string, unknown>) {
   const r = await api().fetch(`https://api/plans/${planId}/commands`, { method: 'POST', headers: headers(true), body: JSON.stringify({ type, by, data }) });
   const body = (await r.json()) as Record<string, unknown>;
   return { status: r.status, ...body };
 }
+// </cp-05>
+// <cp-04>
 export async function apiPut<T extends Record<string, unknown>>(path: string, body: unknown) {
   const r = await api().fetch(`https://api${path}`, { method: 'PUT', headers: headers(true), body: JSON.stringify(body) });
   const data = (await r.json()) as T;
   return { status: r.status, ...data };
 }
+// </cp-04>

@@ -24,10 +24,12 @@ const openThread = createServerFn({ method: 'POST' })
   .validator((d: Open) => d)
   .handler(({ data }) => apiCommand(data.planId, 'OpenThread', data.by, { blockId: data.blockId, body: data.body }));
 
+// <cp-10>
 // Flags for the participant acting on the page: the resolve action shows only when resolve-thread is on for them.
 const loadFlags = createServerFn({ method: 'GET' })
   .validator((by: string) => by)
   .handler(({ data: by }) => apiGet<{ participant: string; on: string[] }>(`/participants/${encodeURIComponent(by)}/flags`));
+// </cp-10>
 
 export const Route = createFileRoute('/plans/$planId')({
   loader: async ({ params }) => {
@@ -46,6 +48,7 @@ function PlanPage() {
   const [by, setBy] = useState(account?.accountId ?? 'pratos');
   const [error, setError] = useState<string | null>(null);
   const [live, setLive] = useState<'connecting' | 'live' | 'off'>('connecting');
+  // <cp-10>
   const [flags, setFlags] = useState<string[] | null>(null);
 
   // Ask which flags are on for whoever is acting, and again when they come back to the tab: a flag flipped in
@@ -58,6 +61,7 @@ function PlanPage() {
     return () => { alive = false; window.removeEventListener('focus', refresh); };
   }, [by]);
   const canResolve = flags?.includes('resolve-thread') ?? false;
+  // </cp-10>
 
   // Multiplayer: subscribe to the plan's stream. Any append, by anyone, reloads this page's data.
   useEffect(() => {
@@ -113,9 +117,13 @@ function PlanPage() {
               <p className="mt-1.5 text-base font-medium">{t.body}</p>
               {decision ? (
                 <p className="mt-3 text-sm" data-decision><span className="gh-pill" data-tone="live">decided</span> <strong>“{decision.decision}”</strong> <span className="gh-muted">· {decision.by} · {decision.at.slice(0, 16).replace('T', ' ')} UTC</span></p>
-              ) : !canResolve ? (
+              ) :
+              /* <cp-10> */
+              !canResolve ? (
                 <p className="gh-muted mt-3 text-sm" data-flag-off="resolve-thread">{flags === null ? 'Checking what you can do here…' : `Resolving threads is not switched on for ${by} yet.`}</p>
-              ) : (
+              ) :
+              /* </cp-10> */
+              (
                 <form className="mt-3 flex gap-2" onSubmit={(e) => { e.preventDefault(); const f = new FormData(e.currentTarget); void run(resolveThread({ data: { planId, threadId: t.threadId, decision: field(f, 'decision'), by } })); }}>
                   <input name="decision" required aria-label="What was decided" placeholder="What was decided?" className="gh-input" />
                   <button type="submit" className="gh-btn gh-btn-primary">Resolve</button>

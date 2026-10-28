@@ -19,7 +19,9 @@ function Home() {
         )}
       </p>
       <ul className="mt-8 space-y-2">
+        {/* <cp-04> */}
         {account?.admin && <li><Link to="/admin" className="underline">Admin</Link> · accounts, the event log, flags</li>}
+        {/* </cp-04> */}
       </ul>
     </main>
   )
