@@ -1,6 +1,6 @@
 import { createFileRoute, useRouter } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { PlanView } from '@greenhouse/schema';
 import { apiGet, apiCommand } from '#/lib/api';
 
@@ -30,6 +30,18 @@ function PlanPage() {
   const router = useRouter();
   const [by, setBy] = useState('pratos');
   const [error, setError] = useState<string | null>(null);
+  const [live, setLive] = useState<'connecting' | 'live' | 'off'>('connecting');
+
+  // Multiplayer: subscribe to the plan's stream. Any append, by anyone, reloads this page's data.
+  useEffect(() => {
+    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    const ws = new WebSocket(`${proto}://${location.host}/plans/${planId}/ws`);
+    ws.onopen = () => setLive('live');
+    ws.onclose = () => setLive('off');
+    ws.onerror = () => setLive('off');
+    ws.onmessage = (m) => { try { if (JSON.parse(String(m.data)).type === 'events') void router.invalidate(); } catch {} };
+    return () => ws.close();
+  }, [planId, router]);
 
   async function run<T extends { status: number; rejected?: string }>(p: Promise<T>) {
     setError(null);
@@ -44,7 +56,7 @@ function PlanPage() {
         <h1 className="text-2xl font-semibold tracking-tight">Plan {planId}</h1>
         <label className="text-sm text-gray-500">as <input value={by} onChange={(e) => setBy(e.target.value)} className="ml-1 w-28 rounded border border-gray-300 px-2 py-1 text-gray-900" /></label>
       </header>
-      <p className="mt-1 text-sm text-gray-500">{plan.threads.length} threads · {plan.decisions.length} decisions · version {plan.version}</p>
+      <p className="mt-1 text-sm text-gray-500">{plan.threads.length} threads · {plan.decisions.length} decisions · version {plan.version} · <span data-live={live} className={live === 'live' ? 'text-emerald-700' : 'text-gray-400'}>{live === 'live' ? '● live' : live === 'off' ? '○ offline' : '○ connecting'}</span></p>
       {error && <p role="alert" className="mt-4 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">{error}</p>}
 
       <section className="mt-8 space-y-4">

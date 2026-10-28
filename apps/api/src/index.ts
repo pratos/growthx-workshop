@@ -38,6 +38,9 @@ app.post('/plans/:planId/commands', async (c) => {
   return c.json(outcome.body, outcome.status);
 });
 
+// Live stream of the plan: the Durable Object accepts the socket and fans out every append.
+app.get('/plans/:planId/ws', (c) => c.env.PLAN_ROOM.getByName(planId(c.req.param('planId'))).fetch(c.req.raw));
+
 app.get('/plans/:planId/events', async (c) => {
   const id = planId(c.req.param('planId'));
   return c.json(await runtimeFor(c.env).runPromise(PlanRooms.use((r) => r.events(id))));

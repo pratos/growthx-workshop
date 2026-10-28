@@ -26,5 +26,8 @@ case "$cp" in
     v=$(curl -sf --max-time 20 "$api/healthz" | jq -r '"\(.version.label) (\(.version.id))"'); [ -n "$v" ] && [ "$v" != "null (null)" ] || { echo "✗ no version from $api/healthz"; exit 1; }
     n=$(cd apps/api && bunx wrangler deployments list 2>/dev/null | grep -c "Version(s)" || true)
     GH_REMOTE=1 scripts/flag.sh list >/dev/null && pass "live api version $v; $n deployment(s) listed; flags readable. Rollback: just rollback api <previous id>" ;;
+  cp-08)
+    web="https://greenhouse-web.prthamesh-sarang.workers.dev"; api="https://greenhouse-api.prthamesh-sarang.workers.dev"
+    out=$(timeout 20 bun scripts/ws-check.ts "$web" "$api" 2>&1) && echo "$out" | grep -q "ThreadOpened" && pass "multiplayer: a socket on the web Worker hears an append made through the api ($out)" ;;
   *) echo "unknown checkpoint $cp"; exit 2 ;;
 esac

@@ -25,6 +25,23 @@ export class PlanRoom extends DurableObject<Env> {
     return project(this.events());
   }
 
+  // Multiplayer: every open tab holds a hibernating WebSocket on this object. The DO is the one owner of the stream,
+  // so it is also the one place that knows when the stream changed. Nothing else has to poll.
+  async fetch(request: Request): Promise<Response> {
+    if (request.headers.get('Upgrade') !== 'websocket') return new Response('expected a websocket upgrade', { status: 426 });
+    const pair = new WebSocketPair();
+    const [client, server] = Object.values(pair) as [WebSocket, WebSocket];
+    this.ctx.acceptWebSocket(server);
+    server.send(JSON.stringify({ type: 'hello', version: this.version() }));
+    return new Response(null, { status: 101, webSocket: client });
+  }
+  webSocketMessage(ws: WebSocket, message: string | ArrayBuffer) { if (message === 'ping') ws.send('pong'); }
+  webSocketClose(ws: WebSocket) { try { ws.close(); } catch {} }
+  private broadcast(events: StoredEvent[]) {
+    const frame = JSON.stringify({ type: 'events', events });
+    for (const ws of this.ctx.getWebSockets()) { try { ws.send(frame); } catch {} }
+  }
+
   // Validate through the decider, then append every resulting event in one synchronous block: all land or none.
   dispatch(command: Command & { by: string }, enabledFlags: string[]): { events: StoredEvent[] } | Rejection {
     const flags = new Set(enabledFlags);
@@ -40,6 +57,7 @@ export class PlanRoom extends DurableObject<Env> {
       this.ctx.storage.sql.exec('INSERT INTO events (version, type, at, by, data) VALUES (?,?,?,?,?)', row.version, row.type, row.at, row.by, JSON.stringify(row.data));
       stored.push(row as StoredEvent);
     }
+    this.broadcast(stored);
     return { events: stored };
   }
 }
