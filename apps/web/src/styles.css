@@ -445,3 +445,89 @@ a {
 }
 
 
+/* ---- Greenhouse components in Chopin's language: the workspace (Chat on the ground, the plan as a raised white sheet),
+   quiet controls, petrol for the action you can take, semantic colour for outcomes. Tokens: the --ch-* roles above. */
+@layer components {
+  .gh-workspace { display: grid; gap: 1rem; max-width: 84rem; margin: 0 auto; padding: 1rem; }
+  @media (min-width: 1024px) { .gh-workspace { grid-template-columns: 360px minmax(0, 1fr); align-items: start; } }
+  .gh-chat { display: flex; flex-direction: column; gap: 1rem; padding: 0.5rem 0.25rem; }
+  @media (min-width: 1024px) { .gh-chat { position: sticky; top: 1rem; max-height: calc(100vh - 2rem); overflow-y: auto; } }
+  .gh-sheet { background: var(--ch-page); border-radius: var(--ch-radius-xl); box-shadow: var(--ch-shadow-raised); min-width: 0; }
+  @media (max-width: 1023px) { .gh-sheet { order: -1; } }
+  .gh-titlebar { display: flex; align-items: center; gap: 0.75rem; min-height: 40px; padding: 0 0.75rem 0 1rem; border-bottom: 1px solid var(--ch-divider); font-size: var(--ch-text-sm); }
+  .gh-titlebar-title { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .gh-titlebar-sep { align-self: stretch; width: 1px; background: var(--ch-divider); }
+  .gh-views { display: flex; gap: 2px; padding: 7px 7px 0; }
+  .gh-view { border-radius: var(--ch-radius-md); padding: 3px 8px; font-size: 14px; color: var(--ch-ink-3); }
+  .gh-view[aria-selected="true"] { background: var(--ch-selected); color: var(--ch-ink); }
+  @media (hover: hover) and (pointer: fine) { .gh-view:hover { color: var(--ch-ink); } }
+  .gh-doc { max-width: calc(40.625rem + 7rem); padding: 3.75rem 3.5rem 4rem; margin: 0 auto; }
+  @media (max-width: 600px) { .gh-doc { padding: 2rem 1.5rem 3rem; } }
+  .gh-doc h1 { font-size: var(--ch-text-2xl); line-height: 1.15; }
+  .gh-doc h2 { font-family: var(--font-document-heading); font-weight: 400; font-size: var(--ch-text-xl); line-height: 1.25; }
+
+  .gh-card { border: 1px solid var(--ch-edge); background: var(--ch-page); border-radius: var(--ch-radius-md); box-shadow: var(--ch-shadow-resting); }
+  .gh-muted { color: var(--ch-ink-2); }
+  .gh-meta { color: var(--ch-ink-3); font-size: var(--ch-text-xs); display: flex; flex-wrap: wrap; gap: 0 0.75rem; }
+  .gh-input { width: 100%; border: 1px solid var(--ch-control-edge); background: var(--ch-page); color: var(--ch-ink); border-radius: var(--ch-radius-md); padding: 0 0.625rem; height: 2rem; font-size: var(--ch-text-sm); box-shadow: var(--ch-shadow-resting); }
+  .gh-input::placeholder { color: var(--ch-ink-4); }
+  .gh-input:focus-visible { outline: 2px solid var(--ch-brand); outline-offset: 1px; }
+  .gh-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 2rem; padding: 0 0.75rem; border: 1px solid var(--ch-edge); border-radius: var(--ch-radius-lg); font-size: var(--ch-text-sm); font-weight: 500; color: var(--ch-ink); background: var(--ch-selected); white-space: nowrap; transition: background-color 120ms var(--ch-ease-out), transform 120ms var(--ch-ease-out); }
+  .gh-btn:focus-visible { outline: 2px solid var(--ch-brand); outline-offset: 2px; }
+  .gh-btn-primary { background: var(--ch-brand); border-color: oklch(0 0 0 / 15%); color: var(--ch-page); }
+  .gh-btn-ghost { background: transparent; border-color: transparent; color: var(--ch-ink-2); }
+  @media (hover: hover) and (pointer: fine) { .gh-btn:hover { background: var(--ch-gray-300); } .gh-btn-primary:hover { background: var(--ch-brand-hover); } .gh-btn-ghost:hover { background: var(--ch-selected); color: var(--ch-ink); } }
+  .gh-btn-primary:active { background: var(--ch-brand-active); }
+  .gh-btn:active { transform: scale(0.97); }
+  .gh-btn:disabled { opacity: 0.55; transform: none; }
+  .gh-pill { display: inline-flex; align-items: center; gap: 6px; height: 23px; padding: 0 8px; border: 1px solid var(--ch-edge); background: var(--ch-inset); border-radius: 9999px; font-size: var(--ch-text-2xs); color: var(--ch-ink-2); white-space: nowrap; }
+  .gh-pill[data-tone="live"] { background: var(--ch-success-wash); color: var(--ch-success-ink); border-color: color-mix(in oklch, var(--ch-success) 30%, transparent); }
+  .gh-pill[data-tone="warn"] { background: var(--ch-warning-wash); color: var(--ch-warning-ink); border-color: color-mix(in oklch, var(--ch-warning-ink) 25%, transparent); }
+  .gh-session-tab { height: 1.75rem; padding: 0 0.625rem; font-size: var(--ch-text-xs); }
+  .gh-session-tab[aria-pressed="true"] { background: var(--ch-page); box-shadow: var(--ch-shadow-resting); }
+  .gh-face { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; flex: none; border-radius: 9999px; background: var(--ch-selected); color: var(--ch-ink-2); font-size: 10px; font-weight: 600; box-shadow: 0 0 0 2px var(--ch-ground); }
+  .gh-face[data-agent] { background: var(--ch-brand-wash); color: var(--ch-brand-ink); }
+  .gh-face-dot { position: absolute; right: -1px; bottom: -1px; width: 8px; height: 8px; border-radius: 9999px; background: var(--ch-success); box-shadow: 0 0 0 2px var(--ch-ground); }
+  .gh-thread { display: flex; flex-direction: column; gap: 0.875rem; }
+  .gh-members { display: flex; align-items: center; gap: 4px; }
+  .gh-members .gh-meta { margin-left: 6px; }
+  .gh-line { display: flex; gap: 0.5rem; align-items: flex-start; }
+  .gh-said { font-size: var(--ch-text-sm); line-height: 1.5; color: var(--ch-ink); white-space: pre-wrap; overflow-wrap: anywhere; }
+  .gh-line[data-mine] .gh-said { color: var(--ch-ink); }
+  .gh-mention { color: var(--ch-brand-ink); font-weight: 500; }
+  .gh-failed { color: var(--ch-warning-ink); }
+  .gh-streaming::after { content: ""; display: inline-block; width: 0.5ch; height: 1em; margin-left: 2px; vertical-align: text-bottom; background: var(--ch-brand); animation: gh-caret 1s steps(2, start) infinite; }
+  @keyframes gh-caret { to { visibility: hidden; } }
+  .gh-composer { position: relative; display: flex; flex-direction: column; gap: 0.5rem; padding: 0.5rem; border-radius: var(--ch-radius-lg); background: var(--ch-inset); border: 1px solid var(--ch-edge); }
+  .gh-composer-input { height: auto; min-height: 3.25rem; padding: 0.5rem 0.625rem; resize: vertical; line-height: 1.5; box-shadow: none; }
+  .gh-mentions { position: absolute; bottom: calc(100% + 6px); left: 0; }
+  @media (prefers-reduced-motion: reduce) { .gh-streaming::after { animation: none; } }
+  .gh-link-btn { font-size: var(--ch-text-2xs); color: var(--ch-ink-3); text-decoration: underline; text-underline-offset: 2px; }
+  @media (hover: hover) and (pointer: fine) { .gh-link-btn:hover { color: var(--ch-brand-ink); } }
+  .gh-card:target { box-shadow: 0 0 0 2px var(--ch-brand), var(--ch-shadow-resting); scroll-margin-top: 4rem; }
+  .gh-share { position: absolute; right: 0; top: calc(100% + 6px); }
+  .gh-share-note { padding: 4px 6px 2px; font-size: var(--ch-text-2xs); color: var(--ch-ink-3); border-top: 1px solid var(--ch-edge); margin-top: 4px; }
+  .gh-chat-switch { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; margin-top: 2px; font-size: var(--ch-text-sm); color: var(--ch-ink-2); }
+  .gh-chat-switch kbd { font: inherit; font-size: var(--ch-text-2xs); color: var(--ch-ink-3); border: 1px solid var(--ch-edge); border-radius: var(--ch-radius-sm); padding: 0 4px; background: var(--ch-page); }
+  @media (hover: hover) and (pointer: fine) { .gh-chat-switch:hover { color: var(--ch-ink); } }
+  .gh-palette-backdrop { position: fixed; inset: 0; z-index: 60; background: oklch(0.15908 0.00637 95 / 12%); display: flex; justify-content: center; align-items: flex-start; padding-top: 14vh; }
+  .gh-palette { width: min(32rem, calc(100vw - 2rem)); padding: 4px; background: var(--ch-page); border-radius: var(--ch-radius-lg); box-shadow: 0 0 0 1px var(--ch-edge), var(--ch-shadow-overlay); }
+  .gh-palette-input { width: 100%; height: 2.5rem; padding: 0 0.625rem; border: 0; border-bottom: 1px solid var(--ch-divider); outline: none; font-size: var(--ch-text-base); color: var(--ch-ink); background: transparent; margin-bottom: 4px; }
+  .gh-events { display: flex; flex-direction: column; border-top: 1px solid var(--ch-divider); font-size: var(--ch-text-xs); }
+  .gh-events li { display: grid; grid-template-columns: 2.5rem 9rem 5rem 9.5rem minmax(0, 1fr); gap: 0.5rem; padding: 6px 0; border-bottom: 1px solid var(--ch-edge); color: var(--ch-ink-2); align-items: baseline; }
+  .gh-events code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; color: var(--ch-ink-3); overflow-wrap: anywhere; }
+  .gh-event-type { color: var(--ch-ink); font-weight: 500; }
+  @media (max-width: 700px) { .gh-events li { grid-template-columns: 2rem 1fr; } .gh-events li > :nth-child(n+3) { grid-column: 2; } }
+  .gh-dot { width: 7px; height: 7px; border-radius: 9999px; background: currentColor; }
+  .gh-bubble { border-radius: var(--ch-radius-lg); padding: 0.5rem 0.75rem; font-size: var(--ch-text-sm); line-height: 1.5; max-width: 92%; }
+  .gh-bubble-asked { align-self: flex-end; background: var(--ch-brand-wash); color: var(--ch-ink); }
+  .gh-bubble-answer { align-self: flex-start; border: 1px solid var(--ch-edge); background: var(--ch-page); color: var(--ch-ink); box-shadow: var(--ch-shadow-resting); }
+  .gh-bubble-failed { align-self: flex-start; border: 1px solid color-mix(in oklch, var(--ch-warning-ink) 25%, transparent); background: var(--ch-warning-wash); color: var(--ch-warning-ink); }
+  :root { --gh-warn: var(--ch-warning-ink); }
+  /* A message that just arrived settles in: opacity and a 4px lift, 200ms, Chopin's ease-out. Not on reduced motion. */
+  .gh-arrive { animation: gh-arrive 200ms var(--ch-ease-out); }
+  @keyframes gh-arrive { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .gh-working::after { content: "…"; display: inline-block; animation: gh-blink 1.2s steps(4, end) infinite; width: 1ch; overflow: hidden; vertical-align: bottom; }
+  @keyframes gh-blink { from { width: 0; } to { width: 1.1ch; } }
+  @media (prefers-reduced-motion: reduce) { .gh-arrive { animation: none; } .gh-working::after { animation: none; width: auto; } .gh-btn { transition: none; } }
+}

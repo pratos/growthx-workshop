@@ -27,6 +27,19 @@ export async function signIn(page: Page, who: { email: string; password: string 
 
 export async function signOut(page: Page) {
   await ready(page, '/');
-  const button = page.getByRole('button', { name: 'Sign out' });
+  const button = page.getByTestId('header-account').getByRole('button', { name: 'Sign out' });
+  await expect(page.getByTestId('header-account')).not.toBeEmpty();
   if (await button.isVisible()) { await button.click(); await expect(page.getByTestId('session')).toContainText('Not signed in'); }
+}
+
+// Comment on the plan as a person does: write a line, select it, press Comment, ask, Open.
+export async function commentOn(page: Page, question: string, write = 'Retries live in the wrapper.') {
+  await page.getByRole('textbox', { name: 'Plan text' }).click();
+  await page.keyboard.press('End');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type(write);
+  await page.keyboard.press('Shift+Home');
+  await page.getByRole('button', { name: 'Comment', exact: true }).click();
+  await page.getByLabel('What should we decide').fill(question);
+  await page.getByRole('button', { name: 'Open', exact: true }).click();
 }

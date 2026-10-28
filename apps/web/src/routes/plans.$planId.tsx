@@ -1,9 +1,11 @@
-import { createFileRoute, Link, useRouter } from '@tanstack/react-router';
+import { createFileRoute, useRouter } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
 import { useEffect, useState } from 'react';
 import type { PlanView } from '@greenhouse/schema';
 import { apiGetOrStatus, apiCommand } from '#/lib/api';
 import { rememberPlan } from '#/lib/recent-plans';
+import { signInHref } from '#/lib/next';
+import { ShareMenu, CopyLink } from '#/components/Share';
 import { PlanEditor, WRITE_PREFIX } from '#/components/PlanEditor';
 import { savePlanText } from '#/lib/plan-text';
 import { askToWrite } from '#/lib/sessions';
@@ -24,9 +26,16 @@ const resolveThread = createServerFn({ method: 'POST' })
   .handler(({ data }) => apiCommand(data.planId, 'ResolveThread', data.by, { threadId: data.threadId, decision: data.decision }));
 
 type Open = { planId: string; blockId: string; body: string; by: string };
+// The plan room's own event log, for the Events view: what was recorded, by whom, in order.
+type LoggedEvent = { version: number; type: string; at: string; by: string; data: Record<string, unknown> };
+const loadEvents = createServerFn({ method: 'GET' })
+  .validator((id: string) => id)
+  .handler(({ data: id }) => apiGetOrStatus<LoggedEvent[]>(`/plans/${id}/events`));
+
 const openThread = createServerFn({ method: 'POST' })
   .validator((d: Open) => d)
   .handler(({ data }) => apiCommand(data.planId, 'OpenThread', data.by, { blockId: data.blockId, body: data.body }));
+
 
 export const Route = createFileRoute('/plans/$planId')({
   loader: async ({ params }) => {
@@ -40,7 +49,7 @@ export const Route = createFileRoute('/plans/$planId')({
 function PlanGate() {
   const { plan, status } = Route.useLoaderData();
   const { planId } = Route.useParams();
-  if (!plan) return <main className="mx-auto max-w-3xl px-4 py-10"><h1 className="text-2xl font-semibold tracking-tight">Plan {planId}</h1><p role="alert" className="mt-4 text-sm text-gray-500">{status === 401 ? <><Link to="/login" className="underline">Sign in</Link> to open this plan. Plans are for the people working on them.</> : status === 400 ? 'A plan id is 1 to 40 lowercase letters, digits or dashes.' : `This plan could not be opened (${status}).`}</p></main>;
+  if (!plan) return <main className="mx-auto max-w-3xl px-4 py-16"><h1 className="text-3xl font-semibold tracking-tight">{planId}</h1><p role="alert" className="gh-muted mt-4 text-sm">{status === 401 ? <><a href="/login" className="underline" onClick={(e) => { e.preventDefault(); window.location.assign(signInHref()); }}>Sign in</a> to open this plan. Plans are for the people working on them.</> : status === 400 ? 'A plan id is 1 to 40 lowercase letters, digits or dashes.' : `This plan could not be opened (${status}).`}</p></main>;
   return <PlanPage />;
 }
 
@@ -48,9 +57,13 @@ function PlanPage() {
   // Home lists the plans opened on this device; there is no plan index yet.
   const { planId: opened } = Route.useParams();
   useEffect(() => rememberPlan(opened), [opened]);
+  const [view, setView] = useState<'document' | 'decisions' | 'events'>('document');
   const { plan: loaded, account } = Route.useLoaderData();
   const plan = loaded!;
   const [sessionTick, setSessionTick] = useState(0);
+  // Who has this plan open now, and the agent's answers while it writes them (both from the room's socket).
+  const [here, setHere] = useState<string[]>([]);
+  const [partials, setPartials] = useState<Record<string, string>>({});
   const { planId } = Route.useParams();
   const router = useRouter();
   // Comments are written as the signed-in account; the API sets `by` from the sign-in.
@@ -67,9 +80,11 @@ function PlanPage() {
     ws.onerror = () => setLive('off');
     ws.onmessage = (m) => {
       try {
-        const type = (JSON.parse(String(m.data)) as { type?: string }).type;
-        if (type === 'events') void router.invalidate();
-        if (type === 'session') setSessionTick((n) => n + 1);
+        const frame = JSON.parse(String(m.data)) as { type?: string; here?: string[]; runId?: string; text?: string };
+        if (frame.type === 'events') void router.invalidate();
+        if (frame.type === 'session') { setSessionTick((n) => n + 1); setPartials({}); }
+        if (frame.here) setHere(frame.here);
+        if (frame.type === 'partial' && frame.runId) setPartials((p) => ({ ...p, [frame.runId!]: frame.text ?? '' }));
       } catch {}
     };
     return () => ws.close();
@@ -83,47 +98,111 @@ function PlanPage() {
   }
 
   return (
-    <main className="mx-auto grid max-w-6xl gap-8 px-4 py-10 lg:grid-cols-[minmax(0,1fr)_380px]">
-      <div>
-      <header className="flex items-baseline justify-between gap-4">
-        <h1 className="text-2xl font-semibold tracking-tight">Plan {planId}</h1>
-        <p className="text-sm text-gray-500">as {by}</p>
-      </header>
-      <p className="mt-1 text-sm text-gray-500">{plan.threads.length} threads · {plan.decisions.length} decisions · version {plan.version} · <span data-live={live} className={live === 'live' ? 'text-emerald-700' : 'text-gray-400'}>{live === 'live' ? '● live' : live === 'off' ? '○ offline' : '○ connecting'}</span></p>
-      {error && <p role="alert" className="mt-4 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">{error}</p>}
-
-      <div className="mt-8"><PlanEditor body={plan.body} onSave={(content, basedOn) => savePlanText(planId, by, content, basedOn)}
-        onAsk={async (prompt) => { const refused = await askToWrite(planId, by, prompt, WRITE_PREFIX); setSessionTick((n) => n + 1); return refused; }} /></div>
-      <section className="mt-8 space-y-4">
-        {plan.threads.map((t) => {
-          const decision = plan.decisions.find((d) => d.threadId === t.threadId);
-          return (
-            <article key={t.threadId} data-thread={t.threadId} className="rounded-lg border border-gray-200 p-4">
-              <p className="text-xs uppercase tracking-wide text-gray-500">block {t.blockId} · thread {t.threadId} · {t.replies} replies</p>
-              <p className="mt-1 text-base">{t.body}</p>
-              {decision ? (
-                <p className="mt-3 text-sm text-emerald-800">Decided by {decision.by} · {decision.at.slice(0, 16).replace('T', ' ')} UTC · “{decision.decision}”</p>
-              ) : (
-                <form className="mt-3 flex gap-2" onSubmit={(e) => { e.preventDefault(); const f = new FormData(e.currentTarget); void run(resolveThread({ data: { planId, threadId: t.threadId, decision: field(f, 'decision'), by } })); }}>
-                  <input name="decision" required placeholder="What was decided?" className="flex-1 rounded border border-gray-300 px-3 py-2 text-sm" />
-                  <button type="submit" className="rounded bg-black px-3 py-2 text-sm text-white">Resolve</button>
-                </form>
-              )}
-            </article>
-          );
-        })}
-      </section>
-
-      <form className="mt-10 flex flex-col gap-2 rounded-lg border border-dashed border-gray-300 p-4" onSubmit={(e) => { e.preventDefault(); const f = new FormData(e.currentTarget); void run(openThread({ data: { planId, blockId: field(f, 'blockId'), body: field(f, 'body'), by } })); e.currentTarget.reset(); }}>
-        <p className="text-sm font-medium">Open a thread</p>
-        <div className="flex gap-2">
-          <input name="blockId" required placeholder="block id" className="w-32 rounded border border-gray-300 px-3 py-2 text-sm" />
-          <input name="body" required placeholder="What should we decide?" className="flex-1 rounded border border-gray-300 px-3 py-2 text-sm" />
-          <button type="submit" className="rounded border border-gray-300 px-3 py-2 text-sm">Open</button>
+    <main className="gh-workspace">
+      <SessionsPanel planId={planId} me={account?.accountId ?? null} tick={sessionTick} here={here} partials={partials} />
+      <article className="gh-sheet" aria-label={`Plan ${planId}`}>
+        <div className="gh-titlebar">
+          <span className="gh-titlebar-title">{planId}</span>
+          <span className="gh-titlebar-sep" aria-hidden="true" />
+          <span className="flex min-w-0 flex-wrap items-center gap-1.5">
+            <span className="gh-pill">{plan.threads.length} thread{plan.threads.length === 1 ? '' : 's'}</span>
+            <span className="gh-pill">version {plan.version}</span>
+          </span>
+          <span className="ml-auto flex items-center gap-3">
+            <span className="flex -space-x-1.5" aria-label={`Here now: ${here.join(', ') || 'nobody'}`}>
+              {here.map((who) => <span key={who} className="gh-face" data-agent={who === 'agent' || undefined} title={`${who}, here now`}>{who === 'agent' ? 'AI' : who.slice(0, 2).toUpperCase()}</span>)}
+            </span>
+            <span className="gh-pill" data-live={live} data-tone={live === 'live' ? 'live' : undefined}><span className="gh-dot" aria-hidden="true" />{live === 'live' ? 'Live' : live === 'off' ? 'Offline' : 'Connecting'}</span>
+            <ShareMenu planId={planId} />
+            <span className="gh-muted">as {by}</span>
+          </span>
         </div>
-      </form>
-      </div>
-      <SessionsPanel planId={planId} me={account?.accountId ?? null} tick={sessionTick} />
+        <div className="gh-views" role="tablist" aria-label="Plan views">
+          <button type="button" role="tab" aria-selected={view === 'document'} className="gh-view" onClick={() => setView('document')}>Plan</button>
+          <button type="button" role="tab" aria-selected={view === 'decisions'} className="gh-view" onClick={() => setView('decisions')}>Decisions <span className="tabular-nums">{plan.decisions.length}</span></button>
+          <button type="button" role="tab" aria-selected={view === 'events'} className="gh-view" onClick={() => setView('events')}>Events <span className="tabular-nums">{plan.version}</span></button>
+        </div>
+        <div className="gh-doc">
+          <h1>{planId}</h1>
+          {error && <p role="alert" className="gh-pill mt-4" data-tone="warn">{error}</p>}
+          {view === 'events' ? <EventLog planId={planId} version={plan.version} /> : view === 'decisions' ? (
+            <section className="mt-8" aria-label="Decisions">
+              {plan.decisions.length === 0 ? <p className="gh-muted text-sm">No decisions yet. A thread ends in one when someone resolves it.</p> : (
+                <ol className="flex flex-col divide-y divide-[var(--ch-divider)]">
+                  {plan.decisions.map((d) => {
+                    const thread = plan.threads.find((t) => t.threadId === d.threadId);
+                    return (
+                      <li key={d.threadId} className="py-4" data-decision>
+                        <p className="text-base">{d.decision}</p>
+                        <p className="gh-meta mt-1"><span>{thread ? `On “${thread.body}”` : d.threadId}</span><span>{d.by}</span><span>{d.at.slice(0, 16).replace('T', ' ')} UTC</span></p>
+                      </li>
+                    );
+                  })}
+                </ol>
+              )}
+            </section>
+          ) : (
+            <>
+              <PlanEditor body={plan.body} onSave={(content, basedOn) => savePlanText(planId, by, content, basedOn)}
+                onComment={(blockId, body) => run(openThread({ data: { planId, blockId, by, body } })).then(() => undefined)}
+                onAsk={async (prompt) => { const refused = await askToWrite(planId, by, prompt, WRITE_PREFIX); setSessionTick((n) => n + 1); return refused; }} />
+              <section className="mt-8 space-y-4" aria-label="Comment threads">
+                {plan.threads.length === 0 && <p className="gh-muted text-sm">No comments yet. Select text in the plan and press Comment to ask what should be decided about it.</p>}
+                {plan.threads.map((t) => {
+                  const decision = plan.decisions.find((d) => d.threadId === t.threadId);
+                  return (
+                    <article key={t.threadId} id={`thread-${t.threadId}`} data-thread={t.threadId} className="gh-card gh-arrive p-4">
+                      <p className="gh-meta"><span>Block {t.blockId}</span><span>{t.replies} {t.replies === 1 ? 'reply' : 'replies'}</span><CopyLink path={`/plans/${planId}#thread-${t.threadId}`} label="Copy link to this thread" /></p>
+                      <p className="mt-1.5 text-base font-medium">{t.body}</p>
+                      {decision ? (
+                        <div className="mt-3 text-sm" data-decision>
+                          <p><span className="gh-pill" data-tone="live">Decided</span> <strong className="font-medium">“{decision.decision}”</strong></p>
+                          <p className="gh-meta mt-1"><span>{decision.by}</span><span>{decision.at.slice(0, 16).replace('T', ' ')} UTC</span></p>
+                        </div>
+                      ) :
+                      (
+                        <form className="mt-3 flex gap-2" onSubmit={(e) => { e.preventDefault(); const f = new FormData(e.currentTarget); void run(resolveThread({ data: { planId, threadId: t.threadId, decision: field(f, 'decision'), by } })); }}>
+                          <input name="decision" required aria-label="What was decided" placeholder="What was decided?" className="gh-input" />
+                          <button type="submit" className="gh-btn gh-btn-primary">Resolve</button>
+                        </form>
+                      )}
+                    </article>
+                  );
+                })}
+              </section>
+
+
+            </>
+          )}
+        </div>
+      </article>
     </main>
+  );
+}
+
+// Events: the plan room's log as recorded, newest first, for debugging what happened and in what order.
+function EventLog({ planId, version }: { planId: string; version: number }) {
+  const [events, setEvents] = useState<LoggedEvent[] | null>(null);
+  const [status, setStatus] = useState(200);
+  useEffect(() => { void loadEvents({ data: planId }).then((r) => { setStatus(r.status); setEvents(r.data ?? []); }); }, [planId, version]);
+  if (events === null) return <p className="gh-muted mt-8 text-sm">Loading the event log…</p>;
+  if (status >= 400) return <p role="alert" className="gh-muted mt-8 text-sm">The event log could not be read ({status}).</p>;
+  if (events.length === 0) return <p className="gh-muted mt-8 text-sm">Nothing recorded on this plan yet.</p>;
+  const brief = (d: Record<string, unknown>) => Object.entries(d).map(([k, v]) => `${k}=${typeof v === 'string' ? (v.length > 80 ? `${v.slice(0, 80)}…` : v) : JSON.stringify(v)}`).join('  ');
+  return (
+    <section className="mt-8" aria-label="Events">
+      <p className="gh-muted text-sm">{events.length} events on this plan, newest first. Sessions keep their own streams in the same room.</p>
+      <ol className="gh-events mt-4">
+        {[...events].reverse().map((e) => (
+          <li key={e.version}>
+            <span className="tabular-nums">{e.version}</span>
+            <span className="gh-event-type">{e.type}</span>
+            <span>{e.by}</span>
+            <span className="tabular-nums">{e.at.slice(0, 19).replace('T', ' ')}</span>
+            <code>{brief(e.data)}</code>
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 }
