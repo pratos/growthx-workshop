@@ -862,6 +862,286 @@ Depth is on the companion page. The talk only names them.
 ---
 <!-- .slide: class="section-slide" -->
 
+<div class="num">60 min · live</div>
+
+# Greenhouse · the demo
+
+<p class="subtitle">seven beats · one repo · minute 0 to 60</p>
+
+Note:
+Minute 0. The whole hour is in this repo; every beat has a tag and a `just demo cp-NN` twin from docs/RUNBOOK.md. Say the order once: scaffold, plan, vocabulary, backend, components, why Cloudflare, flags.
+
+---
+
+<div class="poster-label">GREENHOUSE · THE DEMO · 01 SCAFFOLD · cp-00</div>
+
+## The layout is the first thing the agent reads
+
+```text
+apps/api          Hono Worker: /healthz, /readyz, commands in, events out. PlanRoom Durable Object.
+apps/web          TanStack Start Worker. Reaches the api over the API service binding only.
+packages/schema   the vocabulary as types
+packages/domain   decide, evolve, project. Expect tests read as a story.
+docs/             GLOSSARY, ARCHITECTURE, RELEASE, CHECKPOINTS, RUNBOOK, decisions/
+skills/           ours in place; third-party vendored at pinned commits
+justfile          every runnable thing is a recipe
+```
+
+<p class="kicker mono"><a href="../docs/architecture/cp-00.html">diagram: docs/architecture/cp-00.html</a></p>
+
+Note:
+Minute 0 to 3. Type `ls` then `ls apps packages`; point at the two Workers and the two packages. Then `cat justfile | head -40`: if it is not a recipe here, the agent invents its own way.
+
+---
+
+<div class="poster-label">GREENHOUSE · THE DEMO · 01 SCAFFOLD · cp-00</div>
+
+<div class="live">live</div>
+
+## Health before login
+
+```sh
+just up                                  # api + web locally, D1 and DO in miniflare
+```
+
+<p>Two Workers. The web Worker reaches the api over the <code>API</code> service binding and nothing else.</p>
+<p><code>/healthz</code> answers before anyone has logged in.</p>
+<p><code>/readyz</code> touches each dependency and names the one that fails.</p>
+<p><code>/login</code> comes after that.</p>
+
+Note:
+Minute 3 to 6. Run `just up`, open http://localhost:3000/healthz and point at the two versions, web and api, coming through the binding. Then `/login`. If the laptop is slow, `just demo cp-00` runs the two curls.
+
+---
+<!-- .slide: class="statement" -->
+
+<div class="poster-label">GREENHOUSE · THE DEMO · 02 PLAN THE PRODUCT</div>
+
+## Where does the agent's loop live?
+
+<p class="subtitle fragment fade-in">A multiplayer coding agent on pi-durable. One plan, many people, one agent in the room.</p>
+
+<p class="kicker fragment fade-in">the loop needs one owner and a checkpoint store. the browser, a Worker, a Durable Object or a Container: pick one.</p>
+
+Note:
+Minute 6 to 9. Say the planning question out loud before the agent hears it. Open the plan room at http://localhost:3000/plans/gh-12 and show the Blocks the agent drafted; the question is a Thread on one Block.
+
+---
+
+<div class="poster-label">GREENHOUSE · THE DEMO · 02 PLAN THE PRODUCT · cp-04</div>
+
+## The plan is a report you click, not a wall of Markdown
+
+```sh
+just artifact docs/decisions/gh-12.spec.json docs/decisions/gh-12.html
+```
+
+<p>Each option has a diagram, a cost and the Block it changes.</p>
+<p>Clicking one records a Decision on the Thread.</p>
+<p>Plans orient. They do not bind.</p>
+
+Note:
+Minute 9 to 13. Run `/create_plan GH-12` in Claude Code and let the Markdown scroll for ten seconds, then open docs/decisions/gh-12.html and click an option. Point at the Decision appearing on the Block. Say: the plan tells the agent where to look, the tests tell it when it is done.
+
+---
+
+<div class="poster-label">GREENHOUSE · THE DEMO · 03 ONE VOCABULARY · cp-01</div>
+
+## The glossary lives next to the code
+
+<p><code>docs/GLOSSARY.md</code>: Thread, Decision, Participant, each with the events and commands that carry it.</p>
+<p>Every entry lists its banned synonyms. Decision, not resolution, verdict, outcome.</p>
+<p>A noun appears there and in <code>packages/schema</code> before it appears anywhere else.</p>
+<p>The agent searches the web before it names: how Linear, GitHub and Chopin say it.</p>
+
+Note:
+Minute 13 to 16. `cat docs/GLOSSARY.md` and point at the "Not:" line under Decision. Then ask pi "add resolve thread" and watch the names it picks; the ddd-vocabulary skill makes it search first.
+
+---
+
+<div class="poster-label">GREENHOUSE · THE DEMO · 03 ONE VOCABULARY · cp-01</div>
+
+<div class="live">live</div>
+
+## The check that catches ThreadClosed
+
+```sh
+just glossary-check                      # cp-01
+```
+
+<p>On <code>main</code> it passes.</p>
+<p>On <code>wrong/cp-01</code> the first pass named the event <code>ThreadClosed</code> with a <code>verdict</code>. Every test passed.</p>
+<p>The check fails the build. A second model fails the review the same way.</p>
+
+Note:
+Minute 16 to 20. Run `just glossary-check` on main, then `git checkout wrong/cp-01 && just glossary-check` and point at the two names it rejects. Come back with `git checkout main`. If there is time, start `HEAD_REF=wrong/cp-01 just review cp-02` and let it run in the background pane.
+
+---
+
+<div class="poster-label">GREENHOUSE · THE DEMO · 04 THE BACKEND · cp-02 · cp-03</div>
+
+## Hono at the edge. Effect behind it.
+
+<p>Schema decodes at the boundary; nothing unknown gets past the handler.</p>
+<p><code>decide</code>, <code>evolve</code> and <code>project</code> are pure functions in <code>packages/domain</code>.</p>
+<p>Flags, PlanRooms and Commands are services with Layers; one ManagedRuntime per env.</p>
+<p>A rejection is a typed error, not a thrown string.</p>
+<p>Test layers swap D1 and the Durable Object for memory. The tests do not know.</p>
+
+<p class="kicker mono"><a href="../docs/architecture/cp-02.html">diagram: docs/architecture/cp-02.html</a></p>
+
+Note:
+Minute 20 to 25. Open apps/api/src/services.ts and scroll: Flags.layer against D1, Flags.layerTest against a list; PlanRooms.layer against the namespace, PlanRooms.layerTest against a Map. Then packages/domain/src/thread/decider.ts, the ResolveThread case: the flag gate, the state check, two events.
+
+---
+
+<div class="poster-label">GREENHOUSE · THE DEMO · 04 THE BACKEND · cp-02</div>
+
+<div class="live">live</div>
+
+## The test is a story a person can read
+
+```text
+given  ThreadOpened       t7 on b3 by pratos "retries in the client or the wrapper?"
+       ReplyPosted        t7 by agent "wrapper: one place to change"
+when   ResolveThread      t7 by pratos decision "wrapper"
+then   ThreadResolved     t7 by pratos
+       DecisionRecorded   t7 on b3 by pratos decision "wrapper"
+```
+
+<p class="kicker">command plus starting stream in, events out. simulated clock. no mocks of our own modules.</p>
+
+Note:
+Minute 25 to 28. Run `just test`, then `cat packages/domain/src/thread/__expect__/resolve.snap.txt`. Ask pi for a test and watch it reach for a mock; point at the snapshot and say this is the test it should have written.
+
+--
+<!-- .slide: class="btw-slide" -->
+
+<div class="poster-label">/BTW · 04 THE BACKEND · cp-03</div>
+
+## Changing a recorded event
+
+```text
+v1 stream as recorded
+  DecisionRecorded   t7 on b3 by pratos decision "wrapper"
+read through upcast
+  DecisionRecorded   t7 on b3 by pratos decision "wrapper" rationale "wrapper: one place to change"
+```
+
+<p>Events are facts. <code>packages/domain/src/upcast</code> reads v1 as v2; nothing on disk changes.</p>
+<p>The Effect source sits at <code>repos/effect</code>, read-only. The agent reads it before it writes Effect code, and never imports from it.</p>
+
+Note:
+Minute 28 to 32. Ask Claude Code to "add rationale to decisions" and watch it edit the schema in place; stop it. Then `cat packages/domain/src/upcast/__expect__/*.snap.txt`. Point at the AGENTS.md line about repos/effect and the oxlint ignore.
+
+---
+
+<div class="poster-label">GREENHOUSE · THE DEMO · 05 COMPONENTS · cp-05</div>
+
+<div class="live">live</div>
+
+## Build the plan page under skills
+
+<p>Claude Code with <code>impeccable</code> for the craft and Emil's <code>animate</code> for the motion, on <code>/plans/gh-12</code>.</p>
+<p>One Agentation note on the resolve action: pin it in the browser, the agent reads it from the toolbar.</p>
+<p>The flags admin panel: the same components, the flags table, default off.</p>
+<p>Skills are vendored at a pinned commit in <code>skills/manifest.json</code>.</p>
+
+Note:
+Minute 32 to 37. Open http://localhost:3000/plans/gh-12 with the Agentation toolbar on, leave one note on the resolve button, and let Claude Code pick it up. Then open the flags panel and show resolve-thread off. Point at skills/manifest.json: the sha is bumped on purpose, never the morning of.
+
+---
+
+<div class="poster-label">GREENHOUSE · THE DEMO · 05 COMPONENTS · cp-08</div>
+
+<div class="live">live</div>
+
+## Two tabs, one Durable Object
+
+<p>Every open tab holds a hibernating WebSocket on the plan's object.</p>
+<p>An append broadcasts to all of them. Nothing polls.</p>
+<p>The browser reaches the socket through the web Worker, which proxies the upgrade over the binding.</p>
+
+```sh
+bun scripts/ws-check.ts <api url>
+```
+
+<p class="kicker mono"><a href="../docs/architecture/cp-08.html">diagram: docs/architecture/cp-08.html</a></p>
+
+Note:
+Minute 37 to 41. Two tabs on /plans/gh-12 side by side; open a Thread in one, watch it land in the other. Then apps/api/src/plan-room.ts: acceptWebSocket, getWebSockets, broadcast after the insert. If the socket misbehaves, `just demo cp-08`.
+
+--
+<!-- .slide: class="btw-slide" -->
+
+<div class="poster-label">/BTW · 05 COMPONENTS · packages/agent</div>
+
+## kill -9, then the same command
+
+<p>One request id. SQLite checkpoints after every step.</p>
+<p>Kill the process mid tool call.</p>
+<p>The same command resumes from the last checkpoint; the tool reruns.</p>
+<p>A third run answers from the store. No model call.</p>
+
+Note:
+Minute 41 to 45. Start the agent in packages/agent with one request id, wait for "tool started", `kill -9` it, run the same command and watch it resume. Run it a third time and point at the answer arriving with no model call in the log. The recorded fallback is in demo/.
+
+---
+<!-- .slide: class="statement" -->
+
+<div class="poster-label">GREENHOUSE · THE DEMO · 06 WHY CLOUDFLARE</div>
+
+## One owner per stream is a Durable Object.
+
+<h2 class="fragment fade-in">A checkpointed agent loop needs exactly that owner.</h2>
+
+<p class="kicker fragment fade-in">D1, R2 and Workers cost nothing idle and deploy in seconds.</p>
+
+Note:
+Minute 45 to 48. Three sentences, three clicks. Point back at plan-room.ts: the object that owns the event log is the object that knows when it changed, and the same shape holds a pi-durable session.
+
+---
+
+<div class="poster-label">GREENHOUSE · THE DEMO · 07 SHIP BEHIND A FLAG · cp-07</div>
+
+## Flags default off, in decide()
+
+```sh
+GH_REMOTE=1 just flag user resolve-thread pratos
+```
+
+<p>The gate is the first line of <code>ResolveThread</code> in the decider. Not in the web Worker.</p>
+<p>You first. Then a named slice: the people you interviewed.</p>
+<p>Then a percentage by stable hash: <code>just flag pct NAME 5</code>, then 25. Same person, same bucket.</p>
+
+Note:
+Minute 48 to 53. `just deploy` first, about a minute including the smoke. Then the flag command above, use the resolve action live on prod, and point at `bucket()` in services.ts: FNV over flag and participant, mod 100.
+
+---
+
+<div class="poster-label">GREENHOUSE · THE DEMO · 07 SHIP BEHIND A FLAG · cp-07</div>
+
+<div class="live">live</div>
+
+## The code version is a separate dial
+
+```sh
+GH_REMOTE=1 just flag off resolve-thread
+just rollback api <version-id>
+```
+
+<p><code>/healthz</code> carries a <code>label</code> from <code>git describe</code> for people and an <code>id</code> for rollback.</p>
+<p>Flag off is step one: seconds, no deploy.</p>
+<p>Rollback is step two: the previous id, pinned.</p>
+
+<p class="kicker mono"><a href="../docs/architecture/cp-07.html">diagram: docs/architecture/cp-07.html</a></p>
+
+Note:
+Minute 53 to 58. `curl https://greenhouse-api.prthamesh-sarang.workers.dev/healthz` and point at version.label and version.id. Flip the flag off and show the resolve action gone without a deploy; then `just rollback api <id>` with the id from `bunx wrangler deployments list`. Minute 58 to 60 hands back to the close.
+
+---
+<!-- .slide: class="section-slide" -->
+
 <div class="num">09</div>
 
 # You are the gardener
