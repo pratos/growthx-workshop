@@ -7,13 +7,13 @@ Two sites, two ways in.
 | **greenhouse.tarp.sh** | the finished product | by hand, from the last stage branch `cp-10-release`: `just deploy prod` | `greenhouse-web`, `greenhouse-api` · D1 `greenhouse` |
 | **greenhouse-demo.tarp.sh** | `main` as the workshop merges the stage PRs into it | GitHub Actions, on every push to `main`: `scripts/deploy.sh demo` | `greenhouse-demo-web`, `greenhouse-demo-api` · D1 `greenhouse-demo` |
 
-The web Worker serves the domain; it reaches its own API over the service binding, and `/api/*` on the domain is the API for curl and the agent. A deploy never applies a migration: a deploy with one pending stops and lists it.
+The web Worker serves the domain; it reaches its own API over the service binding, and `/api/*` on the domain is the API for curl and the agent. A deploy never applies a migration: a deploy with one pending stops and lists it. A deploy also runs the security and spending audit first (`just cf-audit`), and any ✗ stops it.
 
 ## What GitHub runs
 
 | Event | Jobs | What happens |
 |---|---|---|
-| Push to any branch, every PR | `check` | Frozen install, lint and typecheck, the tests, the architecture map, the generated Worker types, and a guard that refuses a migration with `drop` or `rename` unless the commit message says `ALLOW_DESTRUCTIVE`. |
+| Push to any branch, every PR | `check` | Frozen install, lint and typecheck, the tests, the architecture map, the Cloudflare security and spending audit, the generated Worker types, and a guard that refuses a migration with `drop` or `rename` unless the commit message says `ALLOW_DESTRUCTIVE`. |
 | Pull request | `check`, `preview` | Uploads both demo Workers as new versions tagged `pr-<number>`, with no traffic. Skipped with a notice if there is no Cloudflare token. |
 | Push to `main` | `check`, `deploy` | Deploys `main` to greenhouse-demo.tarp.sh, then checks `https://greenhouse-demo.tarp.sh/healthz`. Any failure fails the job. |
 | Actions → deploy → Run workflow | `check`, `migrate` | Lists, then applies, the demo database's pending migrations. |
@@ -55,6 +55,25 @@ Merge the stage PRs into `main` in order; each merge deploys. Before the merges 
 | cp-03 (accounts) | `just migrate-remote demo` for `0002_accounts`, then after the merge `GH_REMOTE=1 GH_ENV=demo just user-add …` for your login |
 | cp-04 (admin) | `just migrate-remote demo` for `0001_flags_and_projections`; make your demo account an admin with `user-add … admin` |
 | cp-05 to cp-10 | nothing new; flags with `GH_REMOTE=1 GH_ENV=demo just flag …` |
+
+## What it costs, and the audit
+
+Durable Objects are the part that can run up a bill. Each plan room is one, billed per request (HTTP, RPC, every WebSocket message, each alarm) and for every second it is awake, at 128 MB. Cloudflare's own example of 100 objects, each holding one socket open all month without hibernation, comes to about $419. With hibernation, a similar workload costs about $21. ([pricing](https://developers.cloudflare.com/durable-objects/platform/pricing/))
+
+`just cf-audit` checks the code for what keeps that small:
+
+| Check | Why |
+|---|---|
+| Sockets accepted with `ctx.acceptWebSocket`, never `accept()` | A hibernating socket costs nothing while idle; `accept()` bills the whole connection |
+| `ping` answered by `setWebSocketAutoResponse` | Keep-alives never wake the room |
+| No timers, no alarm that reschedules forever | Either keeps an object awake |
+| Every `/plans/*` route behind sign-in, plan ids `^[a-z0-9][a-z0-9-]{0,39}$` | The first touch of a new id creates, and bills, a new object; a crawler cannot mint them |
+| Writes rate-limited per account, sign-in and sign-up per IP (`WRITE_LIMIT`, `AUTH_LIMIT`) | Caps both runaway cost and password guessing |
+| The agent listens on the room's socket and backs off to 30 s when idle | A fixed fast poll is a billed request that wakes the room every time |
+| Account pinned, no secret-looking `vars`, no `.dev.vars` tracked, admin routes behind `requireAdmin`, secrets masked | The security half |
+| Trace sampling at 0.2 or below | Traces are billed per span |
+
+Once per account, by hand (code cannot check it): **Billing → Notifications → add a usage-based billing alert**, and look at **Billing → Billable usage** after the first week. On the Free plan an exceeded limit fails the request instead of billing it.
 
 ## Every change after that
 
