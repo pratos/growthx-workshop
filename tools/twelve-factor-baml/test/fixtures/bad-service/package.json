@@ -1,0 +1,7 @@
+{
+  "name": "bad-service",
+  "dependencies": {
+    "express": "*",
+    "pg": "^8.11.0"
+  }
+}

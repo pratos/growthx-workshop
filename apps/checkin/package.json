@@ -1,0 +1,10 @@
+{
+  "name": "@greenhouse/checkin",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:init": "wrangler d1 execute ai-coding-checkin --remote --file schema.sql"
+  }
+}

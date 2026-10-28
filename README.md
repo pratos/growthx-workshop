@@ -1,4 +1,6 @@
-# Greenhouse
+# Greenhouse · Shipping Reliable Products
+
+This folder is the workshop: `reliable-products-workshop.html` is the talk, `apps/checkin` is the pre-workshop check-in, and the rest is Greenhouse, the runnable example.
 
 A planning room in the spirit of GitHub Next's Chopin: people and an agent write a plan together, every decision is owned, dated and attached to the block it changed. Built as the runnable example for the "Shipping Reliable Products" workshop, so each engineering practice can be shown running instead of described.
 
@@ -14,6 +16,7 @@ Read `AGENTS.md` first, then `docs/GLOSSARY.md` and `docs/ARCHITECTURE.md`. The 
 | Where | What |
 |---|---|
 | `apps/api` | Hono Worker: `/healthz`, `/readyz`, commands in, events out. `PlanRoom` Durable Object holds each plan's event log. |
+| `apps/checkin` | The workshop's anonymous check-in Worker (growthx-eng.tarp.sh). Separate deploy, same conventions. |
 | `apps/web` | TanStack Start Worker. Talks to the api over a service binding only. Agentation toolbar in dev. |
 | `packages/domain` | The decider: commands validate, events are facts, projections are pure. Expect tests read as a story. |
 | `packages/schema` | The vocabulary as types. |

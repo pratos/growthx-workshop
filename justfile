@@ -18,6 +18,10 @@ install: skills
 up: install migrate-local seed
     cd apps/web && bun run dev
 
+# The anonymous check-in Worker (growthx-eng.tarp.sh): just checkin dev | just checkin deploy
+checkin action:
+    cd apps/checkin && bunx wrangler {{action}}
+
 # Expect tests (ms), then api tests
 test:
     bun test packages apps/api

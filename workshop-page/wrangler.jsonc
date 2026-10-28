@@ -1,0 +1,15 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "reliable-products-workshop",
+  "account_id": "e36a0d53cbe993dac321c2ac8dea60f6",
+  "compatibility_date": "2026-10-21",
+  "workers_dev": true,
+  "routes": [
+    { "pattern": "growthx-workshop.tarp.sh", "custom_domain": true }
+  ],
+  "assets": {
+    "directory": "./public",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "single-page-application"
+  }
+}

@@ -1,0 +1,543 @@
+<title>AI Coding Level Check</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,750&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one narrow reading column; questions as fieldsets, sticky submit bar at the bottom, result + host tally below. */
+:root {
+  --bg: #F2F5F6;
+  --surface: #FFFFFF;
+  --ink: #15212A;
+  --muted: #586771;
+  --line: #D6DEE2;
+  --accent: #0D6B66;
+  --accent-soft: #DDF0EE;
+  --warn: #B45309;
+  --warn-soft: #FDF0DF;
+  --l1: #B7DCD8; --l2: #6FB9B1; --l3: #2E8C84; --l4: #0D5F5A;
+  --font-display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1417; --surface: #151D21; --ink: #E4EBEE; --muted: #93A2AA; --line: #26333A;
+    --accent: #45C3B6; --accent-soft: #143A37; --warn: #F0A54A; --warn-soft: #3A2A15;
+    --l1: #1F4A46; --l2: #2B7A72; --l3: #3BA89D; --l4: #6FDCCF;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1417; --surface: #151D21; --ink: #E4EBEE; --muted: #93A2AA; --line: #26333A;
+  --accent: #45C3B6; --accent-soft: #143A37; --warn: #F0A54A; --warn-soft: #3A2A15;
+  --l1: #1F4A46; --l2: #2B7A72; --l3: #3BA89D; --l4: #6FDCCF;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.55;
+}
+.wrap {
+  max-width: 680px;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 40px 120px;
+  display: grid;
+  gap: 28px;
+}
+header { display: grid; gap: 10px; }
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+h1 {
+  font-family: var(--font-display);
+  font-weight: 750;
+  font-size: clamp(2rem, 6vw, 2.75rem);
+  line-height: 1.05;
+  letter-spacing: -.02em;
+  margin: 0;
+  text-wrap: balance;
+}
+h2 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.5rem;
+  line-height: 1.15;
+  margin: 0;
+  text-wrap: balance;
+}
+.lede { margin: 0; color: var(--muted); max-width: 58ch; }
+
+form { display: grid; gap: 14px; }
+fieldset {
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 18px 18px 14px;
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+fieldset.missing { border-color: var(--warn); background: linear-gradient(var(--warn-soft), var(--surface) 60px); }
+legend {
+  float: left;
+  width: 100%;
+  padding: 0;
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  font-weight: 600;
+  font-size: 1.02rem;
+  line-height: 1.35;
+}
+legend + * { clear: both; }
+.qnum {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 12px;
+  color: var(--muted);
+  flex: none;
+  min-width: 2.2em;
+}
+.hint { font-size: 13px; color: var(--muted); margin: -4px 0 0 calc(2.2em + 10px); }
+.opts { display: grid; gap: 6px; }
+.opt {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  cursor: pointer;
+  transition: border-color .12s, background .12s;
+}
+.opt:hover { border-color: var(--accent); }
+.opt input { margin: 4px 0 0; accent-color: var(--accent); flex: none; }
+.opt:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.opt:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.opt span { min-width: 0; }
+.opt small { display: block; color: var(--muted); font-size: 13px; }
+
+.bar {
+  position: sticky;
+  bottom: 0;
+  margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px)));
+  padding: 12px max(16px, env(safe-area-inset-right, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid var(--line);
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.progress { display: flex; gap: 10px; align-items: center; font-family: var(--font-mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.track { width: 120px; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.track i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+button {
+  font: inherit;
+  font-weight: 600;
+  border-radius: 7px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--surface);
+  padding: 10px 18px;
+  cursor: pointer;
+}
+button.ghost { background: transparent; color: var(--accent); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.note { font-size: 13px; color: var(--warn); }
+
+#result {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 22px;
+  display: grid;
+  gap: 14px;
+  scroll-margin-top: 20px;
+}
+.lvl-row { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+.badge {
+  font-family: var(--font-display);
+  font-weight: 750;
+  font-size: 2.2rem;
+  line-height: 1;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--surface);
+}
+.score { font-family: var(--font-mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ladder { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.ladder div { height: 6px; border-radius: 3px; background: var(--line); }
+.ladder div.on { background: var(--accent); }
+#result p { margin: 0; max-width: 60ch; }
+.share {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+.share code {
+  flex: 1 1 260px;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 10px 12px;
+  border-radius: 7px;
+  background: var(--bg);
+  border: 1px dashed var(--line);
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+.small { font-size: 13px; color: var(--muted); }
+
+details.host {
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+}
+details.host summary {
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: .04em;
+  color: var(--accent);
+  list-style: none;
+}
+details.host summary::before { content: "+ "; }
+details.host[open] summary::before { content: "− "; }
+.host-body { display: grid; gap: 18px; margin-top: 18px; }
+textarea {
+  width: 100%;
+  min-height: 140px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 12px;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  resize: vertical;
+}
+textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.dist { display: grid; gap: 8px; }
+.dist-row { display: grid; grid-template-columns: 7.5em 1fr 3.5em; gap: 10px; align-items: center; font-size: 14px; }
+.dist-row .fill { height: 14px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.dist-row .fill i { display: block; height: 100%; }
+.dist-row .n { font-family: var(--font-mono); font-size: 13px; text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+.verdict { padding: 14px 16px; border-radius: 8px; background: var(--accent-soft); }
+.verdict strong { display: block; margin-bottom: 4px; }
+.mini { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 13px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); }
+.chip b { font-family: var(--font-mono); font-weight: 500; margin-left: 4px; }
+.key { display: grid; gap: 10px; }
+.key div { display: grid; grid-template-columns: 3.2em 1fr; gap: 12px; font-size: 14px; }
+.key b { font-family: var(--font-mono); font-weight: 500; }
+.key span { min-width: 0; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">GrowthX · AI coding session</div>
+    <h1>Where are you with AI coding?</h1>
+    <p class="lede">Ten quick questions, about two minutes. There are no wrong answers. It helps the session start at the right level for this room. At the end you get a one-line result to paste into the session chat.</p>
+  </header>
+
+  <form id="quiz" novalidate></form>
+
+  <section id="result" hidden aria-live="polite"></section>
+
+  <details class="host" id="host">
+    <summary>For the host: tally the room</summary>
+    <div class="host-body">
+      <p class="small" style="margin:0">Paste the chat messages below, as many lines as you like. Lines without a result line are ignored.</p>
+      <textarea id="paste" placeholder="Asha: L2 Prototyper · 11/24 · Growth · goal: first-agent&#10;Rohan: L3 Builder · 16/24 · PM · goal: real-codebases&#10;Meera: L1 Explorer · 4/24 · Founder · goal: first-build"></textarea>
+      <div id="tally" class="dist"></div>
+      <div class="key" id="key"></div>
+    </div>
+  </details>
+</div>
+
+<script>
+const QUESTIONS = [
+  { id: "role", text: "What do you mostly do?", scored: false, options: [
+    { label: "Product management", key: "PM" },
+    { label: "Design", key: "Design" },
+    { label: "Growth or marketing", key: "Growth" },
+    { label: "Founder or business", key: "Founder" },
+    { label: "Engineering", key: "Eng" },
+    { label: "Data or analytics", key: "Data" },
+  ]},
+  { id: "prellm", text: "How much did you code before ChatGPT and other LLMs?", options: [
+    { label: "Not at all", pts: 0 },
+    { label: "Hobby level", sub: "Tutorials, scripts, spreadsheet formulas, small side projects", pts: 1 },
+    { label: "Professionally, under 3 years", pts: 2 },
+    { label: "Professionally, 3+ years", pts: 3 },
+  ]},
+  { id: "prod", text: "What's your experience with production code?", hint: "Code that real users depend on.", options: [
+    { label: "I haven't worked on production code", pts: 0 },
+    { label: "I've made small changes or fixes", pts: 1 },
+    { label: "I ship and maintain features", pts: 2 },
+    { label: "I own systems: deploys, incidents, on-call", pts: 3 },
+  ]},
+  { id: "brownfield", text: "Have you used AI on an existing codebase, not just new projects?", options: [
+    { label: "I haven't used AI for code", pts: 0 },
+    { label: "Only new projects I started from scratch", pts: 1 },
+    { label: "Existing personal or small repos", pts: 2 },
+    { label: "A large team or production codebase", sub: "Many contributors, history you didn't write", pts: 3 },
+  ]},
+  { id: "terminal", text: "How comfortable are you in the terminal?", options: [
+    { label: "I've never opened it", pts: 0 },
+    { label: "I paste commands from guides", pts: 1 },
+    { label: "I can move around folders, install packages and run a project", pts: 2 },
+    { label: "I use it every day", pts: 3 },
+  ]},
+  { id: "tools", text: "Which AI tools have you used to build something?", hint: "Pick all that apply.", multi: true, options: [
+    { label: "Nothing yet", pts: 0, none: true },
+    { label: "ChatGPT, Claude or Gemini chat", pts: 1 },
+    { label: "App builders", sub: "Lovable, Bolt, v0, Replit", pts: 1 },
+    { label: "AI code editors", sub: "Cursor, Windsurf, Copilot in VS Code", pts: 2 },
+    { label: "Terminal coding agents", sub: "Claude Code, Codex CLI, Gemini CLI, Aider", pts: 3 },
+  ]},
+  { id: "debug", text: "When code from AI breaks, what do you usually do?", options: [
+    { label: "I get stuck or start over", pts: 0 },
+    { label: "I paste the error back and hope", pts: 1 },
+    { label: "I read the error and give the AI more context", pts: 2 },
+    { label: "I read the diff, find the cause, and add tests", pts: 3 },
+  ]},
+  { id: "git", text: "How well do you know git?", options: [
+    { label: "What's git?", pts: 0 },
+    { label: "I have a GitHub account, but I rarely use git", pts: 1 },
+    { label: "I commit, push and use branches", pts: 2 },
+    { label: "I review PRs, rebase, use worktrees", pts: 3 },
+  ]},
+  { id: "context", text: "Have you given an AI agent standing context or tools?", hint: "CLAUDE.md or rules files, MCP servers, custom commands, skills, hooks.", options: [
+    { label: "I don't know what these are", pts: 0 },
+    { label: "I've heard of them", pts: 1 },
+    { label: "I've set up one or two", pts: 2 },
+    { label: "I have my own setup and tune it", pts: 3 },
+  ]},
+  { id: "goal", text: "What do you most want from this session?", scored: false, options: [
+    { label: "Build my first thing with AI", key: "first-build" },
+    { label: "Move from chat or app builders to a real coding agent", key: "first-agent" },
+    { label: "Use agents well on a real codebase", key: "real-codebases" },
+    { label: "Advanced workflows: parallel agents, automation, custom tooling", key: "agent-workflows" },
+  ]},
+];
+
+const LEVELS = [
+  { n: 1, name: "Explorer", min: 0, max: 6,
+    you: "You're new to building with code. The session will walk you through the whole loop, from an idea to something running on your screen.",
+    host: "What an agent is and how it differs from chat. Installation walkthrough. One guided build end to end. Keep terminal jargon to a minimum." },
+  { n: 2, name: "Prototyper", min: 7, max: 13,
+    you: "You've made things with chat or app builders. The next step is running a coding agent on your own machine, where you control the code.",
+    host: "The jump from Lovable or ChatGPT to Claude Code or Cursor. Git as a safety net. Reading errors and handing the agent context." },
+  { n: 3, name: "Builder", min: 14, max: 19,
+    you: "You build with AI in an editor and know your way around git. The gains now come from giving the agent better context and checking its work.",
+    host: "Context: CLAUDE.md and rules files, plan mode, MCP. Reviewing diffs. Tests as guardrails. Breaking work into agent-sized tasks." },
+  { n: 4, name: "Operator", min: 20, max: 24,
+    you: "You run agents on real codebases with your own setup. The interesting part for you is scale: more agents, more automation.",
+    host: "Parallel agents and worktrees, subagents and skills, hooks, headless runs in CI, evaluating agent output." },
+];
+const MAX = QUESTIONS.filter(q => q.scored !== false).length * 3;
+const STORE = "aicl-answers-v1";
+
+const form = document.getElementById("quiz");
+const result = document.getElementById("result");
+
+function render() {
+  const html = QUESTIONS.map((q, i) => {
+    const type = q.multi ? "checkbox" : "radio";
+    const opts = q.options.map((o, j) => `
+      <label class="opt" for="${q.id}-${j}">
+        <input type="${type}" id="${q.id}-${j}" name="${q.id}" value="${j}">
+        <span>${o.label}${o.sub ? `<small>${o.sub}</small>` : ""}</span>
+      </label>`).join("");
+    return `<fieldset id="fs-${q.id}">
+      <legend><span class="qnum">${String(i + 1).padStart(2, "0")}/${QUESTIONS.length}</span><span>${q.text}</span></legend>
+      ${q.hint ? `<p class="hint">${q.hint}</p>` : ""}
+      <div class="opts">${opts}</div>
+    </fieldset>`;
+  }).join("");
+  form.innerHTML = html + `
+    <div class="bar">
+      <div class="progress"><div class="track"><i id="prog"></i></div><span id="progtxt">0 of ${QUESTIONS.length}</span></div>
+      <span class="note" id="note" hidden></span>
+      <button type="submit" id="submit">See my level</button>
+    </div>`;
+}
+
+function answers() {
+  const out = {};
+  for (const q of QUESTIONS) {
+    const picked = [...form.querySelectorAll(`input[name="${q.id}"]:checked`)].map(el => +el.value);
+    if (picked.length) out[q.id] = picked;
+  }
+  return out;
+}
+
+function updateProgress() {
+  const a = answers();
+  const done = QUESTIONS.filter(q => a[q.id]).length;
+  document.getElementById("prog").style.width = (done / QUESTIONS.length * 100) + "%";
+  document.getElementById("progtxt").textContent = `${done} of ${QUESTIONS.length}`;
+  for (const q of QUESTIONS) if (a[q.id]) document.getElementById("fs-" + q.id).classList.remove("missing");
+  try { localStorage.setItem(STORE, JSON.stringify(a)); } catch (e) {}
+}
+
+function restore() {
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(STORE) || "null"); } catch (e) {}
+  if (!saved) return;
+  for (const [id, picks] of Object.entries(saved)) {
+    for (const j of picks) {
+      const el = document.getElementById(`${id}-${j}`);
+      if (el) el.checked = true;
+    }
+  }
+}
+
+form.addEventListener("change", e => {
+  const q = QUESTIONS.find(q => q.id === e.target.name);
+  // "Nothing yet" on the multi-select clears the others, and vice versa
+  if (q && q.multi && e.target.checked) {
+    const noneIdx = q.options.findIndex(o => o.none);
+    const boxes = form.querySelectorAll(`input[name="${q.id}"]`);
+    if (+e.target.value === noneIdx) boxes.forEach((b, j) => { if (j !== noneIdx) b.checked = false; });
+    else boxes[noneIdx].checked = false;
+  }
+  updateProgress();
+});
+
+function score(a) {
+  let total = 0;
+  for (const q of QUESTIONS) {
+    if (q.scored === false) continue;
+    total += Math.max(...a[q.id].map(j => q.options[j].pts));
+  }
+  return total;
+}
+
+function levelFor(total) { return LEVELS.find(l => total >= l.min && total <= l.max); }
+
+form.addEventListener("submit", e => {
+  e.preventDefault();
+  const a = answers();
+  const missing = QUESTIONS.filter(q => !a[q.id]);
+  const note = document.getElementById("note");
+  if (missing.length) {
+    missing.forEach(q => document.getElementById("fs-" + q.id).classList.add("missing"));
+    note.textContent = `${missing.length} question${missing.length > 1 ? "s" : ""} left`;
+    note.hidden = false;
+    document.getElementById("fs-" + missing[0].id).scrollIntoView({ behavior: "smooth", block: "center" });
+    return;
+  }
+  note.hidden = true;
+  const total = score(a);
+  const lvl = levelFor(total);
+  const role = QUESTIONS[0].options[a.role[0]].key;
+  const goal = QUESTIONS.find(q => q.id === "goal").options[a.goal[0]].key;
+  const line = `L${lvl.n} ${lvl.name} · ${total}/${MAX} · ${role} · goal: ${goal}`;
+
+  result.innerHTML = `
+    <div class="eyebrow">Your level</div>
+    <div class="lvl-row">
+      <div class="badge">L${lvl.n}</div>
+      <div><h2>${lvl.name}</h2><div class="score">${total} of ${MAX} points</div></div>
+    </div>
+    <div class="ladder" aria-hidden="true">${LEVELS.map(l => `<div class="${l.n <= lvl.n ? "on" : ""}"></div>`).join("")}</div>
+    <p>${lvl.you}</p>
+    <div>
+      <p class="small" style="margin-bottom:8px">Paste this line into the session chat:</p>
+      <div class="share">
+        <code id="line">${line}</code>
+        <button type="button" class="ghost" id="copy">Copy</button>
+      </div>
+    </div>`;
+  result.hidden = false;
+  result.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  document.getElementById("copy").addEventListener("click", ev => {
+    const btn = ev.currentTarget;
+    navigator.clipboard.writeText(line).then(() => {
+      btn.textContent = "Copied";
+      setTimeout(() => (btn.textContent = "Copy"), 1600);
+    }).catch(() => {
+      const r = document.createRange();
+      r.selectNodeContents(document.getElementById("line"));
+      const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+      btn.textContent = "Press ⌘C";
+    });
+  });
+});
+
+// Host tally
+const paste = document.getElementById("paste");
+const tally = document.getElementById("tally");
+const LINE_RE = /L([1-4])\s+\w+\s*·\s*(\d+)\/\d+\s*·\s*([\w-]+)\s*·\s*goal:\s*([\w-]+)/i;
+
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+
+function count() {
+  const rows = paste.value.split(/\n/).map(l => l.match(LINE_RE)).filter(Boolean);
+  if (!rows.length) {
+    tally.innerHTML = `<p class="small" style="margin:0">No results yet. Once people paste their lines in chat, copy the chat here.</p>`;
+    return;
+  }
+  const byLevel = [0, 0, 0, 0];
+  const roles = {}, goals = {};
+  let sum = 0;
+  for (const m of rows) {
+    byLevel[+m[1] - 1]++;
+    sum += +m[2];
+    roles[m[3]] = (roles[m[3]] || 0) + 1;
+    goals[m[4]] = (goals[m[4]] || 0) + 1;
+  }
+  const n = rows.length;
+  const peak = Math.max(...byLevel);
+  const modeIdx = byLevel.indexOf(peak);
+  const share = byLevel.map(c => c / n);
+  const spread = share[0] >= .15 && share[3] >= .15;
+  const below = share.slice(0, modeIdx).reduce((x, y) => x + y, 0);
+  const above = share.slice(modeIdx + 1).reduce((x, y) => x + y, 0);
+  const mode = LEVELS[modeIdx];
+  let advice;
+  if (spread) advice = `The room is split: ${Math.round(share[0] * 100)}% are L1 and ${Math.round(share[3] * 100)}% are L4. Pitch the core at L${mode.n}, pair L4s with L1s for the hands-on part, and give L4s a stretch exercise.`;
+  else if (above > below && modeIdx < 3) advice = `Pitch the core at L${mode.n} ${mode.name} and plan stretch segments at L${mode.n + 1}, since ${Math.round(above * 100)}% are above that level.`;
+  else if (below > 0 && modeIdx > 0) advice = `Pitch the core at L${mode.n} ${mode.name}. Recap L${mode.n - 1} basics in the first few minutes for the ${Math.round(below * 100)}% below that level.`;
+  else advice = `Pitch the session at L${mode.n} ${mode.name}.`;
+
+  const chips = obj => Object.entries(obj).sort((a, b) => b[1] - a[1]).map(([k, v]) => `<span class="chip">${esc(k)}<b>${v}</b></span>`).join("");
+  tally.innerHTML = `
+    <div class="verdict"><strong>${n} response${n > 1 ? "s" : ""} · average ${(sum / n).toFixed(1)}/${MAX}</strong>${advice}<div class="small" style="margin-top:6px">Focus for L${mode.n}: ${mode.host}</div></div>
+    ${LEVELS.map((l, i) => `<div class="dist-row"><span>L${l.n} ${l.name}</span><div class="fill"><i style="width:${share[i] * 100}%;background:var(--l${l.n})"></i></div><span class="n">${byLevel[i]}</span></div>`).join("")}
+    <div><p class="small" style="margin:0 0 6px">Goals</p><div class="mini">${chips(goals)}</div></div>
+    <div><p class="small" style="margin:0 0 6px">Roles</p><div class="mini">${chips(roles)}</div></div>`;
+}
+paste.addEventListener("input", count);
+
+document.getElementById("key").innerHTML =
+  `<p class="small" style="margin:0">Scoring: 8 questions × 0–3 points. Role and goal aren't scored. For the tools question, the highest tool counts.</p>` +
+  LEVELS.map(l => `<div><b>L${l.n}</b><span><strong>${l.name}</strong> (${l.min}–${l.max}). ${l.host}</span></div>`).join("");
+
+render();
+restore();
+updateProgress();
+count();
+</script>

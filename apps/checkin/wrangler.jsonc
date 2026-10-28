@@ -1,0 +1,18 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "growthx-ai-coding-checkin",
+  "account_id": "e36a0d53cbe993dac321c2ac8dea60f6",
+  "main": "src/index.js",
+  "compatibility_date": "2026-10-21",
+  "workers_dev": true,
+  "routes": [
+    { "pattern": "growthx-eng.tarp.sh", "custom_domain": true }
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "ai-coding-checkin",
+      "database_id": "baa2e88e-974f-487d-835e-d0781e596986"
+    }
+  ]
+}

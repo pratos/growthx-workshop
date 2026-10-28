@@ -21,6 +21,9 @@
         "zod": "^4.1.0",
       },
     },
+    "apps/checkin": {
+      "name": "@greenhouse/checkin",
+    },
     "apps/web": {
       "name": "@greenhouse/web",
       "dependencies": {
@@ -178,6 +181,8 @@
     "@esbuild/win32-x64": ["@esbuild/win32-x64@0.28.2", "", { "os": "win32", "cpu": "x64" }, "sha512-5ebpxr3nWMzrL/rnUI755Jkuee0bHL/Gq0WTF9lvcpv73wAp5eu8MfBUgWK9bhWvZjj7yX8etf/8tI8Ney695g=="],
 
     "@greenhouse/api": ["@greenhouse/api@workspace:apps/api"],
+
+    "@greenhouse/checkin": ["@greenhouse/checkin@workspace:apps/checkin"],
 
     "@greenhouse/db": ["@greenhouse/db@workspace:packages/db"],
 
