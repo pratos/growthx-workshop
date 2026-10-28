@@ -43,6 +43,10 @@ reset:
     rm -rf apps/api/.wrangler/state apps/web/.wrangler/state
     just migrate-local seed
 
+# Flags: just flag list | on NAME | off NAME | user NAME participant | pct NAME 25. GH_REMOTE=1 for prod.
+flag action name="" id="":
+    @scripts/flag.sh {{action}} {{name}} {{id}}
+
 # Rebuild the architecture map from docs/ARCHITECTURE.md (a hook does this on every edit)
 arch:
     bun scripts/arch.ts
@@ -86,6 +90,14 @@ user-add email name role="member":
 migrate-remote site="prod":
     bash scripts/cf-account.sh
     cd apps/api && e=$([ "{{site}}" = demo ] && echo "--env demo" || true) && bunx wrangler d1 migrations list DB --remote $e && bunx wrangler d1 migrations apply DB --remote $e
+
+# End-to-end tests in a real browser against the local app (starts it if :3000 is free): just e2e [filter]
+e2e filter="":
+    cd e2e && bunx playwright test {{filter}}
+
+# One-time: the browser Playwright drives
+e2e-install:
+    bunx playwright install chromium
 
 # Can an agent clone, run, seed, log into, administer and browse this repo alone? ✓/✗ per item with the fix
 agent-ready:
