@@ -27,6 +27,7 @@ export async function signIn(page: Page, who: { email: string; password: string 
 
 export async function signOut(page: Page) {
   await ready(page, '/');
-  const button = page.getByRole('button', { name: 'Sign out' });
+  const button = page.getByTestId('header-account').getByRole('button', { name: 'Sign out' });
+  await expect(page.getByTestId('header-account')).not.toBeEmpty();
   if (await button.isVisible()) { await button.click(); await expect(page.getByTestId('session')).toContainText('Not signed in'); }
 }

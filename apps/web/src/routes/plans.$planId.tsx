@@ -42,7 +42,8 @@ function PlanPage() {
   const [sessionTick, setSessionTick] = useState(0);
   const { planId } = Route.useParams();
   const router = useRouter();
-  const [by, setBy] = useState('pratos');
+  // Who acts on the comments: the signed-in account, changeable here so one laptop can play several participants.
+  const [by, setBy] = useState(account?.accountId ?? 'pratos');
   const [error, setError] = useState<string | null>(null);
   const [live, setLive] = useState<'connecting' | 'live' | 'off'>('connecting');
   const [flags, setFlags] = useState<string[] | null>(null);
@@ -86,27 +87,38 @@ function PlanPage() {
     <main className="mx-auto grid max-w-6xl gap-8 px-4 py-10 lg:grid-cols-[minmax(0,1fr)_380px]">
       <div>
       <header className="flex items-baseline justify-between gap-4">
-        <h1 className="text-2xl font-semibold tracking-tight">Plan {planId}</h1>
-        <label className="text-sm text-gray-500">as <input value={by} onChange={(e) => setBy(e.target.value)} className="ml-1 w-28 rounded border border-gray-300 px-2 py-1 text-gray-900" /></label>
+        <div>
+          <p className="gh-kicker">Plan</p>
+          <h1 className="text-3xl font-semibold tracking-tight">{planId}</h1>
+        </div>
+        <label className="gh-muted flex items-center gap-2 text-sm" title="Comments are written as this participant. It starts as your account.">
+          acting as <input value={by} onChange={(e) => setBy(e.target.value)} className="gh-input !w-28 !py-1" />
+        </label>
       </header>
-      <p className="mt-1 text-sm text-gray-500">{plan.threads.length} threads · {plan.decisions.length} decisions · version {plan.version} · <span data-live={live} className={live === 'live' ? 'text-emerald-700' : 'text-gray-400'}>{live === 'live' ? '● live' : live === 'off' ? '○ offline' : '○ connecting'}</span></p>
-      {error && <p role="alert" className="mt-4 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">{error}</p>}
+      <p className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+        <span className="gh-pill">{plan.threads.length} thread{plan.threads.length === 1 ? '' : 's'}</span>
+        <span className="gh-pill">{plan.decisions.length} decision{plan.decisions.length === 1 ? '' : 's'}</span>
+        <span className="gh-pill">version {plan.version}</span>
+        <span className="gh-pill" data-live={live} data-tone={live === 'live' ? 'live' : undefined}>{live === 'live' ? '● live' : live === 'off' ? '○ offline' : '○ connecting'}</span>
+      </p>
+      {error && <p role="alert" className="gh-pill mt-4" data-tone="warn">{error}</p>}
 
-      <section className="mt-8 space-y-4">
+      <section className="mt-8 space-y-4" aria-label="Comment threads">
+        {plan.threads.length === 0 && <p className="gh-muted text-sm">No threads on this plan yet. Open the first one below: a question about one block that should end in a decision.</p>}
         {plan.threads.map((t) => {
           const decision = plan.decisions.find((d) => d.threadId === t.threadId);
           return (
-            <article key={t.threadId} data-thread={t.threadId} className="rounded-lg border border-gray-200 p-4">
-              <p className="text-xs uppercase tracking-wide text-gray-500">block {t.blockId} · thread {t.threadId} · {t.replies} replies</p>
-              <p className="mt-1 text-base">{t.body}</p>
+            <article key={t.threadId} data-thread={t.threadId} className="gh-card gh-arrive p-5">
+              <p className="gh-kicker">block {t.blockId} · {t.replies} {t.replies === 1 ? 'reply' : 'replies'}</p>
+              <p className="mt-1.5 text-base font-medium">{t.body}</p>
               {decision ? (
-                <p className="mt-3 text-sm text-emerald-800">Decided by {decision.by} · {decision.at.slice(0, 16).replace('T', ' ')} UTC · “{decision.decision}”</p>
+                <p className="mt-3 text-sm" data-decision><span className="gh-pill" data-tone="live">decided</span> <strong>“{decision.decision}”</strong> <span className="gh-muted">· {decision.by} · {decision.at.slice(0, 16).replace('T', ' ')} UTC</span></p>
               ) : !canResolve ? (
-                <p className="mt-3 text-sm text-gray-500" data-flag-off="resolve-thread">{flags === null ? 'Checking what you can do here…' : `Resolving threads is not switched on for ${by} yet.`}</p>
+                <p className="gh-muted mt-3 text-sm" data-flag-off="resolve-thread">{flags === null ? 'Checking what you can do here…' : `Resolving threads is not switched on for ${by} yet.`}</p>
               ) : (
                 <form className="mt-3 flex gap-2" onSubmit={(e) => { e.preventDefault(); const f = new FormData(e.currentTarget); void run(resolveThread({ data: { planId, threadId: t.threadId, decision: field(f, 'decision'), by } })); }}>
-                  <input name="decision" required placeholder="What was decided?" className="flex-1 rounded border border-gray-300 px-3 py-2 text-sm" />
-                  <button type="submit" className="rounded bg-black px-3 py-2 text-sm text-white">Resolve</button>
+                  <input name="decision" required aria-label="What was decided" placeholder="What was decided?" className="gh-input" />
+                  <button type="submit" className="gh-btn gh-btn-primary">Resolve</button>
                 </form>
               )}
             </article>
@@ -114,12 +126,13 @@ function PlanPage() {
         })}
       </section>
 
-      <form className="mt-10 flex flex-col gap-2 rounded-lg border border-dashed border-gray-300 p-4" onSubmit={(e) => { e.preventDefault(); const f = new FormData(e.currentTarget); void run(openThread({ data: { planId, blockId: field(f, 'blockId'), body: field(f, 'body'), by } })); e.currentTarget.reset(); }}>
-        <p className="text-sm font-medium">Open a thread</p>
+      <form className="gh-card mt-10 flex flex-col gap-2 border-dashed p-5" onSubmit={(e) => { e.preventDefault(); const f = new FormData(e.currentTarget); void run(openThread({ data: { planId, blockId: field(f, 'blockId'), body: field(f, 'body'), by } })); e.currentTarget.reset(); }}>
+        <p className="text-sm font-semibold">Open a thread</p>
+        <p className="gh-muted text-xs">A question about one block of the plan. It collects replies and ends in a decision.</p>
         <div className="flex gap-2">
-          <input name="blockId" required placeholder="block id" className="w-32 rounded border border-gray-300 px-3 py-2 text-sm" />
-          <input name="body" required placeholder="What should we decide?" className="flex-1 rounded border border-gray-300 px-3 py-2 text-sm" />
-          <button type="submit" className="rounded border border-gray-300 px-3 py-2 text-sm">Open</button>
+          <input name="blockId" required aria-label="Block id" placeholder="block id" className="gh-input !w-32" />
+          <input name="body" required aria-label="What should we decide" placeholder="What should we decide?" className="gh-input" />
+          <button type="submit" className="gh-btn">Open</button>
         </div>
       </form>
       </div>

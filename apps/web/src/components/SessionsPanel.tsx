@@ -31,9 +31,9 @@ export function SessionsPanel({ planId, me, tick }: Props) {
 
   if (!me || status === 401) {
     return (
-      <aside className="rounded-lg border border-gray-200 p-4" aria-label="Sessions">
+      <aside className="gh-card p-5 lg:sticky lg:top-6" aria-label="Sessions">
         <h2 className="text-lg font-semibold">Talk to the agent</h2>
-        <p className="mt-2 text-sm text-gray-500"><Link to="/login" className="underline">Sign in</Link> to start a session or join one. Sessions are where you ask the agent, and everyone in the room sees each step.</p>
+        <p className="gh-muted mt-2 text-sm"><Link to="/login" className="underline">Sign in</Link> to start a session or join one. Sessions are where you ask the agent, and everyone in the room sees each step.</p>
       </aside>
     );
   }
@@ -43,19 +43,19 @@ export function SessionsPanel({ planId, me, tick }: Props) {
   const running = current?.runs.find((r) => r.status === 'running');
 
   return (
-    <aside className="flex flex-col gap-4 rounded-lg border border-gray-200 p-4" aria-label="Sessions">
+    <aside className="gh-card flex flex-col gap-4 p-5 lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto" aria-label="Sessions">
       <header>
         <h2 className="text-lg font-semibold">Talk to the agent</h2>
-        <p className="mt-1 text-sm text-gray-500">Ask in a session; the agent answers one question at a time, in order. Anyone in the session can steer the question it is working on.</p>
+        <p className="gh-muted mt-1 text-sm">Ask in a session; the agent answers one question at a time, in order. Anyone in the session can steer the question it is working on.</p>
       </header>
-      {error && <p role="alert" className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">{error}</p>}
+      {error && <p role="alert" className="gh-pill" data-tone="warn">{error}</p>}
 
-      {sessions === null ? <p className="text-sm text-gray-500">Loading sessions…</p> : sessions.length > 0 && (
+      {sessions === null ? <p className="gh-muted text-sm">Loading sessions…</p> : sessions.length > 0 && (
         <ul className="flex flex-wrap gap-2" aria-label="Sessions on this plan">
           {sessions.map((s) => (
             <li key={s.sessionId}>
-              <button type="button" onClick={() => setSelected(s.sessionId)} aria-pressed={s.sessionId === selected}
-                className={`rounded-full border px-3 py-1 text-xs ${s.sessionId === selected ? 'border-gray-900 font-semibold' : 'border-gray-300 text-gray-600'}`}>
+              <button type="button" onClick={() => setSelected(s.sessionId)} aria-pressed={s.sessionId === selected} className="gh-btn !px-3 !py-1 !text-xs"
+                style={s.sessionId === selected ? { borderColor: 'var(--lagoon)' } : { fontWeight: 500 }}>
                 {s.title}{s.status === 'ended' ? ' · ended' : ''}
               </button>
             </li>
@@ -65,44 +65,45 @@ export function SessionsPanel({ planId, me, tick }: Props) {
 
       {current && (
         <section data-session={current.sessionId} className="flex flex-col gap-3">
-          <p className="text-xs text-gray-500">Started by {current.startedBy} · in this session: {current.participants.join(', ')}</p>
-          {current.runs.length === 0 && <p className="text-sm text-gray-500">No questions yet.</p>}
-          <ol className="flex flex-col gap-3">
+          <p className="gh-muted text-xs">Started by {current.startedBy} · here: {current.participants.join(', ')}</p>
+          {current.runs.length === 0 && <p className="gh-muted text-sm">No questions yet. Ask the first one below.</p>}
+          <ol className="flex flex-col gap-2.5">
             {current.runs.map((r) => (
-              <li key={r.runId} data-run={r.runId} data-status={r.status} className="flex flex-col gap-1">
-                <p className="self-end rounded-lg bg-gray-100 px-3 py-2 text-sm text-gray-900"><span className="block text-[11px] text-gray-500">{r.askedBy} asked</span>{r.asked}</p>
-                {r.status === 'queued' && <p className="text-xs text-gray-500">Queued · waiting for the agent</p>}
-                {r.status === 'running' && <p className="text-xs text-gray-500">{r.runBy} is working on it{r.steers ? ` · steered ${r.steers}×` : ''}</p>}
-                {r.status === 'finished' && <p data-result className="rounded-lg border border-gray-200 px-3 py-2 text-sm"><span className="block text-[11px] text-gray-500">{r.runBy}{r.steers ? ` · steered ${r.steers}×` : ''}</span>{r.result}</p>}
+              <li key={r.runId} data-run={r.runId} data-status={r.status} className="gh-arrive flex flex-col gap-1.5">
+                <p className="gh-bubble gh-bubble-asked"><span className="gh-kicker block !normal-case !tracking-normal">{r.askedBy} asked</span>{r.asked}</p>
+                {r.status === 'queued' && <p className="gh-muted text-xs">Queued · the agent takes questions in order</p>}
+                {r.status === 'running' && <p className="gh-muted gh-working text-xs">{r.runBy === 'agent' ? 'The agent is working on it' : `${r.runBy} is working on it`}{r.steers ? ` · steered ${r.steers}×` : ''}</p>}
+                {r.status === 'finished' && <p data-result className="gh-bubble gh-bubble-answer gh-arrive"><span className="gh-kicker block !normal-case !tracking-normal">{r.runBy}{r.steers ? ` · steered ${r.steers}×` : ''}</span>{r.result}</p>}
+                {r.status === 'failed' && <p data-result className="gh-bubble gh-bubble-failed gh-arrive"><span className="block text-[11px]">{r.runBy} could not answer</span>{r.result}</p>}
               </li>
             ))}
           </ol>
 
-          {current.status === 'ended' ? <p className="text-sm text-gray-500">This session has ended.</p> : !member ? (
-            <button type="button" onClick={() => void send('JoinSession', { sessionId: current.sessionId })} className="self-start rounded border border-gray-300 px-3 py-1.5 text-sm">Join this session</button>
+          {current.status === 'ended' ? <p className="gh-muted text-sm">This session has ended.</p> : !member ? (
+            <button type="button" onClick={() => void send('JoinSession', { sessionId: current.sessionId })} className="gh-btn self-start">Join this session</button>
           ) : (
             <>
               {running && (
                 <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); const f = new FormData(e.currentTarget); void send('Steer', { sessionId: current.sessionId, runId: running.runId, steer: field(f, 'steer') }); e.currentTarget.reset(); }}>
-                  <input name="steer" required aria-label="Steer the running question" placeholder="Steer the question it is working on…" className="flex-1 rounded border border-gray-300 px-3 py-2 text-sm" />
-                  <button type="submit" className="rounded border border-gray-300 px-3 py-2 text-sm">Steer</button>
+                  <input name="steer" required aria-label="Steer the running question" placeholder="Steer the question it is working on…" className="gh-input" />
+                  <button type="submit" className="gh-btn">Steer</button>
                 </form>
               )}
               <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); const f = new FormData(e.currentTarget); void send('Ask', { sessionId: current.sessionId, asked: field(f, 'asked') }); e.currentTarget.reset(); }}>
-                <input name="asked" required aria-label="Ask the agent" placeholder="Ask the agent…" className="flex-1 rounded border border-gray-300 px-3 py-2 text-sm" />
-                <button type="submit" className="rounded bg-black px-3 py-2 text-sm text-white">Ask</button>
+                <input name="asked" required aria-label="Ask the agent" placeholder="Ask the agent…" className="gh-input" />
+                <button type="submit" className="gh-btn gh-btn-primary">Ask</button>
               </form>
               {current.startedBy === me && !running && (
-                <button type="button" onClick={() => void send('EndSession', { sessionId: current.sessionId })} className="self-start text-xs text-gray-500 underline">End this session</button>
+                <button type="button" onClick={() => void send('EndSession', { sessionId: current.sessionId })} className="gh-muted self-start text-xs underline">End this session</button>
               )}
             </>
           )}
         </section>
       )}
 
-      <form className="flex gap-2 border-t border-gray-200 pt-3" onSubmit={(e) => { e.preventDefault(); const f = new FormData(e.currentTarget); void send('StartSession', { title: field(f, 'title') }); e.currentTarget.reset(); }}>
-        <input name="title" required aria-label="New session title" placeholder="New session: what is it about?" className="flex-1 rounded border border-gray-300 px-3 py-2 text-sm" />
-        <button type="submit" className="rounded border border-gray-300 px-3 py-2 text-sm">Start</button>
+      <form className="flex gap-2 border-t pt-4" style={{ borderColor: 'var(--line)' }} onSubmit={(e) => { e.preventDefault(); const f = new FormData(e.currentTarget); void send('StartSession', { title: field(f, 'title') }); e.currentTarget.reset(); }}>
+        <input name="title" required aria-label="New session title" placeholder="New session: what is it about?" className="gh-input" />
+        <button type="submit" className="gh-btn">Start</button>
       </form>
     </aside>
   );

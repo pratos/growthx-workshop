@@ -3,6 +3,7 @@
 //   GREENHOUSE_URL  the API, default http://localhost:3000/api (the web Worker forwards /api to it)
 //   PLAN            comma-separated plan ids, default gh-12
 //   AGENT_EMAIL / AGENT_PASSWORD   default: the local-only agent login in .dev.vars.example
+//   AGENT_STORE     the pi-durable SQLite file, default packages/agent/agent-serve.sqlite
 // With no model key it answers with a faux model, so the whole loop runs locally without one.
 import { readFileSync, existsSync } from "node:fs";
 import { openBrain } from "./brain.ts";
@@ -50,7 +51,7 @@ const api: SessionsApi = {
 };
 
 const me = await signIn();
-const brain = await openBrain(new URL("../agent-serve.sqlite", import.meta.url).pathname, log);
+const brain = await openBrain(process.env.AGENT_STORE ?? new URL("../agent-serve.sqlite", import.meta.url).pathname, log);
 log(`pid ${process.pid} · signed in as ${me} · model ${brain.model} · watching ${plans.join(", ")} at ${base}`);
 let stopping = false;
 process.on("SIGINT", () => { stopping = true; });
