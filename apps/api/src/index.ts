@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { Effect, Schema } from 'effect';
-import { Commands, PlanRooms, readiness, runtimeFor, type Env } from './services';
+import { Commands, Flags, PlanRooms, readiness, runtimeFor, type Env } from './services';
 import { PlanRoom } from './plan-room';
 import { flagsAdmin } from './flags-admin';
 import { auth, requireSignIn } from './auth';
@@ -54,6 +54,14 @@ app.post('/plans/:planId/sessions', requireSignIn, async (c) => {
 app.get('/plans/:planId/sessions/:sessionId', requireSignIn, async (c) => {
   const view = await c.env.PLAN_ROOM.getByName(planId(c.req.param('planId'))).sessionView(c.req.param('sessionId'));
   return view ? c.json(view) : c.json({ error: 'no such session' }, 404);
+});
+
+// Which flags are on for a participant: what the screen asks before it offers a flagged action. Same Flags service
+// decide() reads, so the screen and the domain never disagree. Names only, no allowlists.
+app.get('/participants/:participant/flags', async (c) => {
+  const participant = planId(c.req.param('participant'));
+  const on = await runtimeFor(c.env).runPromise(Flags.use((f) => f.enabledFor(participant)));
+  return c.json({ participant, on });
 });
 
 // Live stream of the plan: the Durable Object accepts the socket and fans out every append.

@@ -3,7 +3,8 @@
 # Author with pi (grok) → review with Claude; author with Claude Code → review with pi. REVIEWER=claude|pi overrides.
 set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"; cd "$root"
-base="${1:-main}"; head="${HEAD_REF:-HEAD}"; dry=""; [ "${2:-}" = "--dry-run" ] && dry=1
+# --dry-run says how much would be reviewed; --prompt prints exactly what the reviewing model receives.
+base="${1:-main}"; head="${HEAD_REF:-HEAD}"; dry=""; [ "${2:-}" = "--dry-run" ] && dry=1; show=""; [ "${2:-}" = "--prompt" ] && show=1
 reviewer="${REVIEWER:-claude}"
 diff="$(git diff "$base"..."$head" -- . ':!bun.lock' ':!**/*.snap.txt' 2>/dev/null || git diff "$base" "$head" -- . ':!bun.lock')"
 [ -n "$diff" ] || { echo "no diff against $base"; exit 0; }
@@ -14,6 +15,7 @@ $(cat docs/DOMAIN-VOCABULARY.md)
 
 DIFF:
 $diff"
+[ -n "$show" ] && { echo "$prompt"; exit 0; }
 [ -n "$dry" ] && { echo "would review $(echo "$diff" | wc -l | tr -d ' ') diff lines with $reviewer"; exit 0; }
 case "$reviewer" in
   claude) claude -p "$prompt" --model opus ;;

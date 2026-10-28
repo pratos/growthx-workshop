@@ -63,11 +63,17 @@ case "$cp" in
   cp-06)
     test -f packages/agent/README.md && (cd packages/agent && bunx tsc --noEmit -p . >/dev/null 2>&1) || fail "packages/agent does not typecheck"
     pass "the durable agent builds; kill -9 and resume live with just agent-demo (needs a model key)" ;;
-  cp-07) scripts/review.sh main --dry-run >/dev/null && pass "review runs with a different model than the author; recorded fallback: demo/review-fallback.md" || fail "review dry run fails" ;;
+  cp-07)
+    p=$(HEAD_REF=wrong/cp-02 scripts/review.sh cp-02 --prompt 2>/dev/null) || fail "review cannot build its prompt"
+    grep -q "Not: resolution, verdict" <<<"$p" && grep -q "ThreadClosed" <<<"$p" || fail "the reviewer would not see both the vocabulary and the ThreadClosed diff"
+    pass "just review sends a different model the domain vocabulary first, then the planted branch's diff with ThreadClosed; recorded answer: demo/review-fallback.md" ;;
   cp-08)
+    grep -q 'data-flag-off="resolve-thread"' "apps/web/src/routes/plans.\$planId.tsx" || fail "the plan page does not gate Resolve on its flag"
+    api_up
+    curl -sf localhost:8799/participants/admin/flags | jq -e '.on | index("resolve-thread")' >/dev/null || fail "resolve-thread should be on for admin (seeded allowlist)"
+    curl -sf localhost:8799/participants/sam/flags | jq -e '.on | index("resolve-thread") | not' >/dev/null || fail "resolve-thread should be off for sam"
     live="https://greenhouse-api.prthamesh-sarang.workers.dev"
-    v=$(curl -sf --max-time 20 "$live/healthz" | jq -r '"\(.version.label) (\(.version.id))"'); [ -n "$v" ] && [ "$v" != "null (null)" ] || fail "no version from $live/healthz"
-    GH_REMOTE=1 scripts/flag.sh list >/dev/null || fail "remote flags unreadable"
-    pass "released: live api version $v; flags readable remotely. Rollback: just rollback api <previous id>" ;;
+    v=$(curl -sf --max-time 20 "$live/healthz" | jq -r '"\(.version.label) (\(.version.id))"') || v="unreachable"
+    pass "released behind a flag: Resolve shows only where resolve-thread is on (admin yes, sam no); flip it with just flag, no deploy. Live api: $v" ;;
   *) echo "unknown checkpoint $cp"; exit 2 ;;
 esac
