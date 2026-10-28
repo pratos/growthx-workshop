@@ -9,10 +9,10 @@
 | `main` | Scaffold and skills, running locally | `just up`; `/healthz` on both Workers through the binding; `just agent-ready` lists what is missing | `cp-00-scaffold` |
 | `cp-01-first-deploy` | First deploy of web and API | merge into `main`; GitHub deploys greenhouse-demo.tarp.sh, whose `/healthz` shows the version; roll back | `cp-01-first-deploy` |
 | `cp-02-design` | Vocabulary, architecture and event design | the map and the agent-loop decision report; the vocabulary check rejects a banned word | `cp-02-design` |
-| `cp-03-engine-identity` | Event-sourcing engine; sign-up and sign-in | sign up in the browser; read the sign-up story | `cp-03-engine-identity` |
-| `cp-04-admin` | Admin workflows and the first browser test | the dashboard and the masked event log; an admin adds an account; a participant refused; `just e2e admin` | `cp-04-admin` |
-| `cp-05-plan-document` | The plan, written in an editor: comments to decisions, live | home opens a plan; write it in the editor ("/" for blocks), two tabs see each save; one thread to a decision; the check and a second model catch ThreadClosed | `cp-05-plan-document` |
-| `cp-06-sessions-agent` | Chat with the agent, and the agent writes | ask in a session; `/ask` in the editor and the agent writes into the plan; `just agent-serve` through pi-durable | `cp-06-sessions-agent` |
+| `cp-03-engine-identity` | Event-sourcing engine; sign-up and sign-in | sign up in the browser with a username; read the sign-up story | `cp-03-engine-identity` |
+| `cp-04-admin` | Admin workflows and the first browser test | the dashboard and the masked event log; an admin adds an account and names the agent; a participant refused; `just e2e admin` | `cp-04-admin` |
+| `cp-05-plan-document` | The plan, written in an editor: comments to decisions, live | home lists every plan room and who is in it; write in the editor ("/" for blocks), two tabs see each save; select text, Comment, resolve; share a thread link; the check catches ThreadClosed | `cp-05-plan-document` |
+| `cp-06-sessions-agent` | Chat with the agent, and the agent writes | chat with each other, @agent to ask, the answer streams in; ⌘K switches chats; `/ask` and the agent writes into the plan; `just agent-serve` through pi-durable | `cp-06-sessions-agent` |
 | `cp-07-ui` | UI and UX in Chopin's language, with Impeccable, Emil's skill and Agentation | before and after: Chat on the ground, the plan as a raised sheet; one Agentation note fixed live | `cp-07-ui` |
 | `cp-08-agent-failures` | The agent's failures as expect tests | the failing-agent stories; `just test` | `cp-08-agent-failures` |
 | `cp-09-e2e` | End-to-end tests across the product | `just e2e`: seven tests in a real browser | `cp-09-e2e` |

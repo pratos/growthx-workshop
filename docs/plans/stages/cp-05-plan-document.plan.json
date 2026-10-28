@@ -4,7 +4,7 @@
   "date": "2026-10-28",
   "status": "final",
   "author": "pratos with Claude Code",
-  "summary": "A Plan gets its text and its comments. People write it in a Tiptap editor (\"/\" opens a block menu); every save is an EditPlan event, refused when stale. A Thread on a Block resolves into a Decision. Every tab sees each change at once. Resolving ships behind `resolve-thread`.",
+  "summary": "A Plan gets its text and its comments. People write it in a Tiptap editor (\"/\" opens a block menu); every save is an EditPlan event. Selected text becomes a Thread that resolves into a Decision. Each plan is its own room; the API keeps the list.",
   "current": "cp-04 has accounts and sign-in, the Flags service with `resolve-thread` seeded off but allowlisted for admin and pratos, admin pages and Playwright. There is no Plan yet. No Durable Object, thread commands, event log per Plan or page at `/plans/:id`.",
   "discoveries": [
     "The PlanRoom appends a command's events in one synchronous block, so `ThreadResolved` and `DecisionRecorded` land together or not at all.",
@@ -530,7 +530,7 @@
         },
         {
           "file": "apps/api/src/plan-room.ts",
-          "intent": "One object per Plan; synchronous appends; sockets told; pings answered without waking it.",
+          "intent": "One object per Plan; sockets tagged by account; presence goes to sockets and D1.",
           "contract": {
             "lang": "ts",
             "code": "export class PlanRoom extends DurableObject<Env> {\n  dispatch(command: Command, enabledFlags: string[]): { events: StoredEvent[] } | Rejection;\n  events(): StoredEvent[];\n  read(): PlanView;\n  version(): number;\n  fetch(request: Request): Promise<Response>;   // WebSocket upgrade, then { type: 'hello', version }\n}\n// after each append, every socket gets { type: 'events', events }"
@@ -546,7 +546,7 @@
         },
         {
           "file": "apps/api/src/index.ts",
-          "intent": "Plan routes behind sign-in and an id check; writes rate-limited; `by` from the sign-in.",
+          "intent": "Plan routes behind sign-in; GET /plans lists the rooms; /participants; the event log.",
           "contract": {
             "lang": "text",
             "code": "POST /plans/:planId/commands → 201 { events } | 400 { rejected } | 409 { rejected }\nGET  /plans/:planId          → PlanView\nGET  /plans/:planId/events   → StoredEvent[]\nGET  /plans/:planId/ws       → 101, a hibernating WebSocket"
@@ -555,6 +555,10 @@
         {
           "file": "apps/api/test/commands.test.ts",
           "intent": "Flag off, a guest is refused; pratos records both events; a bad envelope is typed."
+        },
+        {
+          "file": "apps/api/migrations/0003_plans.sql",
+          "intent": "The orchestrator's list of plan rooms: opener, last active, who is here."
         }
       ],
       "verify": {
@@ -603,7 +607,7 @@
         },
         {
           "file": "apps/web/src/components/PlanEditor.tsx",
-          "intent": "Tiptap: autosave, others' saves arrive live, \"/\" opens the blocks menu."
+          "intent": "Tiptap: autosave, live saves, a \"/\" menu, and Comment on selected text."
         },
         {
           "file": "apps/web/src/components/plan-editor.css",
@@ -619,7 +623,11 @@
         },
         {
           "file": "apps/web/src/routes/index.tsx",
-          "intent": "Signed in, home opens or starts a plan and lists the ones opened here."
+          "intent": "Home opens a plan by any name, as a slug, and lists every room."
+        },
+        {
+          "file": "apps/web/src/components/Share.tsx",
+          "intent": "Share: copy a link or email an invite; links to threads and chats."
         }
       ],
       "components": [
@@ -762,6 +770,6 @@
     "`docs/ARCHITECTURE.md`: flags in `decide()`, multiplayer is the Durable Object's job"
   ],
   "change": {
-    "intent": "Title, summary and end state match what the stage now builds."
+    "intent": "The API orchestrates the plan rooms; sharing; comments from selected text."
   }
 }

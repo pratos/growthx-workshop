@@ -4,7 +4,7 @@
   "date": "2026-10-28",
   "status": "final",
   "author": "pratos with Claude Code",
-  "summary": "Beside the plan, people start a Session, ask the agent and steer its Run. The agent is a Participant: `just agent-serve` answers queued Runs through the same API, and \"/ask\" in the editor has it write into the plan with EditPlan, credited. It survives `kill -9` through pi-durable.",
+  "summary": "Beside the plan, people chat: messages to each other, @agent to ask the agent, ⌘K to switch chats. The agent answers through the same API, streaming as it writes; its tools edit the plan, draw, and ask. It survives `kill -9` through pi-durable.",
   "current": "cp-05 has the plan document: Threads and Decisions in each PlanRoom's `events` table, the live socket, `resolve-thread` checked in `decide()`, and `just review`. Nobody can ask the agent anything, no route sets `by` from the sign-in, and `packages/agent` does not exist.",
   "discoveries": [
     "Sessions run on the engine over the room's own SQLite (the `durableObject` adapter), so events and their projections commit in one transaction.",
@@ -13,7 +13,7 @@
     "The panel's server functions reach the API over the binding, but `agent-serve` and curl need an HTTP door: `/api` on the web origin.",
     "With no model key, `chooseModelOrFaux` answers through pi-durable all the same, with a faux model that echoes the question."
   ],
-  "endState": "On `/plans/gh-12`, ask in a Session and `just agent-serve` answers within seconds. \"/ask a three step rollout plan\" in the editor: the agent's text replaces the line. Kill the agent mid-answer and restart it: the Run finishes once.",
+  "endState": "On `/plans/gh-12`, mention @agent in chat and the answer streams in. \"/ask a three step rollout plan\" in the editor: the agent writes it in. Kill the agent mid-answer and restart it: the Run finishes once.",
   "notDoing": [
     "Failing a Run after repeated errors; `FailRun` arrives in a later stage.",
     "Tools for the agent; it answers in words, three sentences at most.",
@@ -518,7 +518,7 @@
         },
         {
           "file": "packages/domain/src/session/decider.ts",
-          "intent": "Seven commands and seven events; the agent is in every Session from its start.",
+          "intent": "Sessions and Runs, plus PostMessage: people talk; mentioning @agent asks instead.",
           "contract": {
             "lang": "ts",
             "code": "StartSession(sessionId, planId, by, title) → SessionStarted\nJoinSession(sessionId, by)                 → ParticipantJoined\nAsk(sessionId, by, asked)                  → RunQueued { runId }\nStartRun(sessionId, runId, by)             → RunStarted     // the oldest queued, one at a time\nSteer(sessionId, runId, by, steer)         → RunSteered     // any Participant, while it runs\nFinishRun(sessionId, runId, by, result)    → RunFinished    // only whoever started it\nEndSession(sessionId, by)                  → SessionEnded   // only the starter, nothing running\nsessionStream(sessionId) = `session-${sessionId}`"
@@ -526,7 +526,7 @@
         },
         {
           "file": "packages/domain/src/session/view.ts",
-          "intent": "Project `sessions`, `session_participants` and `runs`; read them with `readSession` and `listSessions`.",
+          "intent": "Sessions, participants, runs and messages, projected in the same transaction.",
           "contract": {
             "lang": "ts",
             "code": "sessionsView: Projection   // tables: sessions, session_participants, runs\nreadSession(sessionId: string): Effect<SessionView | undefined, never, Sql>\nlistSessions(): Effect<SessionView[], never, Sql>   // oldest first"
@@ -539,6 +539,10 @@
         {
           "file": "packages/domain/src/index.ts",
           "intent": "Export the session decider and view beside Identity and Threads."
+        },
+        {
+          "file": "packages/schema/src/session.ts",
+          "intent": "Agent work's schemas, Message included, in their own file."
         }
       ],
       "verify": {
@@ -567,7 +571,7 @@
       "changes": [
         {
           "file": "apps/api/src/plan-room.ts",
-          "intent": "Run Session commands on the engine over the room's SQLite; broadcast a `session` frame.",
+          "intent": "runPartial relays a Run's answer so far to the sockets, never stored.",
           "contract": {
             "lang": "ts",
             "code": "sessionCommand(planId: string, type: string, data: unknown, by: string): Promise<{ events: Recorded[] } | Rejection>\nsessionList(): Promise<SessionView[]>\nsessionView(sessionId: string): Promise<SessionView | undefined>\n// StartSession gets planId and a fresh sessionId here; every socket gets { type: 'session', events }"
@@ -579,7 +583,7 @@
         },
         {
           "file": "apps/api/src/index.ts",
-          "intent": "Three signed-in Session routes; a refusal is 409 with the decider's sentence.",
+          "intent": "The partial relay: only the Run's runner may send it.",
           "contract": {
             "lang": "text",
             "code": "POST /plans/:planId/sessions            { type, data } → 201 { events } | 401 | 409 { rejected }\nGET  /plans/:planId/sessions            → { sessions: SessionView[] }\nGET  /plans/:planId/sessions/:sessionId → SessionView | 404 { error: 'no such session' }"
@@ -629,7 +633,7 @@
         },
         {
           "file": "apps/web/src/components/SessionsPanel.tsx",
-          "intent": "Session chips, each Run's question and result; Join, Ask, Steer and End where allowed."
+          "intent": "Chat: messages, @agent mentions, ⌘K to switch chats, streamed answers, names."
         },
         {
           "file": "apps/web/src/routes/plans.$planId.tsx",
@@ -745,7 +749,7 @@
       "changes": [
         {
           "file": "packages/agent/src/loop.ts",
-          "intent": "`tick` answers queued Runs in order; \"/ask\" answers are written into the plan.",
+          "intent": "Answers queued Runs with a room for tools; streams; writes \"/ask\" answers in.",
           "contract": {
             "lang": "ts",
             "code": "type SessionsApi = {\n  list(planId: string): Promise<SessionViewLite[]>;\n  command(planId: string, type: string, data: Record<string, unknown>): Promise<{ ok: boolean; rejected?: string }>;\n};\ntype Answerer = { answer(sessionId: string, runId: string, asked: string): Promise<string> };\ntick(planId: string, me: string, api: SessionsApi, brain: Answerer, log?: (line: string) => void): Promise<number>"
@@ -753,7 +757,7 @@
         },
         {
           "file": "packages/agent/src/brain.ts",
-          "intent": "One pi-durable conversation per Session; each Run submits with its id as `requestId`.",
+          "intent": "A pi-style system prompt; tools edit_plan, draw_diagram, ask_room, clarify; streamed deltas.",
           "contract": {
             "lang": "ts",
             "code": "openBrain(dbPath: string, log?: (line: string) => void): Promise<Brain>\ntype Brain = { model: string; answer(sessionId, runId, asked): Promise<string>; close(): Promise<void> }\n// on open: harness.resume(); per Run: submit({ type: 'input', content: asked, requestId: runId })"
@@ -773,7 +777,7 @@
         },
         {
           "file": "packages/agent/src/serve.ts",
-          "intent": "Sign in as the agent, listen on the socket, write answers in with EditPlan."
+          "intent": "Signs in as the agent; posts, relays partials, reads the plan, knows its name."
         },
         {
           "file": "packages/agent/test/loop.expect.test.ts",
@@ -826,6 +830,6 @@
     "`packages/agent/README.md`: pi-durable on Bun, and the kill -9 story"
   ],
   "change": {
-    "intent": "Title, summary and end state match what the stage now builds."
+    "intent": "Chat between people and the agent: messages, @agent, ⌘K, streaming, tools."
   }
 }

@@ -374,7 +374,7 @@
         },
         {
           "file": "apps/api/src/admin.ts",
-          "intent": "Counts, accounts, masked events; `POST /admin/accounts` opens an account with a role.",
+          "intent": "Counts, accounts, masked events; open an account; rename one, the agent included.",
           "contract": {
             "lang": "ts",
             "code": "GET /admin/summary  → { accounts, admins, signIns, flags, flagsOn, events, streams }\nGET /admin/accounts → { accounts: { accountId, email, name, admin, openedAt, liveSignIns }[] }\nGET /admin/events?stream=&limit=50 → { events: { stream, version, type, by, at, data }[] }\n// in data, every key matching /hash|password|token/i is '•••'; limit is 1..200"
@@ -449,7 +449,7 @@
         },
         {
           "file": "apps/web/src/routes/admin.accounts.tsx",
-          "intent": "Accounts with roles and live sign-ins; an Add an account form below."
+          "intent": "Accounts with roles; Add an account; Name the agent."
         },
         {
           "file": "apps/web/src/routes/admin.events.tsx",
@@ -596,7 +596,7 @@
         },
         {
           "file": "e2e/admin.spec.ts",
-          "intent": "Refused signed out and as Sam; an admin sees everything and adds an account."
+          "intent": "Refused signed out and as Sam; an admin adds an account and names the agent."
         },
         {
           "file": "justfile",
@@ -629,6 +629,6 @@
     "`docs/TESTING.md`, step 2: Admin"
   ],
   "change": {
-    "intent": "Title, summary and end state match what the stage now builds."
+    "intent": "Admins name the agent."
   }
 }

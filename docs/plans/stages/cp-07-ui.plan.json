@@ -303,7 +303,7 @@
       "changes": [
         {
           "file": "apps/web/src/routes/plans.$planId.tsx",
-          "intent": "The workspace: title bar, Plan and Decisions views, the document, threads.",
+          "intent": "The workspace: faces, Share, Plan, Decisions and Events views, Comment on text.",
           "contract": {
             "lang": "tsx",
             "code": "const [by, setBy] = useState(account?.accountId ?? 'pratos');"
@@ -378,7 +378,7 @@
       "changes": [
         {
           "file": "apps/web/src/components/SessionsPanel.tsx",
-          "intent": "Chat on the ground, no card; bubbles, a working line, empty copy."
+          "intent": "Chat on the ground: faces, the ⌘K switcher, a composer with mentions."
         }
       ],
       "components": [
@@ -474,6 +474,6 @@
     "the `impeccable`, `animate` and `agentation` skills"
   ],
   "change": {
-    "intent": "Title, summary and end state match what the stage now builds."
+    "intent": "Chat, faces, Share and the Events view in Chopin's language."
   }
 }
