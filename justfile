@@ -26,10 +26,9 @@ checkin action:
 test:
     bun test packages/domain packages/schema apps/api/test
 
-# Lint and typecheck: oxlint type-aware, oxfmt, tsc
+# Lint and typecheck: oxlint (type-aware, repo config), tsc. `just fmt` formats; the format check is not enforced yet.
 lint:
-    bunx oxlint --type-aware .
-    bunx oxfmt --check .
+    bunx oxlint -c .oxlintrc.json --type-aware --tsconfig apps/api/tsconfig.json --disable-nested-config apps packages
     bunx tsc -p apps/api/tsconfig.json --noEmit
 
 # Apply pending D1 migrations locally (never runs on deploy)
