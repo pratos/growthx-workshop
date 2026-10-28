@@ -25,6 +25,10 @@ Read `AGENTS.md` first, then `docs/DOMAIN-VOCABULARY.md` and `docs/ARCHITECTURE.
 | `deck/`, `workshop-page/`, `reliable-products-workshop.html` | The talk itself. |
 | `skills/` | Loaded by Claude Code and pi. Ours in place; third-party vendored at pinned commits by `just skills`. |
 
+## How we work
+
+One task, end to end, in nine steps: [`docs/WORKFLOW.md`](docs/WORKFLOW.md). Before anything ships, three questions: [`docs/RELEASE.md`](docs/RELEASE.md); every pull request asks them.
+
 ## Trying it
 
 Start it, sign in as the seeded accounts, and the things worth trying: [`docs/TESTING.md`](docs/TESTING.md).
